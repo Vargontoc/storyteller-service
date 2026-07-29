@@ -1,0 +1,7 @@
+name: storyteller-container
+services:
+  storyteller-api:
+    build: .
+    container_name: storyteller_api
+    ports:
+      - "${APP_PORT}:8080"
