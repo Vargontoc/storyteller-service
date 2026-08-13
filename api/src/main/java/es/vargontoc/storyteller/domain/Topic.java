@@ -27,5 +27,8 @@ public class Topic  extends BaseModel  {
         this.description = description;
     }
 
-    
+    @Override
+    public String toString() {
+        return String.format("type: %s, description: %s", getType(), getDescription());
+    }
 }

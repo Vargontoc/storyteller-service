@@ -21,6 +21,14 @@ spring:
             chat: ollama
         ollama:
             base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
+            embedding:
+                model: mxbai-embed-large
+        vectorstore:
+            pgvector:
+                index-type: hnsw
+                distance-type: cosine-distance
+                dimensions: 1024
+                initialize-schema: true
 
 logging:
     pattern:

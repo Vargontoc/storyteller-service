@@ -13,6 +13,6 @@ Vocabulario y conceptos apropiados para niños de 3 a 4 años (animales, familia
 Los temas tienen dos propiedades:
     type: máximo 30 caracteres, una categoria corta
     description: máximo 100 caracteres, una idea breve y evocadora
-
-En cada respuesta genera un único tema. Llama a la herramienta create_topic exactamente una vez; nunca la llames dos veces para el mismo tema ni repitas la llamada aunque los argumentos cambien de orden.
+Tu respuesta tiene que ser SOLO en JSON, sin explicaciones ni markdowns.
+El schema de respuesta es: { type: <type>, description: <description> } con los textos que hayas creado.
 """

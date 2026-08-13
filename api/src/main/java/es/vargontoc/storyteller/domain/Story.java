@@ -10,9 +10,7 @@ public class Story  extends BaseModel {
     private String title;
     private List<Character> characters;
     private String summary;
-    private List<StoryPage> pages;
-    private String promptImage;
-    private byte[] image;
+    private StorySize size;
 
     public Long getId() {
         return id;
@@ -38,24 +36,10 @@ public class Story  extends BaseModel {
     public void setSummary(String summary) {
         this.summary = summary;
     }
-    public String getPromptImage() {
-        return promptImage;
+    public StorySize getSize() {
+        return size;
     }
-    public void setPromptImage(String promptImage) {
-        this.promptImage = promptImage;
+    public void setSize(StorySize size) {
+        this.size = size;
     }
-    public byte[] getImage() {
-        return image;
-    }
-    public void setImage(byte[] image) {
-        this.image = image;
-    }
-    public List<StoryPage> getPages() {
-        return pages;
-    }
-    public void setPages(List<StoryPage> pages) {
-        this.pages = pages;
-    }
-
-    
 }
