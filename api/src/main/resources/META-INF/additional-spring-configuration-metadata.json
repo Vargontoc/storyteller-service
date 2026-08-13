@@ -1,0 +1,19 @@
+{
+    "properties": [
+        {
+            "name": "app.cors.allowed-origins",
+            "type": "java.lang.String",
+            "description": "A description for 'app.cors.allowed-origins'"
+        },
+        {
+            "name": "app.cors.allowed-origin-patterns",
+            "type": "java.lang.String",
+            "description": "A description for 'allowed-origin-patterns'"
+        },
+        {
+            "name": "app.chatterbox.url",
+            "type": "java.lang.String",
+            "description": "URL for Chatterbox API"
+        }
+    ]
+}
