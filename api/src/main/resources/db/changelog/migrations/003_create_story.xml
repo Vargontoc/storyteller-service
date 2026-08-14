@@ -5,23 +5,33 @@
         xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
         https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
 
-    <changeSet id="002_create_topic" author="vargontoc">
-        <createTable tableName="topic">
+    <changeSet id="003_create_story" author="vargontoc">
+        <createTable tableName="story">
             <column name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" />
             </column>
-            <column name="name" type="VARCHAR(30)">
+            <column name="title" type="VARCHAR(50)">
                 <constraints nullable="false" />
             </column>
-            <column name="description" type="VARCHAR(100)">
+            <column name="topic_id" type="BIGINT">
+                <constraints nullable="false" />
+            </column>
+            <column name="synopsis" type="VARCHAR(500)">
+                <constraints nullable="false"  />
+            </column>
+            <column name="size" type="VARCHAR(1)">
+                <constraints nullable="false" />
+            </column>
+            <column name="status" type="VARCHAR(20)">
                 <constraints nullable="false" />
             </column>
             <column name="created_at" type="TIMESTAMPTZ">
                 <constraints nullable="false"/>
             </column>
             <column name="updated_at" type="TIMESTAMPTZ"/>
-
         </createTable>
+
+        <addForeignKeyConstraint baseTableName="story" baseColumnNames="topic_id" constraintName="FK_topic_story" referencedTableName="topic" referencedColumnNames="id" />
     </changeSet>
-    
+
 </databaseChangeLog>

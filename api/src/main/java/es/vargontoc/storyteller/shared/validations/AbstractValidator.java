@@ -1,5 +1,7 @@
 package es.vargontoc.storyteller.shared.validations;
 
+import java.util.List;
+
 import es.vargontoc.storyteller.shared.exceptions.ValidationException;
 
 public abstract class AbstractValidator<T> implements IValidator<T> {
@@ -40,5 +42,11 @@ public abstract class AbstractValidator<T> implements IValidator<T> {
         if (value > max) {
             throw new ValidationException(fieldName + " must be at most " + max);
         }
+    }
+
+
+    protected void requiredItems(List value, String fieldName) {
+        if(value == null || value.isEmpty())
+            throw new ValidationException(fieldName + " must have items");
     }
 }

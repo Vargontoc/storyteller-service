@@ -10,6 +10,7 @@ import es.vargontoc.storyteller.infrastructure.mappers.TopicMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.storyteller.ports.out.TopicRepository;
+import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 
 @Repository
 public class TopicRepositoryAdapter implements TopicRepository {
@@ -33,6 +34,13 @@ public class TopicRepositoryAdapter implements TopicRepository {
     @Override
     public List<Topic> getTopics() {
         return repository.findAll().stream().map(mapper::toModel).toList();
+    }
+
+    @Override
+    public Topic getTopicByStoryId(Long storyId) {
+        return mapper.toModel(repository.getTopicByStory(storyId).orElseThrow(() -> {
+            throw new ResourceNotFoundException("No se encontro story con id: " + storyId);
+        }));
     }
     
 }

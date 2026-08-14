@@ -4,21 +4,36 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.chat.prompt.ChatOptions;
 import org.springframework.ai.ollama.OllamaChatModel;
-import org.springframework.ai.tool.ToolCallback;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+
+import es.vargontoc.storyteller.shared.Constants;
 
 
 @Configuration
 public class AgentsConfig {
 
-    @Bean("topics-agent")
-    public ChatClient topicAgent(OllamaChatModel ollamaModel, ToolCallback[] tools) {
+    @Bean(name = Constants.BeanNames.AGENT_TOPICS_MODEL)
+    public String topìcModel(@Value("${app.agents.topics}") String value) { return value;}
 
+    @Bean(name = Constants.BeanNames.AGENT_DIRECTOR_MODEL)
+    public String directorModel(@Value("${app.agents.topics}") String value) { return value;}
 
+    @Bean(name = Constants.BeanNames.AGENT_TOPICS)
+    public ChatClient topicAgent(OllamaChatModel ollamaModel, @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String model) {
         return ChatClient.builder(ollamaModel)
             .defaultAdvisors(new SimpleLoggerAdvisor())
-            .defaultOptions(ChatOptions.builder().model("storyteller-topics"))
+            .defaultOptions(ChatOptions.builder().model(model))
+            .build();
+    }
+
+    @Bean(name = Constants.BeanNames.AGENT_DIRECTOR)
+    public ChatClient directorAgent(OllamaChatModel ollama, @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model) {
+        return ChatClient.builder(ollama)
+            .defaultAdvisors(new SimpleLoggerAdvisor())
+            .defaultOptions(ChatOptions.builder().model(model))
             .build();
     }
 }

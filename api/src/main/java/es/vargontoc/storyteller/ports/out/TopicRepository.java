@@ -12,4 +12,7 @@ public interface TopicRepository {
 
     /** Obtiene la lista de temas persistidos */
     List<Topic> getTopics();
+
+    /** Obtiene el topic relacionado a un story */
+    Topic getTopicByStoryId(Long storyId);
 }
