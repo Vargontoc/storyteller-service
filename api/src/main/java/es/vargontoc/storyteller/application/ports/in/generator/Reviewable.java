@@ -1,5 +1,5 @@
 package es.vargontoc.storyteller.application.ports.in.generator;
-import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
+import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
 
 /**
  * 

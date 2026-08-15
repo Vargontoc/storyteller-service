@@ -1,3 +1,5 @@
 package es.vargontoc.storyteller.domain.command;
 
-public record StoryGenerateCommand(Long id) { }
+import es.vargontoc.storyteller.domain.model.StorySize;
+
+public record StoryGenerateCommand(Long topicId, StorySize size) { }

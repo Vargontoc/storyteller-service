@@ -8,7 +8,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.application.ComfyUIProperties;
+import es.vargontoc.storyteller.infrastructure.config.ComfyUIProperties;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 
 @Component
