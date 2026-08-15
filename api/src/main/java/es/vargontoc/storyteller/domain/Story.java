@@ -8,7 +8,7 @@ public class Story  extends BaseModel {
     
     private Long id;
     private String title;
-    private List<Character> characters;
+    private List<CharacterModel> characters;
     private String summary;
     private StorySize size;
 
@@ -24,10 +24,10 @@ public class Story  extends BaseModel {
     public void setTitle(String title) {
         this.title = title;
     }
-    public List<Character> getCharacters() {
+    public List<CharacterModel> getCharacters() {
         return characters;
     }
-    public void setCharacters(List<Character> characters) {
+    public void setCharacters(List<CharacterModel> characters) {
         this.characters = characters;
     }
     public String getSummary() {

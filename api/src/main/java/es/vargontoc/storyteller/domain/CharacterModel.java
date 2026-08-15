@@ -2,7 +2,7 @@ package es.vargontoc.storyteller.domain;
 
 import es.vargontoc.storyteller.shared.BaseModel;
 
-public class Character extends BaseModel {
+public class CharacterModel extends BaseModel {
     
     private Long id;
     private String name;

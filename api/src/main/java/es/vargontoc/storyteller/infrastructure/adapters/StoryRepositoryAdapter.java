@@ -85,7 +85,7 @@ public class StoryRepositoryAdapter implements StoryRepository {
         return characterJpaRepository.save(entity);
     }
 
-    private CharacterJpaEntity createCharacter(StoryJpaEntity stored, es.vargontoc.storyteller.domain.Character c) {
+    private CharacterJpaEntity createCharacter(StoryJpaEntity stored, es.vargontoc.storyteller.domain.CharacterModel c) {
         CharacterJpaEntity entity = CharacterJpaEntity.draft(c.getName(), c.getVisualDescription(), c.getNarrativeDescription());
         entity.setStory(stored);
         entity.setCreatedAt(LocalDateTime.now());

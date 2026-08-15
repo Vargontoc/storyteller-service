@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.Character;
+import es.vargontoc.storyteller.domain.CharacterModel;
 import es.vargontoc.storyteller.domain.Story;
 import es.vargontoc.storyteller.domain.StoryReview;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
@@ -58,7 +58,7 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         return target;
     }
 
-    private List<CharacterDraft> toDrafts(List<Character> characters) {
+    private List<CharacterDraft> toDrafts(List<CharacterModel> characters) {
         if (characters == null) {
             return new ArrayList<>();
         }
@@ -67,13 +67,13 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
             .toList();
     }
 
-    private List<Character> toCharacters(List<CharacterDraft> drafts) {
+    private List<CharacterModel> toCharacters(List<CharacterDraft> drafts) {
         if (drafts == null) {
             return new ArrayList<>();
         }
         return drafts.stream()
             .map(d -> {
-                Character c = new Character();
+                CharacterModel c = new CharacterModel();
                 c.setName(d.getName());
                 c.setNarrativeDescription(d.getNarrativeDescription());
                 c.setVisualDescription(d.getVisualDescription());

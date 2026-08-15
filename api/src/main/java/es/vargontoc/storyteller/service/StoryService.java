@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.service;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -9,14 +10,21 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import es.vargontoc.storyteller.domain.CharacterModel;
+import es.vargontoc.storyteller.domain.CharacterReview;
+import es.vargontoc.storyteller.domain.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.domain.RevisionStatus;
 import es.vargontoc.storyteller.domain.Story;
 import es.vargontoc.storyteller.domain.StoryAgentResult;
 import es.vargontoc.storyteller.domain.StoryReview;
 import es.vargontoc.storyteller.domain.StoryReviewAgentResult;
 import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
+import es.vargontoc.storyteller.infrastructure.dto.ReviewCharacterRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.StoryRequestDto;
 import es.vargontoc.storyteller.ports.in.StoryUseCase;
+import es.vargontoc.storyteller.ports.out.CharacterRepository;
+import es.vargontoc.storyteller.ports.out.CharacterReviewRepository;
 import es.vargontoc.storyteller.ports.out.OllamaPort;
 import es.vargontoc.storyteller.ports.out.StoryRepository;
 import es.vargontoc.storyteller.ports.out.StoryReviewRepository;
@@ -33,12 +41,18 @@ public class StoryService implements StoryUseCase {
     @Value("classpath:/templates/new_script.st")
     private Resource scriptResource;
 
-        @Value("classpath:/templates/review_script.st")
+    @Value("classpath:/templates/review_script.st")
     private Resource reviewScriptResource;
+
+    @Value("classpath:/templates/review_character.st")
+    private Resource reviewCharacterResource;
 
     private final TopicRepository topicRepository;
     private final StoryRepository storyRepository;
+    private final CharacterRepository characterRepository;
+
     private final StoryReviewRepository storyReviewRepository;
+    private final CharacterReviewRepository characterReviewRepository;
 
     private final OllamaPort ollama;
     private final String directorMopdel;
@@ -49,6 +63,8 @@ public class StoryService implements StoryUseCase {
         @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String directorModel,
         @Qualifier(Constants.BeanNames.AGENT_DIRECTOR) ChatClient agent,
         StoryRepository storyRepository,
+        CharacterRepository characterRepository,
+        CharacterReviewRepository characterReviewRepository,
         StoryReviewRepository storyReviewRepository) {
         this.topicRepository = topicRepository;
         this.ollama = ollama;
@@ -56,6 +72,8 @@ public class StoryService implements StoryUseCase {
         this.agent = agent;
         this.storyRepository = storyRepository;
         this.storyReviewRepository = storyReviewRepository;
+        this.characterRepository = characterRepository;
+        this.characterReviewRepository = characterReviewRepository;
     }
 
 
@@ -120,19 +138,19 @@ public class StoryService implements StoryUseCase {
     }
 
     @Override
-    public Story confirmReviewStory(Long storyId, boolean confirm) {
+    public Story confirmReviewStory(Long storyId, ConfirmReviewRequestDto request) {
         // 1. Obtenemos la story por id
         Story current = storyRepository.getStory(storyId);
         
         // 2. Obtenemos la revision pendiente
         StoryReview review = getPendingReview(storyId);
         if(review == null)
-            throw new AppException("No hay una review pendiente para la story: " + storyId, null);
+            throw new AppException("No hay una review pendiente para la story: " + storyId, HttpStatus.CONFLICT);
         
         // 3. Si el usuario descarta, descartamos la review
-        if(!confirm)
+        if(request.status() == RevisionStatus.DISCARDED)
             storyReviewRepository.changeStatus(storyId, RevisionStatus.DISCARDED);
-        else
+        else if(request.status()  == RevisionStatus.CONFIRMED)
         {
             storyReviewRepository.changeStatus(storyId, RevisionStatus.CONFIRMED);
             
@@ -141,24 +159,81 @@ public class StoryService implements StoryUseCase {
             return storyRepository.update(current);
         }
 
+        return current;
+    }
+
+    @Override
+    public CharacterReview reviewCharacter(Long storyId, Long characterId, ReviewCharacterRequestDto request) {
+        // 1. Comprobar que el agente esta en el servidor Ollama
+        if(!ollama.isAvailable(directorMopdel))
+            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
+        
+        // 2. Obtenemos el protagonista afectado
+        CharacterModel current = getCharacter(storyId, characterId);
+
+        // 3. Obtenemos la historia actual
+        Story currentStory = getStory(storyId);
+
+        // 4. Descartamos reviews pendientes
+        characterReviewRepository.changeStatus(characterId, RevisionStatus.DISCARDED);
+
+        // 5. Llamamos al agente
+        CharacterReviewAgentResult result = agent.prompt().user(u -> u.text(reviewCharacterResource)
+            .param("synopsis", currentStory.getSummary())
+            .param("narrative", current.getNarrativeDescription())
+            .param("visual", current.getVisualDescription())
+            .param("target", request.target().toString())
+            .param("hint", request.hint()))
+        .call().entity(CharacterReviewAgentResult.class);
+
+        // 6. Persistimos y devolvemos resultado
+        return characterReviewRepository.createReview(result, characterId, request);
+    }
+
+
+    @Override
+    public CharacterReview getPendingReview(Long storyId, Long characterId) {
+        getCharacter(storyId, characterId);
+        return characterReviewRepository.getPendingReview(characterId);
+    }
+
+
+    @Override
+    public CharacterModel confirmCharacterReview(Long storyId, Long characterId, ConfirmReviewRequestDto request) {
+        // 1. Obtenemos personaje actual en bbdd
+        CharacterModel current = getCharacter(storyId, characterId);
+
+        // 2. Obtenemos la revision pendiente
+        CharacterReview review = characterReviewRepository.getPendingReview(characterId);
+        if(review == null)
+            throw new AppException("No hay una review pendiente para el character: " + characterId, HttpStatus.CONFLICT);
+
+        if(request.status() == RevisionStatus.DISCARDED)
+            characterReviewRepository.changeStatus(characterId, RevisionStatus.DISCARDED);
+        else if(request.status() == RevisionStatus.CONFIRMED) {
+            characterReviewRepository.changeStatus(characterId, RevisionStatus.CONFIRMED);
+
+            //3. Persistir los camios
+            applyChanges(current, review);
+            return characterRepository.update(current);
+        }
+
 
         return current;
     }
+
+    
+
+    private void applyChanges(CharacterModel current, CharacterReview review) {
+        current.setNarrativeDescription(review.getNarrativeDescription());
+        current.setVisualDescription(review.getVisualDescription());
+    }
+
 
     private void applyChanges(Story story, StoryReview review) {
         story.setTitle(review.getPreviewStory().getTitle());
         story.setSummary(review.getPreviewStory().getSummary());
         story.setCharacters(review.getPreviewStory().getCharacters());
-    }
-
-    @Override
-    public Character reviewCharacter(Long characterId, String hint) {
-        return null;
-    }
-
-    @Override
-    public Character confirmCharacterReview(Long reviewId) {
-        return null;
     }
 
     @Override
@@ -177,7 +252,16 @@ public class StoryService implements StoryUseCase {
     }
 
 
+    @Override
+    public List<CharacterModel> getCharacters(Long storyId) {
+        return getStory(storyId).getCharacters();
+    }
 
 
-    
+    @Override
+    public CharacterModel getCharacter(Long storyId, Long characterId) {
+        return getStory(storyId).getCharacters().stream().filter(x -> x.getId().equals(characterId)).findFirst().orElseThrow(() -> {
+            throw new ResourceNotFoundException("No se ha encontrado un character con id: " + characterId);
+        });
+    }
 }

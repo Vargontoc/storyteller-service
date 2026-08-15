@@ -1,6 +1,6 @@
 package es.vargontoc.storyteller.domain;
 
-public class CharacterReview extends Character {
+public class CharacterReview extends CharacterModel {
 
     private Long characterId;
     private String hint;

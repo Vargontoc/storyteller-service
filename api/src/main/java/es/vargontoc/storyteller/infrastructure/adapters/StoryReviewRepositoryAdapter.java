@@ -56,7 +56,7 @@ public class StoryReviewRepositoryAdapter implements StoryReviewRepository {
     @Override
     public StoryReview getReview(Long idReview) {
         StoryReviewJpaEntity entity = repository.findById(idReview).orElseThrow(() -> {
-            throw new ResourceNotFoundException("Story not found with id: " + idReview);
+            throw new ResourceNotFoundException("Story review not found with id: " + idReview);
         });
 
         return mapper.toModel(entity);

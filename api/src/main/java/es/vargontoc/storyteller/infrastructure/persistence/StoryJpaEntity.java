@@ -103,13 +103,4 @@ public class StoryJpaEntity extends BaseEntity {
         story.setCreatedAt(LocalDateTime.now());
         return story;
     }
-
-    public void replaceContent(String title, String synopsis, List<CharacterJpaEntity> newCharacters) {
-        setTitle(title);
-        setSynopsis(synopsis);
-        getCharacters().clear();
-        setCharacters(newCharacters);
-        setUpdatedAt(LocalDateTime.now());
-    }
-
 }

@@ -1,24 +1,29 @@
 package es.vargontoc.storyteller.infrastructure.web;
 
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestMapping; 
 import org.springframework.web.bind.annotation.RestController;
 
+import es.vargontoc.storyteller.domain.CharacterModel;
+import es.vargontoc.storyteller.domain.CharacterReview;
 import es.vargontoc.storyteller.domain.RevisionStatus;
 import es.vargontoc.storyteller.domain.Story;
 import es.vargontoc.storyteller.domain.StoryReview;
 import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
+import es.vargontoc.storyteller.infrastructure.dto.ReviewCharacterRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.StoryRequestDto;
 import es.vargontoc.storyteller.ports.in.StoryUseCase;
 import es.vargontoc.storyteller.shared.ApiResponse;
-import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 
+import java.util.List;
+
+import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+
 
 
 @RestController
@@ -49,13 +54,42 @@ public class StoryController {
     }
 
     @GetMapping("/{storyId}/review")
-    public ResponseEntity<ApiResponse<StoryReview>> getActiveReview(@PathVariable("storyId") Long storyId) {
+    public ResponseEntity<ApiResponse<StoryReview>> getActiveStoryReview(@PathVariable("storyId") Long storyId) {
         return ResponseEntity.ok(ApiResponse.ok(useCase.getPendingReview(storyId)));
     }
 
     
     @PostMapping("/{storyId}/review")
     public ResponseEntity<ApiResponse<Story>> confirmReview(@PathVariable("storyId") Long storyId, @RequestBody ConfirmReviewRequestDto request) {
-        return ResponseEntity.ok(ApiResponse.ok(useCase.confirmReviewStory(storyId, request.status() == RevisionStatus.CONFIRMED)));
+        return ResponseEntity.ok(ApiResponse.ok(useCase.confirmReviewStory(storyId, request)));
     }
+
+    @GetMapping("/{storyId}/character")
+    public ResponseEntity<ApiResponse<List<CharacterModel>>> getCharacters(@PathVariable("storyId") Long storyId) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.getCharacters(storyId)));
+    }
+
+    @GetMapping("/{storyId}/character/{characterId}")
+    public ResponseEntity<ApiResponse<CharacterModel>> getCharacter(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.getCharacter(storyId, characterId)));
+    }
+    
+    @PostMapping("/{storyId}/character/{characterId}")
+    public ResponseEntity<ApiResponse<CharacterReview>> reviewCharacter(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId, @RequestBody ReviewCharacterRequestDto request) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.reviewCharacter(storyId, characterId, request)));
+    }
+
+    @GetMapping("/{storyId}/character/{characterId}/review")
+    public ResponseEntity<ApiResponse<CharacterReview>> getActiveCharacterReview(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.getPendingReview(storyId, characterId)));
+    }
+
+    @PostMapping("/{storyId}/character/{characterId}/review")
+    public ResponseEntity<ApiResponse<CharacterModel>> confirmReview(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId, @RequestBody ConfirmReviewRequestDto request) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.confirmCharacterReview(storyId, characterId, request)));
+    }
+    
+    
+    
+    
 }
