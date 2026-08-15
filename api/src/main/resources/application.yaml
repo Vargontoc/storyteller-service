@@ -42,6 +42,19 @@ app:
         allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:}
     chatterbox:
         url: ${CHATTERBOX_URL:http://localhost:8081}
+    comfy:
+        base-url: ${COMFY_URL:http://localhost:8188}
+        workflow-character-template: classpath:comfyui/workflow-character-template.json
+        poll-interval-ms: 1000
+        timeout-seconds: 120
+        style-prefix: "children's book ilustration, soft watercolor style, warn color, simple shapes, gentle lighting"
+        character-framing-prompt: "solo, single character, full body, character reference sheet, centered composition, plain simple background"
+        negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, extra limbs, desfigured"
+        lora-name: "childrens_book_illustration2_.safetensors"
+        lora-strength-model: 0.85
+        lora-strength-clip: 0.85
+        style-trigger-word: "Storybook Illustration art style"
+        background-removal-enabled: true
     agents:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"

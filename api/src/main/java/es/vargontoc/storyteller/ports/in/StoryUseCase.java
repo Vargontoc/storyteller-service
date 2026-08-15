@@ -45,6 +45,6 @@ public interface StoryUseCase {
     CharacterModel confirmCharacterReview(Long storyId, Long characterId, ConfirmReviewRequestDto request);
 
     /** Devuelve una imagen en bytes */
-    byte[] generateCharacter(Long characterId);
+    byte[] generateCharacter(Long story, Long characterId);
 
 }

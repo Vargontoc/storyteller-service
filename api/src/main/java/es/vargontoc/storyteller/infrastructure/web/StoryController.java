@@ -5,7 +5,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import es.vargontoc.storyteller.domain.CharacterModel;
 import es.vargontoc.storyteller.domain.CharacterReview;
-import es.vargontoc.storyteller.domain.RevisionStatus;
 import es.vargontoc.storyteller.domain.Story;
 import es.vargontoc.storyteller.domain.StoryReview;
 import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
@@ -17,7 +16,6 @@ import jakarta.validation.constraints.NotBlank;
 
 import java.util.List;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -88,8 +86,9 @@ public class StoryController {
     public ResponseEntity<ApiResponse<CharacterModel>> confirmReview(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId, @RequestBody ConfirmReviewRequestDto request) {
         return ResponseEntity.ok(ApiResponse.ok(useCase.confirmCharacterReview(storyId, characterId, request)));
     }
-    
-    
-    
-    
+
+    @GetMapping("/{storyId}/character/{characterId}/image")
+    public ResponseEntity<ApiResponse<byte[]>> generateCharacterImage(@PathVariable("storyId") Long storyId, @PathVariable("characterId") Long characterId) {
+        return ResponseEntity.ok(ApiResponse.ok(useCase.generateCharacter(storyId, characterId)));
+    }
 }

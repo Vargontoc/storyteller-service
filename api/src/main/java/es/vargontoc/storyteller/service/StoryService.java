@@ -10,9 +10,11 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import es.vargontoc.storyteller.application.ComfyUIProperties;
 import es.vargontoc.storyteller.domain.CharacterModel;
 import es.vargontoc.storyteller.domain.CharacterReview;
 import es.vargontoc.storyteller.domain.CharacterReviewAgentResult;
+import es.vargontoc.storyteller.domain.ImageGenerationRequest;
 import es.vargontoc.storyteller.domain.RevisionStatus;
 import es.vargontoc.storyteller.domain.Story;
 import es.vargontoc.storyteller.domain.StoryAgentResult;
@@ -22,9 +24,11 @@ import es.vargontoc.storyteller.domain.Topic;
 import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.ReviewCharacterRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.StoryRequestDto;
+import es.vargontoc.storyteller.infrastructure.storage.CharacterImageStorage;
 import es.vargontoc.storyteller.ports.in.StoryUseCase;
 import es.vargontoc.storyteller.ports.out.CharacterRepository;
 import es.vargontoc.storyteller.ports.out.CharacterReviewRepository;
+import es.vargontoc.storyteller.ports.out.ImageGeneratorPort;
 import es.vargontoc.storyteller.ports.out.OllamaPort;
 import es.vargontoc.storyteller.ports.out.StoryRepository;
 import es.vargontoc.storyteller.ports.out.StoryReviewRepository;
@@ -47,6 +51,8 @@ public class StoryService implements StoryUseCase {
     @Value("classpath:/templates/review_character.st")
     private Resource reviewCharacterResource;
 
+    private final ComfyUIProperties comfyProperties;
+
     private final TopicRepository topicRepository;
     private final StoryRepository storyRepository;
     private final CharacterRepository characterRepository;
@@ -55,8 +61,11 @@ public class StoryService implements StoryUseCase {
     private final CharacterReviewRepository characterReviewRepository;
 
     private final OllamaPort ollama;
+    private final ImageGeneratorPort comfyClient;
     private final String directorMopdel;
     private final ChatClient agent;
+
+    private final CharacterImageStorage storage;
 
     public StoryService(TopicRepository topicRepository,
         OllamaPort ollama,
@@ -65,15 +74,20 @@ public class StoryService implements StoryUseCase {
         StoryRepository storyRepository,
         CharacterRepository characterRepository,
         CharacterReviewRepository characterReviewRepository,
-        StoryReviewRepository storyReviewRepository) {
-        this.topicRepository = topicRepository;
-        this.ollama = ollama;
-        this.directorMopdel = directorModel;
-        this.agent = agent;
-        this.storyRepository = storyRepository;
-        this.storyReviewRepository = storyReviewRepository;
-        this.characterRepository = characterRepository;
-        this.characterReviewRepository = characterReviewRepository;
+        StoryReviewRepository storyReviewRepository,
+        CharacterImageStorage storage,
+        ImageGeneratorPort comfyClient, ComfyUIProperties props) {
+            this.topicRepository = topicRepository;
+            this.ollama = ollama;
+            this.directorMopdel = directorModel;
+            this.agent = agent;
+            this.storyRepository = storyRepository;
+            this.storyReviewRepository = storyReviewRepository;
+            this.characterRepository = characterRepository;
+            this.characterReviewRepository = characterReviewRepository;
+            this.storage = storage;
+            this.comfyClient = comfyClient;
+            this.comfyProperties = props;
     }
 
 
@@ -237,8 +251,25 @@ public class StoryService implements StoryUseCase {
     }
 
     @Override
-    public byte[] generateCharacter(Long characterId) {
-        return null;
+    public byte[] generateCharacter(Long storyId, Long characterId) {
+        // 1. Cargamos el personaje
+        CharacterModel character = getCharacter(storyId, characterId);
+
+        // 2. Generamos la imagen
+        String prompt = comfyProperties.stylePrefix() + comfyProperties.characterFramingPrompt() +
+            comfyProperties.styleTriggerWord() == null || comfyProperties.styleTriggerWord().isBlank() ? "" : ", " +
+            comfyProperties.styleTriggerWord() +
+            ", " + character.getVisualDescription();
+
+        byte[] img = comfyClient.generateImage(new ImageGenerationRequest(prompt, null));
+
+        // 3. Guardamos la imagen
+        String path = storage.save(characterId, img);
+
+        // 4. Guardar los bytes y el path de rerencia
+
+        // 5. Debolvemos la respuesta
+        return img;
     }
 
     private String readTopic(Topic t) {
