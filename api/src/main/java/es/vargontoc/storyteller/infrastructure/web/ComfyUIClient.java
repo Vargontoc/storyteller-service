@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import es.vargontoc.storyteller.application.ComfyUIProperties;
-import es.vargontoc.storyteller.domain.ImageRef;
+import es.vargontoc.storyteller.domain.model.ImageRef;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;

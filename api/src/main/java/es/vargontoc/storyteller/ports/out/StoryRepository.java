@@ -1,8 +1,8 @@
 package es.vargontoc.storyteller.ports.out;
 
-import es.vargontoc.storyteller.domain.Story;
-import es.vargontoc.storyteller.domain.StoryAgentResult;
-import es.vargontoc.storyteller.domain.StorySize;
+import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StorySize;
+import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 
 public interface StoryRepository {
     

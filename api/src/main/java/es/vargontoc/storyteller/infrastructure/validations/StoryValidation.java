@@ -2,8 +2,8 @@ package es.vargontoc.storyteller.infrastructure.validations;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.CharacterAgentResult;
-import es.vargontoc.storyteller.domain.StoryAgentResult;
+import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 
 @Component

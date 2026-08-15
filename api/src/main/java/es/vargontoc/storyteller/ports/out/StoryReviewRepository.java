@@ -1,9 +1,9 @@
 package es.vargontoc.storyteller.ports.out;
 
 
-import es.vargontoc.storyteller.domain.RevisionStatus;
-import es.vargontoc.storyteller.domain.StoryReview;
-import es.vargontoc.storyteller.domain.StoryReviewAgentResult;
+import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.StoryReview;
+import es.vargontoc.storyteller.domain.response.StoryReviewAgentResult;
 
 public interface StoryReviewRepository {
     

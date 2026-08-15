@@ -2,15 +2,15 @@ package es.vargontoc.storyteller.infrastructure.mappers;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.CharacterModel;
+import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
 
 @Component
-public class CharacterMapper  extends AbstractMapper<CharacterJpaEntity, CharacterModel>{
+public class CharacterMapper  extends AbstractMapper<CharacterJpaEntity, Actor>{
 
     @Override
-    public CharacterJpaEntity toEntity(CharacterModel model) {
+    public CharacterJpaEntity toEntity(Actor model) {
         CharacterJpaEntity target = new CharacterJpaEntity();
         target.setId(model.getId());
         target.setName(model.getName());
@@ -20,8 +20,8 @@ public class CharacterMapper  extends AbstractMapper<CharacterJpaEntity, Charact
     }
 
     @Override
-    public CharacterModel toModel(CharacterJpaEntity entity) {
-        CharacterModel target = new CharacterModel();
+    public Actor toModel(CharacterJpaEntity entity) {
+        Actor target = new Actor();
         target.setId(entity.getId());
         target.setName(entity.getName());
         target.setNarrativeDescription(entity.getNarrativeDescription());

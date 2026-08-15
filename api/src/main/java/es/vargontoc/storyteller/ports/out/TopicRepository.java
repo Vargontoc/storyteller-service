@@ -2,7 +2,7 @@ package es.vargontoc.storyteller.ports.out;
 
 import java.util.List;
 
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Topic;
 
 /** Interface para la persistencia de Topìcs de historias */
 public interface TopicRepository {

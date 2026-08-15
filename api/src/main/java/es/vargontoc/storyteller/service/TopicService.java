@@ -12,7 +12,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.ports.in.TopicUseCase;
 import es.vargontoc.storyteller.ports.out.OllamaPort;
 import es.vargontoc.storyteller.ports.out.TopicRepository;

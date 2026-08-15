@@ -4,7 +4,7 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Repository;
 
-import es.vargontoc.storyteller.domain.CharacterModel;
+import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.ports.out.CharacterRepository;
@@ -22,7 +22,7 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
 
 
     @Override
-    public CharacterModel update(CharacterModel character) {
+    public Actor update(Actor character) {
         
         CharacterJpaEntity stored = repository.findById(character.getId()).get();
         stored.setNarrativeDescription(character.getNarrativeDescription());

@@ -4,10 +4,10 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Repository;
 
-import es.vargontoc.storyteller.domain.CharacterAgentResult;
-import es.vargontoc.storyteller.domain.Story;
-import es.vargontoc.storyteller.domain.StoryAgentResult;
-import es.vargontoc.storyteller.domain.StorySize;
+import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StorySize;
+import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
@@ -85,7 +85,7 @@ public class StoryRepositoryAdapter implements StoryRepository {
         return characterJpaRepository.save(entity);
     }
 
-    private CharacterJpaEntity createCharacter(StoryJpaEntity stored, es.vargontoc.storyteller.domain.CharacterModel c) {
+    private CharacterJpaEntity createCharacter(StoryJpaEntity stored, es.vargontoc.storyteller.domain.model.Actor c) {
         CharacterJpaEntity entity = CharacterJpaEntity.draft(c.getName(), c.getVisualDescription(), c.getNarrativeDescription());
         entity.setStory(stored);
         entity.setCreatedAt(LocalDateTime.now());

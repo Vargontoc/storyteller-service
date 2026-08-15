@@ -2,7 +2,7 @@ package es.vargontoc.storyteller.infrastructure.mappers;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaEntity;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
 

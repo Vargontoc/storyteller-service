@@ -2,16 +2,16 @@ package es.vargontoc.storyteller.infrastructure.mappers;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.CharacterReview;
+import es.vargontoc.storyteller.domain.model.ActorReview;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterReviewJpaEntity;
 import es.vargontoc.storyteller.shared.mappers.AbstractReviewMapper;
 
 @Component
-public class CharacterReviewMapper extends AbstractReviewMapper<CharacterReviewJpaEntity, CharacterReview> {
+public class CharacterReviewMapper extends AbstractReviewMapper<CharacterReviewJpaEntity, ActorReview> {
 
     @Override
-    public CharacterReviewJpaEntity toEntity(CharacterReview model) {
+    public CharacterReviewJpaEntity toEntity(ActorReview model) {
         CharacterReviewJpaEntity target = new CharacterReviewJpaEntity();
         target.setId(model.getId());
         target.setHint(model.getHint());
@@ -30,8 +30,8 @@ public class CharacterReviewMapper extends AbstractReviewMapper<CharacterReviewJ
     }
 
     @Override
-    public CharacterReview toModel(CharacterReviewJpaEntity entity) {
-        CharacterReview target = new CharacterReview();
+    public ActorReview toModel(CharacterReviewJpaEntity entity) {
+        ActorReview target = new ActorReview();
         target.setId(entity.getId());
         target.setCharacterId(entity.getCharacter() != null ? entity.getCharacter().getId() : null);
         target.setHint(entity.getHint());

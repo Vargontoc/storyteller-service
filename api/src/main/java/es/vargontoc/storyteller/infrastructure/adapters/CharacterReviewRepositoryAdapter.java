@@ -5,10 +5,10 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Repository;
 
-import es.vargontoc.storyteller.domain.CharacterReview;
-import es.vargontoc.storyteller.domain.CharacterReviewAgentResult;
-import es.vargontoc.storyteller.domain.CharacterReviewTarget;
-import es.vargontoc.storyteller.domain.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.ActorReview;
+import es.vargontoc.storyteller.domain.model.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.dto.ReviewCharacterRequestDto;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterReviewMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
@@ -45,7 +45,7 @@ public class CharacterReviewRepositoryAdapter implements CharacterReviewReposito
     }
 
     @Override
-    public CharacterReview getPendingReview(Long characterId) {
+    public ActorReview getPendingReview(Long characterId) {
         Optional<CharacterReviewJpaEntity> entity = repository.getactiveReviewByCharacterId(characterId);
         if(entity.isPresent()){
             return mapper.toModel(entity.get());
@@ -54,7 +54,7 @@ public class CharacterReviewRepositoryAdapter implements CharacterReviewReposito
     }
 
     @Override
-    public CharacterReview getReview(Long idReview) {
+    public ActorReview getReview(Long idReview) {
         CharacterReviewJpaEntity entity = repository.findById(idReview).orElseThrow(() -> {
             throw new ResourceNotFoundException("Character review not found with id: " + idReview);
         });
@@ -64,7 +64,7 @@ public class CharacterReviewRepositoryAdapter implements CharacterReviewReposito
 
 
     @Override
-    public CharacterReview createReview(CharacterReviewAgentResult result, Long characterId, ReviewCharacterRequestDto request) {
+    public ActorReview createReview(CharacterReviewAgentResult result, Long characterId, ReviewCharacterRequestDto request) {
         CharacterJpaEntity character = characterRepository.findById(characterId).get();
         CharacterReviewJpaEntity entity = CharacterReviewJpaEntity.candidate(character, request.hint(), request.target(), result.hintAccepted(), result.rejectionReason(), null, null);
         switch (request.target()) {

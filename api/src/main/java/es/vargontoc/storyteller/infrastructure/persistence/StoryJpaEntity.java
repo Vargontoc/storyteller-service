@@ -4,8 +4,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import es.vargontoc.storyteller.domain.StorySize;
-import es.vargontoc.storyteller.domain.StoryStatus;
+import es.vargontoc.storyteller.domain.model.StorySize;
+import es.vargontoc.storyteller.domain.model.StoryStatus;
 import es.vargontoc.storyteller.shared.BaseEntity;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;

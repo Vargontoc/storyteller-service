@@ -11,16 +11,16 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ComfyUIProperties;
-import es.vargontoc.storyteller.domain.CharacterModel;
-import es.vargontoc.storyteller.domain.CharacterReview;
-import es.vargontoc.storyteller.domain.CharacterReviewAgentResult;
-import es.vargontoc.storyteller.domain.ImageGenerationRequest;
-import es.vargontoc.storyteller.domain.RevisionStatus;
-import es.vargontoc.storyteller.domain.Story;
-import es.vargontoc.storyteller.domain.StoryAgentResult;
-import es.vargontoc.storyteller.domain.StoryReview;
-import es.vargontoc.storyteller.domain.StoryReviewAgentResult;
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.ActorReview;
+import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryReview;
+import es.vargontoc.storyteller.domain.model.Topic;
+import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
+import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.dto.ConfirmReviewRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.ReviewCharacterRequestDto;
 import es.vargontoc.storyteller.infrastructure.dto.StoryRequestDto;
@@ -177,13 +177,13 @@ public class StoryService implements StoryUseCase {
     }
 
     @Override
-    public CharacterReview reviewCharacter(Long storyId, Long characterId, ReviewCharacterRequestDto request) {
+    public ActorReview reviewCharacter(Long storyId, Long characterId, ReviewCharacterRequestDto request) {
         // 1. Comprobar que el agente esta en el servidor Ollama
         if(!ollama.isAvailable(directorMopdel))
             throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
         
         // 2. Obtenemos el protagonista afectado
-        CharacterModel current = getCharacter(storyId, characterId);
+        Actor current = getCharacter(storyId, characterId);
 
         // 3. Obtenemos la historia actual
         Story currentStory = getStory(storyId);
@@ -206,19 +206,19 @@ public class StoryService implements StoryUseCase {
 
 
     @Override
-    public CharacterReview getPendingReview(Long storyId, Long characterId) {
+    public ActorReview getPendingReview(Long storyId, Long characterId) {
         getCharacter(storyId, characterId);
         return characterReviewRepository.getPendingReview(characterId);
     }
 
 
     @Override
-    public CharacterModel confirmCharacterReview(Long storyId, Long characterId, ConfirmReviewRequestDto request) {
+    public Actor confirmCharacterReview(Long storyId, Long characterId, ConfirmReviewRequestDto request) {
         // 1. Obtenemos personaje actual en bbdd
-        CharacterModel current = getCharacter(storyId, characterId);
+        Actor current = getCharacter(storyId, characterId);
 
         // 2. Obtenemos la revision pendiente
-        CharacterReview review = characterReviewRepository.getPendingReview(characterId);
+        ActorReview review = characterReviewRepository.getPendingReview(characterId);
         if(review == null)
             throw new AppException("No hay una review pendiente para el character: " + characterId, HttpStatus.CONFLICT);
 
@@ -238,7 +238,7 @@ public class StoryService implements StoryUseCase {
 
     
 
-    private void applyChanges(CharacterModel current, CharacterReview review) {
+    private void applyChanges(Actor current, ActorReview review) {
         current.setNarrativeDescription(review.getNarrativeDescription());
         current.setVisualDescription(review.getVisualDescription());
     }
@@ -253,7 +253,7 @@ public class StoryService implements StoryUseCase {
     @Override
     public byte[] generateCharacter(Long storyId, Long characterId) {
         // 1. Cargamos el personaje
-        CharacterModel character = getCharacter(storyId, characterId);
+        Actor character = getCharacter(storyId, characterId);
 
         // 2. Generamos la imagen
         String prompt = comfyProperties.stylePrefix() + comfyProperties.characterFramingPrompt() +
@@ -284,13 +284,13 @@ public class StoryService implements StoryUseCase {
 
 
     @Override
-    public List<CharacterModel> getCharacters(Long storyId) {
+    public List<Actor> getCharacters(Long storyId) {
         return getStory(storyId).getCharacters();
     }
 
 
     @Override
-    public CharacterModel getCharacter(Long storyId, Long characterId) {
+    public Actor getCharacter(Long storyId, Long characterId) {
         return getStory(storyId).getCharacters().stream().filter(x -> x.getId().equals(characterId)).findFirst().orElseThrow(() -> {
             throw new ResourceNotFoundException("No se ha encontrado un character con id: " + characterId);
         });

@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.ports.in.TopicUseCase;
 import es.vargontoc.storyteller.shared.ApiResponse;
 

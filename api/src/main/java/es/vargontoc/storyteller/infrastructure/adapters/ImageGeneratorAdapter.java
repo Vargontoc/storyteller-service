@@ -8,8 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.application.ComfyUIProperties;
-import es.vargontoc.storyteller.domain.ImageGenerationRequest;
-import es.vargontoc.storyteller.domain.ImageRef;
+import es.vargontoc.storyteller.domain.model.ImageRef;
+import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.storage.WorkflowTemplateLoader;
 import es.vargontoc.storyteller.infrastructure.web.ComfyUIClient;
 import es.vargontoc.storyteller.ports.out.ImageGeneratorPort;

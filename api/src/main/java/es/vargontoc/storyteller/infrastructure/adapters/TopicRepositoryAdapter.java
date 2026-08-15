@@ -5,7 +5,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
-import es.vargontoc.storyteller.domain.Topic;
+import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.infrastructure.mappers.TopicMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;

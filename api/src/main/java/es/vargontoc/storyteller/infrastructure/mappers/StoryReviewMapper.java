@@ -5,9 +5,9 @@ import java.util.List;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.CharacterModel;
-import es.vargontoc.storyteller.domain.Story;
-import es.vargontoc.storyteller.domain.StoryReview;
+import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity.CharacterDraft;
@@ -58,7 +58,7 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         return target;
     }
 
-    private List<CharacterDraft> toDrafts(List<CharacterModel> characters) {
+    private List<CharacterDraft> toDrafts(List<Actor> characters) {
         if (characters == null) {
             return new ArrayList<>();
         }
@@ -67,13 +67,13 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
             .toList();
     }
 
-    private List<CharacterModel> toCharacters(List<CharacterDraft> drafts) {
+    private List<Actor> toCharacters(List<CharacterDraft> drafts) {
         if (drafts == null) {
             return new ArrayList<>();
         }
         return drafts.stream()
             .map(d -> {
-                CharacterModel c = new CharacterModel();
+                Actor c = new Actor();
                 c.setName(d.getName());
                 c.setNarrativeDescription(d.getNarrativeDescription());
                 c.setVisualDescription(d.getVisualDescription());
