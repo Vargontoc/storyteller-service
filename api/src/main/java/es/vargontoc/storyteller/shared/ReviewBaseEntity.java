@@ -2,7 +2,7 @@ package es.vargontoc.storyteller.shared;
 
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;

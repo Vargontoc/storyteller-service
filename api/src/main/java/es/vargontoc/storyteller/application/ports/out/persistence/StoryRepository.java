@@ -1,7 +1,7 @@
 package es.vargontoc.storyteller.application.ports.out.persistence;
 
+import es.vargontoc.storyteller.domain.enums.StorySize;
 import es.vargontoc.storyteller.domain.model.Story;
-import es.vargontoc.storyteller.domain.model.StorySize;
 import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 
 public interface StoryRepository {

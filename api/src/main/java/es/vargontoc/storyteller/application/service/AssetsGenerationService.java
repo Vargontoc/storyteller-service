@@ -12,9 +12,9 @@ import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPor
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
+import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;
 import es.vargontoc.storyteller.domain.model.AudioToneParams;
-import es.vargontoc.storyteller.domain.model.KindImage;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.request.AudioGenerationRequest;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;

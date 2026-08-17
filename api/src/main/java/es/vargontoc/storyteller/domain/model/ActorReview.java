@@ -1,5 +1,8 @@
 package es.vargontoc.storyteller.domain.model;
 
+import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+
 public class ActorReview extends Actor {
 
     private Long characterId;

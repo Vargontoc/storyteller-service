@@ -2,6 +2,7 @@ package es.vargontoc.storyteller.domain.model;
 
 import java.util.List;
 
+import es.vargontoc.storyteller.domain.enums.StorySize;
 import es.vargontoc.storyteller.shared.BaseModel;
 
 public class Story  extends BaseModel {

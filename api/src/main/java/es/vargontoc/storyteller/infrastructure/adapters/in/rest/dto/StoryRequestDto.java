@@ -1,6 +1,6 @@
 package es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto;
 
-import es.vargontoc.storyteller.domain.model.StorySize;
+import es.vargontoc.storyteller.domain.enums.StorySize;
 import jakarta.validation.constraints.NotNull;
 
 public record StoryRequestDto(

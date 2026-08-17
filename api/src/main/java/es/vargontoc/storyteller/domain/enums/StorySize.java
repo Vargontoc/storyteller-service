@@ -1,4 +1,4 @@
-package es.vargontoc.storyteller.domain.model;
+package es.vargontoc.storyteller.domain.enums;
 
 public enum StorySize {
     

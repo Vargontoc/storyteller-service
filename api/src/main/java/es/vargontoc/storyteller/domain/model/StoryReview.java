@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.domain.model;
 
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.shared.BaseModel;
 
 public class StoryReview extends BaseModel {

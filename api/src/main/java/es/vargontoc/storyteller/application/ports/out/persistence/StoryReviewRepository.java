@@ -1,7 +1,7 @@
 package es.vargontoc.storyteller.application.ports.out.persistence;
 
 
-import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.domain.response.StoryReviewAgentResult;
 

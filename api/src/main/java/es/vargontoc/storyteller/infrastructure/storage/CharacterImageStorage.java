@@ -7,7 +7,7 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.model.KindImage;
+import es.vargontoc.storyteller.domain.enums.KindImage;
 
 @Component
 public class CharacterImageStorage {

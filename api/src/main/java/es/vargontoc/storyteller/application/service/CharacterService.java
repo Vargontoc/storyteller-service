@@ -17,9 +17,9 @@ import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepos
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.ActorReviewCommand;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.ActorReview;
-import es.vargontoc.storyteller.domain.model.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;

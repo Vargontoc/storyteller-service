@@ -5,8 +5,8 @@ import java.time.LocalDateTime;
 import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
+import es.vargontoc.storyteller.domain.enums.StorySize;
 import es.vargontoc.storyteller.domain.model.Story;
-import es.vargontoc.storyteller.domain.model.StorySize;
 import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;

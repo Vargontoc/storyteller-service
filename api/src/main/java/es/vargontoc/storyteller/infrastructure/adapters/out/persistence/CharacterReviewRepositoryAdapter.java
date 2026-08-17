@@ -6,9 +6,9 @@ import java.util.Optional;
 import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterReviewRepository;
+import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.ActorReview;
-import es.vargontoc.storyteller.domain.model.CharacterReviewTarget;
-import es.vargontoc.storyteller.domain.model.RevisionStatus;
 import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterReviewMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;

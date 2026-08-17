@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.model.ImageRef;
-import es.vargontoc.storyteller.domain.model.KindImage;
 import es.vargontoc.storyteller.domain.model.WorkflowProperties;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.clients.ComfyUIClient;

@@ -1,7 +1,7 @@
 package es.vargontoc.storyteller.infrastructure.persistence;
 
-import es.vargontoc.storyteller.domain.model.CharacterReviewTarget;
-import es.vargontoc.storyteller.domain.model.RevisionStatus;
+import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.shared.ReviewBaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;

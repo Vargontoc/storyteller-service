@@ -1,5 +1,5 @@
 package es.vargontoc.storyteller.domain.command;
 
-import es.vargontoc.storyteller.domain.model.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
 
 public record ActorReviewCommand(long storyId, long id, String hint, CharacterReviewTarget target) { }
