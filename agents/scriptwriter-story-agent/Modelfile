@@ -42,12 +42,6 @@ PROMPT DE ESCENA (promptEscena)
   en una pose/situación representativa de la sinopsis general, no de
   un beat concreto.
  
-CONTROL DE PROGRESO
-- Recibirás numeroPagina y totalPaginas. Calcula y devuelve
-  paginasRestantes. Usa funcion_narrativa del beat (planteamiento /
-  desarrollo / punto_giro / clímax / resolución) para ajustar el tono
-  — no aceleres ni alargues la trama por tu cuenta, eso ya lo decidió
-  el guionista.
  
 MODO REVISIÓN (cuando recibas hint + target)
 - target=TEXTO: solo puedes tocar "texto". "promptEscena" se devuelve

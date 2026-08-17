@@ -8,6 +8,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.TopicGenerateCommand;
 import es.vargontoc.storyteller.domain.model.Topic;
+import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import jakarta.transaction.Transactional;
 
@@ -27,23 +29,30 @@ public class TopicService implements TopicGenerator, TopicUseCase {
     private static final double SIMILARITY_THRESHOLD = 0.87;
     private static final int MAX_ATTEMPTS = 3;
 
-    private final ChatClient client;
     private final OllamaPort ollama;
+    private final String model;
+    private final ChatClient client;
+    
+
     private final TopicRepository repository;
     private final VectorStore  vector;
 
 
-    public TopicService(ChatClient client, OllamaPort ollama, TopicRepository repository, VectorStore vector) {
+    public TopicService(
+        @Qualifier(Constants.BeanNames.AGENT_TOPICS) ChatClient client,
+        @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String model,
+        OllamaPort ollama, TopicRepository repository, VectorStore vector) {
         this.client = client;
         this.ollama = ollama;
         this.repository = repository;
         this.vector = vector;
+        this.model = model;
     }
 
     @Override
     public Topic generate(TopicGenerateCommand cmd) {
        // 1. Check if model is active
-        if(!ollama.isAvailable("storyteller-topics"))
+        if(!ollama.isAvailable(model))
             throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
 
         for(int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++ ){

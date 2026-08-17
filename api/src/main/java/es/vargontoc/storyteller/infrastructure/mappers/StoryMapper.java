@@ -2,19 +2,21 @@ package es.vargontoc.storyteller.infrastructure.mappers;
 
 import org.springframework.stereotype.Component;
 
-import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.Story;
-import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
 
 @Component
 public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
 
-    private final AbstractMapper<CharacterJpaEntity, Actor> characterMapper;
+    private final CharacterMapper characterMapper;
+    private final StoryPageMapper pageMapper;
 
-    public StoryMapper(AbstractMapper<CharacterJpaEntity, Actor> characterMapper) {
+    public StoryMapper(
+        CharacterMapper characterMapper,
+        StoryPageMapper pageMapper) {
         this.characterMapper = characterMapper;
+        this.pageMapper = pageMapper;
     }
 
     @Override
@@ -25,6 +27,7 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         target.setSynopsis(model.getSummary());
         target.setSize(model.getSize());
         target.setCharacters(characterMapper.toEntity(model.getCharacters()));
+        target.setPages(pageMapper.toEntity(model.getPages()));
         return target;
     }
 
@@ -37,6 +40,7 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         target.setTitle(entity.getTitle());
 
         target.setCharacters(characterMapper.toModel(entity.getCharacters()));
+        target.setPages(pageMapper.toModel(entity.getPages()));
         return target;
     }
     

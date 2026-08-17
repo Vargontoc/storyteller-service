@@ -23,6 +23,10 @@
     "name": "app.agents.director",
     "type": "java.lang.String",
     "description": "Name of agent who generate stories"
+  },
+  {
+    "name": "app.agents.scriptwriter",
+    "type": "java.lang.String",
+    "description": "Name of agent who generate pages"
   }
-
 ]}

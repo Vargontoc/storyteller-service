@@ -5,41 +5,51 @@ import es.vargontoc.storyteller.shared.BaseModel;
 public class StoryPage  extends BaseModel {
     
     private Long id;
-    private String content;
-    private String imagePrompt;
-    private byte[] image;
-    private byte[] audio;
+    private int page;
+    private String text;
+    private String scene;
+    private String imageAsset;
+    private String audioAsset;
     
-    public Long getId()  {
+    public Long getId() {
         return id;
     }
     public void setId(Long id) {
         this.id = id;
     }
-    public String getContent() {
-        return content;
+    public int getPage() {
+        return page;
     }
-    public void setContent(String content) {
-        this.content = content;
+    public void setPage(int page) {
+        this.page = page;
     }
-    public String getImagePrompt() {
-        return imagePrompt;
+    public String getText() {
+        return text;
     }
-    public void setImagePrompt(String imagePrompt) {
-        this.imagePrompt = imagePrompt;
+    public void setText(String text) {
+        this.text = text;
     }
-    public byte[] getImage() {
-        return image;
+    public String getScene() {
+        return scene;
     }
-    public void setImage(byte[] image) {
-        this.image = image;
+    public void setScene(String scene) {
+        this.scene = scene;
     }
-    public byte[] getAudio() {
-        return audio;
+    public String getImageAsset() {
+        return imageAsset;
     }
-    public void setAudio(byte[] audio) {
-        this.audio = audio;
+    public void setImageAsset(String imageAsset) {
+        this.imageAsset = imageAsset;
     }
+    public String getAudioAsset() {
+        return audioAsset;
+    }
+    public void setAudioAsset(String audioAsset) {
+        this.audioAsset = audioAsset;
+    }
+
+    
+    
 
     
 }

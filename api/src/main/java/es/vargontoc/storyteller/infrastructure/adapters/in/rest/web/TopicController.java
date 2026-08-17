@@ -3,8 +3,8 @@ package es.vargontoc.storyteller.infrastructure.adapters.in.rest.web;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 import es.vargontoc.storyteller.application.ports.in.persistence.TopicUseCase;
 import es.vargontoc.storyteller.domain.model.Topic;
@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 
 
-@Controller
+@RestController
 @RequestMapping("/api/v1/topic")
 public class TopicController {
     

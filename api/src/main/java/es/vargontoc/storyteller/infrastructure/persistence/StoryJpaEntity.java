@@ -45,6 +45,9 @@ public class StoryJpaEntity extends BaseEntity {
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CharacterJpaEntity> characters = new ArrayList<>();
 
+    @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<StoryPageJpaEntity> pages = new ArrayList<>();
+
     @Transient
     private Long reviewId;
 
@@ -92,6 +95,14 @@ public class StoryJpaEntity extends BaseEntity {
     public void setReviewId(Long reviewId) {
         this.reviewId = reviewId;
     }
+    
+    public List<StoryPageJpaEntity> getPages() {
+        return pages;
+    }
+    public void setPages(List<StoryPageJpaEntity> pages) {
+        this.pages = pages;
+    }
+    
 
     public static StoryJpaEntity draft(TopicJpaEntity topic, StorySize size, String title, String synopsis) {
         StoryJpaEntity story = new StoryJpaEntity();
@@ -103,4 +114,5 @@ public class StoryJpaEntity extends BaseEntity {
         story.setCreatedAt(LocalDateTime.now());
         return story;
     }
+
 }

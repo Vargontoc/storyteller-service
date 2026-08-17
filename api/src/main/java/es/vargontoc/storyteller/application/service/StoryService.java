@@ -33,9 +33,9 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class StoryService implements StoryGeneration, StoryUseCase   {
 
-    @Value("classpath:/templates/new_script.st")
+    @Value("classpath:/prompts/new_script.st")
     private Resource scriptResource;
-    @Value("classpath:/templates/review_script.st")
+    @Value("classpath:/prompts/review_script.st")
     private Resource reviewScriptResource;
 
     private final OllamaPort ollama;

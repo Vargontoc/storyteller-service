@@ -16,10 +16,15 @@ import es.vargontoc.storyteller.shared.Constants;
 public class AgentsConfig {
 
     @Bean(name = Constants.BeanNames.AGENT_TOPICS_MODEL)
-    public String topìcModel(@Value("${app.agents.topics}") String value) { return value;}
+    public String topicModel(@Value("${app.agents.topics}") String value) { return value;}
 
     @Bean(name = Constants.BeanNames.AGENT_DIRECTOR_MODEL)
-    public String directorModel(@Value("${app.agents.topics}") String value) { return value;}
+    public String directorModel(@Value("${app.agents.director}") String value) { return value;}
+
+    @Bean(name = Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)
+    public String scriptwriterModel(@Value("${app.agents.scriptwriter}") String value) { return value;}
+
+    
 
     @Bean(name = Constants.BeanNames.AGENT_TOPICS)
     public ChatClient topicAgent(OllamaChatModel ollamaModel, @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String model) {
@@ -31,6 +36,14 @@ public class AgentsConfig {
 
     @Bean(name = Constants.BeanNames.AGENT_DIRECTOR)
     public ChatClient directorAgent(OllamaChatModel ollama, @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model) {
+        return ChatClient.builder(ollama)
+            .defaultAdvisors(new SimpleLoggerAdvisor())
+            .defaultOptions(ChatOptions.builder().model(model))
+            .build();
+    }
+
+    @Bean(name = Constants.BeanNames.AGENT_SCRIPTWRITER)
+    public ChatClient scriptwriterAgent(OllamaChatModel ollama, @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL) String model) {
         return ChatClient.builder(ollama)
             .defaultAdvisors(new SimpleLoggerAdvisor())
             .defaultOptions(ChatOptions.builder().model(model))

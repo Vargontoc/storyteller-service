@@ -9,7 +9,7 @@ import jakarta.persistence.Table;
 
 @Entity
 @Table(name = "story_page")
-public class PageJpaEntity extends BaseEntity 
+public class StoryPageJpaEntity extends BaseEntity 
 {
     @JoinColumn(name = "story_id", nullable = false)
     @ManyToOne(optional = false)

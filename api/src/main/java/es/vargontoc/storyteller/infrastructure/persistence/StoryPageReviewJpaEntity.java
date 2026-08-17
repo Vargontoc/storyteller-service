@@ -6,6 +6,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -13,17 +14,18 @@ import jakarta.persistence.Table;
 @Table(name = "story_page_review")
 public class StoryPageReviewJpaEntity extends ReviewBaseEntity{
     
+    @JoinColumn(name = "story_page_id", nullable = false)
     @ManyToOne(optional = false)
-    private PageJpaEntity page;
+    private StoryPageJpaEntity page;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "target", nullable = false)
     private PageReviewTarget target;
 
-    @Column(name = "text", nullable = false, length = 500)
+    @Column(name = "candidate_text", nullable = false, length = 500)
     private String text;
 
-    @Column(name = "prompt_scene", nullable = false, length = 2000)
+    @Column(name = "candidate_prompt_scene", nullable = false, length = 2000)
     private String scene;
 
 }

@@ -9,6 +9,7 @@ public class Story  extends BaseModel {
     private Long id;
     private String title;
     private List<Actor> characters;
+    private List<StoryPage> pages;
     private String summary;
     private StorySize size;
 
@@ -41,5 +42,11 @@ public class Story  extends BaseModel {
     }
     public void setSize(StorySize size) {
         this.size = size;
+    }
+    public List<StoryPage> getPages() {
+        return pages;
+    }
+    public void setPages(List<StoryPage> pages) {
+        this.pages = pages;
     }
 }

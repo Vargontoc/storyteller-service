@@ -1,3 +1,5 @@
 package es.vargontoc.storyteller.domain.command;
 
-public record StoryPageReviewCommand() { }
+import es.vargontoc.storyteller.domain.model.PageReviewTarget;
+
+public record StoryPageReviewCommand(Long pageId, String hint, PageReviewTarget target) { }

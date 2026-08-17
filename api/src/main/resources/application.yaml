@@ -58,3 +58,4 @@ app:
     agents:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
+        scriptwriter: "${APP_AGENT_SCRIPTWRITER:storyteller-scriptwriter}"

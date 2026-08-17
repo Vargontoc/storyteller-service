@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ import es.vargontoc.storyteller.domain.model.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
+import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import jakarta.transaction.Transactional;
 
@@ -29,7 +31,7 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class CharacterService implements ActorGeneration, ActorUseCase {
     
-    @Value("classpath:/templates/review_character.st")
+    @Value("classpath:/prompts/review_character.st")
     private Resource reviewCharacterResource;
 
     private final OllamaPort ollama;
@@ -42,9 +44,13 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
     
     
 
-    public CharacterService(Resource reviewCharacterResource, OllamaPort ollama, String model, ChatClient client,
-            CharacterRepository repository, CharacterReviewRepository reviewRepository, StoryRepository storyRepository) {
-        this.reviewCharacterResource = reviewCharacterResource;
+    public CharacterService( 
+            OllamaPort ollama,
+            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model,
+            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR) ChatClient client,
+            CharacterRepository repository,
+            CharacterReviewRepository reviewRepository, 
+            StoryRepository storyRepository) {
         this.ollama = ollama;
         this.model = model;
         this.client = client;
@@ -101,8 +107,6 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
 
     @Override
     public Actor confirmReview(ConfirmReviewRequestDto request) {
-
-        
         // 1. Obtenemos personaje actual en bbdd
         Actor current = getActor(request.entityId());
 

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <changeSet id="009_create_story_page_review" author="vargontoc">
+        <createTable tableName="story_page_review">
+            <column name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" />
+            </column>
+            <column name="story_page_id" type="BIGINT">
+                <constraints nullable="false" />
+            </column>
+            <column name="hint" type="VARCHAR(500)">
+                <constraints nullable="false" />
+            </column>
+            <column name="hint_accepted" type="boolean">
+                <constraints nullable="false" />
+            </column>
+            <column name="rejected_reason" type="VARCHAR(500)"></column>
+            <column name="status" type="VARCHAR(20)">
+                <constraints nullable="false" />
+            </column>
+            <column name="target" type="VARCHAR(15)">
+                <constraints nullable="false" />
+            </column>
+            <column name="candidate_text" type="VARCHAR(500)">
+            </column>
+            <column name="candidate_prompt_scene" type="VARCHAR(2000)">
+            </column>
+            <column name="created_at" type="TIMESTAMPTZ">
+                <constraints nullable="false"/>
+            </column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+
+        <addForeignKeyConstraint baseTableName="story_page_review" baseColumnNames="story_page_id" constraintName="FK_storypage_storypage_review" referencedTableName="story_page" referencedColumnNames="id" />
+    </changeSet>
+
+</databaseChangeLog>

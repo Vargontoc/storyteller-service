@@ -4,9 +4,13 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
+import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.TopicGenerator;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
+import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
+import es.vargontoc.storyteller.domain.command.TopicGenerateCommand;
 import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.shared.ApiResponse;
 
@@ -21,19 +25,28 @@ public class GenerationsController
 {
     private final TopicGenerator topicGenerator;
     private final StoryGeneration storyGenerator;
+    private final StoryPageGeneration pageGeneration;
 
-    public GenerationsController(TopicGenerator topicGenerator, StoryGeneration storyGenerator) {
+    public GenerationsController(TopicGenerator topicGenerator,
+        StoryGeneration storyGenerator, 
+        StoryPageGeneration pageGeneration) {
         this.topicGenerator = topicGenerator;
         this.storyGenerator = storyGenerator;
+        this.pageGeneration = pageGeneration;
     }
 
     @PostMapping("/topic")
     public ResponseEntity<ApiResponse<Topic>> generateTopic() {
-        return ResponseEntity.ok(ApiResponse.ok(topicGenerator.generate(null)));
+        return ResponseEntity.ok(ApiResponse.ok(topicGenerator.generate(new TopicGenerateCommand())));
     }
 
     @PostMapping("/story")
     public ResponseEntity<ApiResponse<Story>>  generateStory(@RequestBody StoryGenerateCommand cmd) {
         return ResponseEntity.ok(ApiResponse.ok(storyGenerator.generate(cmd)));
+    }
+
+    @PostMapping("/page")
+    public ResponseEntity<ApiResponse<StoryPage>>  generateStoryPage(@RequestBody StoryPageGenerateCommand cmd) {
+        return ResponseEntity.ok(ApiResponse.ok(pageGeneration.generate(cmd)));
     }
 }
