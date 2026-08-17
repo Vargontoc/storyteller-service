@@ -12,5 +12,7 @@ public interface StoryPageRepository {
     StoryPage update(StoryPage page);
 
     void setImagePath(Long idPage, String path);
+
+    void setAudioPath(Long id, String path);
     
 }

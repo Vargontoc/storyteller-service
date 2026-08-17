@@ -91,5 +91,14 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
 
     }
 
+    @Override
+    public void setAudioPath(Long id, String path) {
+    
+        StoryPageJpaEntity page = repository.findById(id).get();
+        page.setAudioAsset(path);
+        repository.save(page);
+
+    }
+
     
 }

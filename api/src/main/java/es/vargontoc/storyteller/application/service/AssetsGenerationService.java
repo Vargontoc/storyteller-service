@@ -1,34 +1,49 @@
 package es.vargontoc.storyteller.application.service;
 
+import java.util.Objects;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.AudioGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.ImageGeneration;
+import es.vargontoc.storyteller.application.ports.out.external.AudioGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
+import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
+import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;
+import es.vargontoc.storyteller.domain.model.AudioToneParams;
 import es.vargontoc.storyteller.domain.model.KindImage;
+import es.vargontoc.storyteller.domain.model.StoryPage;
+import es.vargontoc.storyteller.domain.request.AudioGenerationRequest;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
+import es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties;
 import es.vargontoc.storyteller.infrastructure.storage.CharacterImageStorage;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 @Service
-public class ImageService implements ImageGeneration {
+public class AssetsGenerationService implements ImageGeneration, AudioGeneration {
 
     private final CharacterRepository actorUseCase;
     private final StoryPageRepository pageUseCase;
 
     private final ImageGeneratorPort generator;
+    private final AudioGeneratorPort audioGenerator;
     private final CharacterImageStorage storage;
 
+    private final String defaultVoice;
 
 
-    public ImageService(CharacterRepository actorUseCase, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
+    public AssetsGenerationService(ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
             CharacterImageStorage storage) {
         this.actorUseCase = actorUseCase;
         this.pageUseCase = pageUseCase;
         this.generator = generator;
         this.storage = storage;
+        defaultVoice = chatterbox.defaultVoiceName();
+        audioGenerator = audioPort;
+
     }
 
 
@@ -73,4 +88,33 @@ public class ImageService implements ImageGeneration {
     }
 
     class ImageResult { long storyId; ImageGenerationRequest request; byte[] result; }
+
+    @Override
+    public byte[] generateAudio(AudioGenerateCommand cmd) {
+        // 1. Obtenemos la pagina de la peticion
+        StoryPage page = pageUseCase.getPage(cmd.pageId());
+
+        // 2. Obtenemos el nombre
+        String voiceName = cmd.voiceName() != null && !cmd.voiceName().isBlank() ? cmd.voiceName() : defaultVoice;
+
+        // 3. Establecemos parametros
+        AudioToneParams params = cmd.preset() == VoiceTonePreset.CUSTOM ? Objects.requireNonNull(cmd.customParams(), "customParams requerido con preset CUSTOM") : cmd.preset().toParams();
+
+        // 4. Generacion del audio
+        byte[] bytes = audioGenerator.generateAudio(new AudioGenerationRequest(
+            page.getPage() != 0 ? page.getText() : page.getCoverText(),
+            voiceName,
+            params.exageration(),
+            params.cfgWeight(),
+            params.temperature()
+        ));
+
+        // 5. Guardamos el fichero audio
+        String path = storage.save(page.getStoryId(), page.getId(), bytes);
+
+        // 5. Persistir el asset
+        pageUseCase.setAudioPath(page.getId(), path);
+
+        return bytes;
+    }
 }

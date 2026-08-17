@@ -6,6 +6,7 @@ public class StoryPage  extends BaseModel {
     
     private Long id;
     private Long storyId;
+    private String coverText;
     private int page;
     private String text;
     private String scene;
@@ -54,9 +55,10 @@ public class StoryPage  extends BaseModel {
     public void setStoryId(Long storyId) {
         this.storyId = storyId;
     }
-
-    
-    
-
-    
+    public String getCoverText() {
+        return coverText;
+    }
+    public void setCoverText(String coverText) {
+        this.coverText = coverText;
+    }
 }

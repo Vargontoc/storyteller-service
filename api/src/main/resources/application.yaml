@@ -41,7 +41,10 @@ app:
         allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost, http://192.168.1.33}
         allowed-origin-patterns: ${APP_CORS_ALLOWED_ORIGIN_PATTERNS:}
     chatterbox:
-        url: ${CHATTERBOX_URL:http://localhost:8081}
+        base-url: ${CHATTERBOX_URL:http://localhost:4123}
+        timeout-seconds: 90
+        default-voice-name: nubi-npc-voice
+        
     comfy:
         # -- General information
         base-url: ${COMFY_URL:http://localhost:8188}

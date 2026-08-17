@@ -28,5 +28,15 @@
     "name": "app.agents.scriptwriter",
     "type": "java.lang.String",
     "description": "Name of agent who generate pages"
+  },
+  {
+    "name": "app.chatterbox.timeout-seconds",
+    "type": "java.lang.String",
+    "description": "Tiempo previsto de peticion"
+  },
+  {
+    "name": "app.chatterbox.default-voice-name",
+    "type": "java.lang.String",
+    "description": "Voz por defecto del storyteller"
   }
 ]}
