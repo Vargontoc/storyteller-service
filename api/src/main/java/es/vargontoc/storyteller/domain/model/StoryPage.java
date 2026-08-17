@@ -5,6 +5,7 @@ import es.vargontoc.storyteller.shared.BaseModel;
 public class StoryPage  extends BaseModel {
     
     private Long id;
+    private Long storyId;
     private int page;
     private String text;
     private String scene;
@@ -46,6 +47,12 @@ public class StoryPage  extends BaseModel {
     }
     public void setAudioAsset(String audioAsset) {
         this.audioAsset = audioAsset;
+    }
+    public Long getStoryId() {
+        return storyId;
+    }
+    public void setStoryId(Long storyId) {
+        this.storyId = storyId;
     }
 
     

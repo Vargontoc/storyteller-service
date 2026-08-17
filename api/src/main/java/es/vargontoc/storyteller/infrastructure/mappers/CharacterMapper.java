@@ -23,6 +23,7 @@ public class CharacterMapper  extends AbstractMapper<CharacterJpaEntity, Actor>{
     public Actor toModel(CharacterJpaEntity entity) {
         Actor target = new Actor();
         target.setId(entity.getId());
+        target.setStoryId(entity.getStory().getId());
         target.setName(entity.getName());
         target.setNarrativeDescription(entity.getNarrativeDescription());
         target.setVisualDescription(entity.getVisualDescription());

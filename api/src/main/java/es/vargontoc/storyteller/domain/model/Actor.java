@@ -5,6 +5,7 @@ import es.vargontoc.storyteller.shared.BaseModel;
 public class Actor extends BaseModel {
     
     private Long id;
+    private Long storyId;
     private String name;
     private String narrativeDescription;
     private String visualDescription;
@@ -33,4 +34,12 @@ public class Actor extends BaseModel {
     public void setVisualDescription(String visualDescription) {
         this.visualDescription = visualDescription;
     }
+    public Long getStoryId() {
+        return storyId;
+    }
+    public void setStoryId(Long storyId) {
+        this.storyId = storyId;
+    }
+
+    
 }

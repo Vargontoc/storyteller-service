@@ -11,4 +11,6 @@ public interface CharacterRepository {
     List<Actor> getActorsByStory(Long storyId);
 
     Actor update(Actor character);
+
+    void setImagePath(Long id, String path);
 }

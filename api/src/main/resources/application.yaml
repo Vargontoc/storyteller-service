@@ -43,18 +43,34 @@ app:
     chatterbox:
         url: ${CHATTERBOX_URL:http://localhost:8081}
     comfy:
+        # -- General information
         base-url: ${COMFY_URL:http://localhost:8188}
-        workflow-character-template: classpath:comfyui/workflow-character-template.json
         poll-interval-ms: 1000
         timeout-seconds: 120
+        # -- Character template
+        workflow-character-template: classpath:comfyui/workflow-character-template.json
         style-prefix: "children's book ilustration, soft watercolor style, warn color, simple shapes, gentle lighting"
         character-framing-prompt: "solo, single character, full body, character reference sheet, centered composition, plain simple background"
         negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, extra limbs, desfigured"
+        
+        # -- Cover / Scene temprate
+        workflow-page-template: classpath:comfyui/workflow-page-template.json
+        page-negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, extra limbs, disfigured, blurry, deformed"
+        
+        ## -- Page properties
+        page-width: 768
+        page-height: 576
+        
+        ## -- Cover properties
+        cover-width: 576
+        cover-height: 768
+        cover-framing-prompt: "book cover illustration, protagonists featured together, inviting warn composition"
+        
+        # -- LoRa properties
         lora-name: "childrens_book_illustration2_.safetensors"
         lora-strength-model: 0.85
         lora-strength-clip: 0.85
         style-trigger-word: "Storybook Illustration art style"
-        background-removal-enabled: true
     agents:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"

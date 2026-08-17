@@ -7,5 +7,10 @@ public interface StoryPageRepository {
     
     StoryPage create(StoryPageAgentResult result, Long storyId, int page);
 
+    StoryPage getPage(Long idPage);
+
     StoryPage update(StoryPage page);
+
+    void setImagePath(Long idPage, String path);
+    
 }

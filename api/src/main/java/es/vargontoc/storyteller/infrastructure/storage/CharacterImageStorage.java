@@ -7,20 +7,24 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
+import es.vargontoc.storyteller.domain.model.KindImage;
+
 @Component
 public class CharacterImageStorage {
     
-    private final Path basePath = Path.of("data/character-images");
+    private final Path basePath = Path.of("stories");
 
-    public String save(Long characterId, byte[] imageBytes) {
+    public String save(Long storyId, KindImage kind, Long id, byte[] imageBytes) {
         try {
-            Path dir = basePath.resolve(String.valueOf(characterId));
+            Path dir = basePath.resolve(String.valueOf(storyId))
+                .resolve(kind == KindImage.ACTOR ? "characters" : "pages")
+                .resolve(String.valueOf(id));
             Files.createDirectories(dir);
             Path file = dir.resolve(Instant.now().toEpochMilli() + ".png");
             Files.write(file, imageBytes);
             return file.toString();
         }catch(IOException e){
-            throw new IllegalStateException("No se pudo guardar la imagen del personaje: " + characterId, e);
+            throw new IllegalStateException("No se pudo guardar la imagen", e);
         }
     }
 }

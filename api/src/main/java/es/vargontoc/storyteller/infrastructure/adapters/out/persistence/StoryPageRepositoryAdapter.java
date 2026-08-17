@@ -12,6 +12,7 @@ import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
+import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 
 @Repository
@@ -70,6 +71,24 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     @Override
     public StoryPage update(StoryPage page) {
         return null;
+    }
+
+    @Override
+    public StoryPage getPage(Long idPage) {
+        StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow(() -> {
+            throw new ResourceNotFoundException("No se entro pagina con id: " + idPage);
+        });
+
+
+        return mapper.toModel(entity);
+    }
+
+    @Override
+    public void setImagePath(Long idPage, String path) {
+        StoryPageJpaEntity page = repository.findById(idPage).get();
+        page.setImageAsset(path);
+        repository.save(page);
+
     }
 
     

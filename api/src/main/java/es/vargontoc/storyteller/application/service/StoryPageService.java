@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
+import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
@@ -28,7 +29,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class StoryPageService implements StoryPageGeneration {
+public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
     @Value("classpath:/prompts/new_cover.st")
     private Resource creatCoverResource;
@@ -135,6 +136,11 @@ public class StoryPageService implements StoryPageGeneration {
     @Override
     public StoryPage confirmReview(ConfirmReviewRequestDto request) {
         return null;
+    }
+
+    @Override
+    public StoryPage getPage(Long idPage) {
+        return repository.getPage(idPage);
     }
     
 }

@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.domain.model.ImageRef;
+import es.vargontoc.storyteller.domain.model.KindImage;
+import es.vargontoc.storyteller.domain.model.WorkflowProperties;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.clients.ComfyUIClient;
 import es.vargontoc.storyteller.infrastructure.config.ComfyUIProperties;
@@ -37,12 +39,22 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
         // 1. Detenemos los servicios activos en ollama
         ollama.stopAllServices();
         
-        // 2. Formamos el prompt visual
-        String positivePrompt = config.stylePrefix() +", " + request.visualDescription();
+        // 2. Obtenemos workflow path segun tipo de peticion
+        String workflowPath = getWorkflowPath(request.kind());
+
+        int[] dimensions = getDimensions(request.kind());
+        
+        // 3. Obtenemos prompt positive segun tipo de peticion
+        String positivePrompt = buildPositive(request);
+
+        // 4. Obtenemos prompt negative
+        String negativePrompt = buildNegative(request);
+
+        // 5. Obtenemos seed
         long seed = request.seed() != null ? request.seed() : System.nanoTime();
 
         // 3. Cargamos el workflow
-        String workflow = loader.render(positivePrompt, config.negativePrompt(), seed);
+        String workflow = loader.render(new WorkflowProperties(workflowPath, positivePrompt, negativePrompt, seed, dimensions, config.loraName(), config.loraStrengthModel(), config.loraStrengthClip()));
         String promptId = client.queuePrompt(workflow);
 
         // 4. Comprobamos las imagenes
@@ -52,6 +64,40 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
 
         // 5. Devolvemos la imagen
         return client.viewImage(images.get(0));
+    }
+
+    private int[] getDimensions(KindImage kind) {
+        return switch(kind)  {
+            case ACTOR -> new int[]{512, 512 };
+            case PAGE -> new int[]{config.pageWidth(), config.pageHeight()};
+            case COVER -> new int[]{config.coverWidth(), config.coverHeight()};
+        };
+    }
+
+    private String buildNegative(ImageGenerationRequest request) {
+        return switch(request.kind()) {
+            case ACTOR -> config.negativePrompt();
+            case PAGE, COVER -> config.pageNegativePrompt();
+        };
+    }
+
+    private String buildPositive(ImageGenerationRequest request) {
+        String trigger = (config.styleTriggerWord() == null || config.styleTriggerWord().isBlank()) 
+            ? "" : ", " + config.styleTriggerWord();
+
+        return switch (request.kind()){
+            case ACTOR -> config.stylePrefix() + ", " + config.characterFramingPrompt() + trigger + ", " +request.visualDescription();
+            case PAGE -> config.stylePrefix() + trigger + ", " + request.visualDescription();
+            case COVER -> config.stylePrefix() + "; " + config.coverFramingPrompt() + trigger + ", " + request.visualDescription();
+        };
+    }
+
+    
+    private String getWorkflowPath(KindImage kind) {
+        return switch (kind) {
+            case ACTOR -> config.workflowCharacterTemplate();
+            case PAGE, COVER -> config.workflowPageTemplate();
+        };
     }
 
     private List<ImageRef> pollUnitReady(String promptId) {

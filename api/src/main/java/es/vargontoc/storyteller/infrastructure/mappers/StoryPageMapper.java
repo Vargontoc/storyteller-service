@@ -23,6 +23,7 @@ public class StoryPageMapper extends AbstractMapper<StoryPageJpaEntity, StoryPag
     public StoryPage toModel(StoryPageJpaEntity entity) {
         StoryPage target = new StoryPage();
         target.setId(entity.getId());
+        target.setStoryId(entity.getStory().getId());
         target.setPage(entity.getPage());
         target.setScene(entity.getScenePrompt());
         target.setText(entity.getText());

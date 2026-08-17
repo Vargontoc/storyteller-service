@@ -10,6 +10,7 @@ import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
+import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 
 @Repository
 public class CharacterRepositoryAdapter implements CharacterRepository {
@@ -39,7 +40,11 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
 
     @Override
     public Actor getActor(Long id) {
-        return mapper.toModel(repository.findById(id).get());
+        CharacterJpaEntity entity = repository.findById(id).orElseThrow(() -> {
+            throw new ResourceNotFoundException("No se encontro personaje con id: " + id);
+        });
+
+        return mapper.toModel(entity);
     }
 
 
@@ -47,6 +52,15 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
     @Override
     public List<Actor> getActorsByStory(Long storyId) {
         return null;
+    }
+
+
+
+    @Override
+    public void setImagePath(Long id, String path) {
+        CharacterJpaEntity  entity = repository.findById(id).get();
+        entity.setImagePath(path);
+        repository.save(entity);
     }
     
 }
