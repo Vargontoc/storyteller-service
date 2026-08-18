@@ -1,0 +1,18 @@
+type: object
+additionalProperties: false
+properties:
+  pageId:
+    type: integer
+    format: int64
+  voiceName:
+    type: string
+  preset:
+    $ref: "../enums/voice-tone-preset.yaml"
+  customParams:
+    description: Requerido únicamente cuando preset es CUSTOM
+    allOf:
+      - $ref: "../audio-tone-params.yaml"
+required:
+  - pageId
+  - voiceName
+  - preset

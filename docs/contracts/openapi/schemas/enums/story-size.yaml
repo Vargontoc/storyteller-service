@@ -1,0 +1,6 @@
+type: string
+description: Tamaño de la historia (número de páginas objetivo)
+enum:
+  - S
+  - M
+  - L

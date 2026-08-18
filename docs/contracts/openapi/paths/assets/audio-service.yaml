@@ -1,0 +1,25 @@
+post:
+  operationId: generateAudio
+  summary: Genera audio
+  description: Genera mediante Chatterbox el audio narrado del texto de una página
+  tags:
+    - Assets
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/audio-generate-command.yaml"
+  responses:
+    "200":
+      description: Audio generado correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/binary-response.yaml"
+    "400":
+      description: El servicio de audio no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

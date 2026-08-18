@@ -54,7 +54,10 @@ public class CharacterReviewJpaEntity extends ReviewBaseEntity {
             result.setRejectedReason(rejectedReason);
             result.setCandidateNarrative(narrative);
             result.setCandidateVisual(visual);
-            result.setStatus(RevisionStatus.PENDING);
+            if(hintAccepted)
+                result.setStatus(RevisionStatus.PENDING);
+            else
+                result.setStatus(RevisionStatus.DISCARDED);
             return result;
         }
 }

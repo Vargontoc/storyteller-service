@@ -1,0 +1,24 @@
+type: object
+description: Revisión pendiente o confirmada de una historia
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  previewStory:
+    description: Historia con los cambios propuestos por el agente
+    allOf:
+      - $ref: "./story.yaml"
+  hint:
+    type: string
+  hintAccepted:
+    type: boolean
+  rejectedReason:
+    type: string
+    nullable: true
+  status:
+    $ref: "./enums/revision-status.yaml"
+required:
+  - id
+  - previewStory
+  - status

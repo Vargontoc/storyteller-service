@@ -1,0 +1,30 @@
+type: object
+description: Página de una historia (page = 0 identifica la portada)
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  storyId:
+    type: integer
+    format: int64
+  page:
+    type: integer
+    description: Número de página; 0 es la portada
+  coverText:
+    type: string
+    nullable: true
+  text:
+    type: string
+  scene:
+    type: string
+    description: Prompt de escena usado para generar la imagen de la página
+  imageAsset:
+    type: string
+    nullable: true
+  audioAsset:
+    type: string
+    nullable: true
+required:
+  - id
+  - page

@@ -48,8 +48,6 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
     public void setCandidateSynopsis(String candidateSynopsis) { this.candidateSynopsis = candidateSynopsis; }
     public List<CharacterDraft> getCandidateCharacters() { return candidateCharacters; }
     public void setCandidateCharacters(List<CharacterDraft> candidateCharacters) { this.candidateCharacters = candidateCharacters; }
-    public RevisionStatus getStatus() { return status; }
-    public void setStatus(RevisionStatus status) { this.status = status; }
 
     public static StoryReviewJpaEntity candidate(
         StoryJpaEntity story,
@@ -68,7 +66,11 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
             result.setCandidateTitle(title);
             result.setCandidateSynopsis(synopsis);
             result.setCandidateCharacters(characters);
-            result.setStatus(RevisionStatus.PENDING);
+            if(hintAccepted)
+                result.setStatus(RevisionStatus.PENDING);
+            else
+                result.setStatus(RevisionStatus.DISCARDED);
+            
             result.setCreatedAt(LocalDateTime.now());
             return result;
     }

@@ -1,0 +1,6 @@
+type: string
+description: Aspecto del personaje sobre el que aplica la revisión
+enum:
+  - VISUAL
+  - NARRATIVE
+  - BOTH

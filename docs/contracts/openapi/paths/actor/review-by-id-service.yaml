@@ -1,0 +1,26 @@
+get:
+  operationId: getActorReview
+  summary: Obtiene la revisión pendiente de un personaje
+  description: Devuelve la revisión activa (PENDING) asociada a un personaje
+  tags:
+    - Reviews
+  parameters:
+    - name: actorId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Revisión encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/actor-review-response.yaml"
+    "404":
+      description: No existe una revisión pendiente para el personaje indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

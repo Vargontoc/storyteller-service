@@ -1,0 +1,25 @@
+post:
+  operationId: reviewStory
+  summary: Solicita una revisión de una historia
+  description: El agente genera una revisión de un guión existente según el hint del usuario
+  tags:
+    - Reviews
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/story-review-command.yaml"
+  responses:
+    "200":
+      description: Revisión generada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-review-response.yaml"
+    "400":
+      description: El agente encargado de esta operación no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

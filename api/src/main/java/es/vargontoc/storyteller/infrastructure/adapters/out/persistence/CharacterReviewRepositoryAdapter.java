@@ -67,18 +67,18 @@ public class CharacterReviewRepositoryAdapter implements CharacterReviewReposito
         CharacterJpaEntity character = characterRepository.findById(characterId).get();
         CharacterReviewJpaEntity entity = CharacterReviewJpaEntity.candidate(character, hint, target, result.hintAccepted(), result.rejectionReason(), null, null);
         switch (target) {
-            case NARRATIVE:
+            case NARRATIVE -> {
                 entity.setCandidateNarrative(result.narrativeDescription());
                 entity.setCandidateVisual(character.getVisualDescription());
-                break;
-            case VISUAL:
+            }
+            case VISUAL -> {
                 entity.setCandidateNarrative(character.getNarrativeDescription());
                 entity.setCandidateVisual(result.visualDescription());
-                break;
-            case BOTH:
+            }
+            case BOTH -> {
                 entity.setCandidateNarrative(result.narrativeDescription());
                 entity.setCandidateVisual(result.visualDescription());
-                break;
+            }
         }
         return mapper.toModel(repository.save(entity));
     }

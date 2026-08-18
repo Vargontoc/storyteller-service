@@ -1,0 +1,25 @@
+post:
+  operationId: generateTopic
+  summary: Genera un nuevo tema
+  description: El agente genera un nuevo tema para cuentos infantiles
+  tags:
+    - Generators
+  responses:
+    "200":
+      description: Tema generado correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/topic-response.yaml"
+    "400":
+      description: El agente encargado de esta operación no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: No se pudo generar un tema novedoso tras varios intentos
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

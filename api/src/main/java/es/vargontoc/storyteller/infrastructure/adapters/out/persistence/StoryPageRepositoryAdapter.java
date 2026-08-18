@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.domain.model.StoryPage;
+import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.StoryPageMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
@@ -97,6 +98,25 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
         StoryPageJpaEntity page = repository.findById(id).get();
         page.setAudioAsset(path);
         repository.save(page);
+
+    }
+
+    @Override
+    public StoryPage updateWithReview(Long idPage, StoryPageReview review) {
+        StoryPageJpaEntity entity = repository.findById(idPage).get();
+        if(entity.getPage() == 0) {
+            entity.setScenePrompt(review.getScene());
+            entity.setImageAsset(null);
+        }else {
+            entity.setScenePrompt(review.getScene());
+            entity.setText(review.getText());
+            entity.setImageAsset(null);
+            entity.setAudioAsset(null);
+            
+            repository.deletePages(entity.getStory().getId(), entity.getPage());
+        }
+
+        return mapper.toModel(repository.save(entity));
 
     }
 

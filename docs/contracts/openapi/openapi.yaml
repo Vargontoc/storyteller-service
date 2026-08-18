@@ -6,6 +6,55 @@ info:
 servers:
   - url: /api/v1
 
+security: []
+
+tags:
+  - name: Generators
+    description: Generación de contenido mediante agentes (temas, historias, páginas)
+  - name: Reviews
+    description: Revisión, confirmación y descarte de contenido generado
+  - name: Assets
+    description: Generación de imágenes y audio
+  - name: Stories
+    description: Consulta de historias
+  - name: Topics
+    description: Consulta de temas
+
 paths:
-  /health:
-      $ref: "./paths/health-service.yaml"
+  /assets/images/generate:
+    $ref: "./paths/assets/image-service.yaml"
+  /assets/audios/generate:
+    $ref: "./paths/assets/audio-service.yaml"
+
+  /generations/topic:
+    $ref: "./paths/topic/generation-service.yaml"
+  /generations/story:
+    $ref: "./paths/story/generation-service.yaml"
+  /generations/page:
+    $ref: "./paths/page/generation-service.yaml"
+
+  /reviews/story:
+    $ref: "./paths/story/review-service.yaml"
+  /reviews/story/{storyId}:
+    $ref: "./paths/story/review-by-id-service.yaml"
+  /reviews/story/confirm:
+    $ref: "./paths/story/confirm-review-service.yaml"
+
+  /reviews/actor:
+    $ref: "./paths/actor/review-service.yaml"
+  /reviews/actor/{actorId}:
+    $ref: "./paths/actor/review-by-id-service.yaml"
+  /reviews/actor/confirm:
+    $ref: "./paths/actor/confirm-review-service.yaml"
+
+  /reviews/page:
+    $ref: "./paths/page/review-service.yaml"
+  /reviews/page/{pageId}:
+    $ref: "./paths/page/review-by-id-service.yaml"
+  /reviews/page/confirm:
+    $ref: "./paths/page/confirm-review-service.yaml"
+
+  /topic:
+    $ref: "./paths/topic/topics-service.yaml"
+  /stories/{storyId}:
+    $ref: "./paths/story/stories-service.yaml"

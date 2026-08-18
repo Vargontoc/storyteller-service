@@ -1,0 +1,12 @@
+type: object
+additionalProperties: false
+properties:
+  image:
+    $ref: "../enums/kind-image.yaml"
+  id:
+    type: integer
+    format: int64
+    description: Id del actor, historia (portada) o página, según el valor de "image"
+required:
+  - image
+  - id

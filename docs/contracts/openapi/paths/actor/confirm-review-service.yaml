@@ -1,0 +1,25 @@
+post:
+  operationId: confirmActorReview
+  summary: Confirma o descarta la revisión de un personaje
+  description: Aplica (CONFIRMED) o descarta (DISCARDED) la revisión pendiente de un personaje
+  tags:
+    - Reviews
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/confirm-review-request.yaml"
+  responses:
+    "200":
+      description: Personaje resultante tras la confirmación o el descarte
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/actor-response.yaml"
+    "409":
+      description: No hay una revisión pendiente para el personaje indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

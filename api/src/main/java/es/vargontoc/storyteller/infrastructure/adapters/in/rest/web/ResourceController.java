@@ -8,6 +8,8 @@ import es.vargontoc.storyteller.application.ports.in.generator.ImageGeneration;
 import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.GenerateImageRequestDto;
 import es.vargontoc.storyteller.shared.ApiResponse;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,6 +18,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 
 @RestController
 @RequestMapping("/api/v1/assets")
+@Tag(name = "Assets")
 public class ResourceController {
     
     private final ImageGeneration image;
@@ -26,11 +29,13 @@ public class ResourceController {
     }
 
     @PostMapping("/images/generate")
+    @Operation(description = "Genera una imagen de personaje, portada o pagina")
     public ResponseEntity<ApiResponse<byte[]>> generateImage(@RequestBody GenerateImageRequestDto request) {
         return ResponseEntity.ok(ApiResponse.ok(image.generateImage(request.image(), request.id())));
     }
 
     @PostMapping("/audios/generate")
+    @Operation(description = "Genera audio del texto de una pagina")
     public ResponseEntity<ApiResponse<byte[]>> generateImage(@RequestBody AudioGenerateCommand request) {
         return ResponseEntity.ok(ApiResponse.ok(audio.generateAudio(request)));
     }

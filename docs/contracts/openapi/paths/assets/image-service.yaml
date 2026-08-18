@@ -1,0 +1,31 @@
+post:
+  operationId: generateImage
+  summary: Genera una imagen
+  description: Genera mediante ComfyUI una imagen de personaje, portada o página
+  tags:
+    - Assets
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/generate-image-request.yaml"
+  responses:
+    "200":
+      description: Imagen generada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/binary-response.yaml"
+    "400":
+      description: El agente encargado de esta operación no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: ComfyUI terminó sin generar ninguna imagen para la petición
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

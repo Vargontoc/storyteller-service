@@ -1,0 +1,31 @@
+post:
+  operationId: generateStory
+  summary: Genera una nueva historia
+  description: El agente genera un nuevo guión a partir de un tema existente
+  tags:
+    - Generators
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/story-generate-command.yaml"
+  responses:
+    "200":
+      description: Historia generada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-response.yaml"
+    "400":
+      description: El agente encargado de esta operación no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: El tema indicado no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

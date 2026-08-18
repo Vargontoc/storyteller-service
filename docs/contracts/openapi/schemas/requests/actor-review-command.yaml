@@ -1,0 +1,19 @@
+type: object
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  id:
+    type: integer
+    format: int64
+    description: Id del actor a revisar
+  hint:
+    type: string
+  target:
+    $ref: "../enums/character-review-target.yaml"
+required:
+  - storyId
+  - id
+  - hint
+  - target

@@ -9,9 +9,8 @@ properties:
     example: true
   message:
     description: Mensaje informativo asociado a la operación
-    type:
-      - string
-      - "null"
+    type: string
+    nullable: true
     example: Operación realizada con existo
   errors:
     description: Lista mensajes de errores

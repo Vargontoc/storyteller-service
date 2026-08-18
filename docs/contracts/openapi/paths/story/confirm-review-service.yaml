@@ -1,0 +1,25 @@
+post:
+  operationId: confirmStoryReview
+  summary: Confirma o descarta la revisión de una historia
+  description: Aplica (CONFIRMED) o descarta (DISCARDED) la revisión pendiente de una historia
+  tags:
+    - Reviews
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/confirm-review-request.yaml"
+  responses:
+    "200":
+      description: Historia resultante tras la confirmación o el descarte
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-response.yaml"
+    "409":
+      description: No hay una revisión pendiente para la historia indicada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

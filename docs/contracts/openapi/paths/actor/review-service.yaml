@@ -1,0 +1,25 @@
+post:
+  operationId: reviewActor
+  summary: Solicita una revisión de un personaje
+  description: El agente genera una revisión de un personaje existente según el hint del usuario
+  tags:
+    - Reviews
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/actor-review-command.yaml"
+  responses:
+    "200":
+      description: Revisión generada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/actor-review-response.yaml"
+    "400":
+      description: El agente encargado de esta operación no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

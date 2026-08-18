@@ -1,0 +1,10 @@
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        type: string
+        format: byte
+        description: Contenido binario (imagen o audio) codificado en Base64
+    required:
+      - data

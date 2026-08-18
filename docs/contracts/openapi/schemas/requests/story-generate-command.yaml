@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+properties:
+  topicId:
+    type: integer
+    format: int64
+  size:
+    $ref: "../enums/story-size.yaml"
+required:
+  - topicId
+  - size

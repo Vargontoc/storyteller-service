@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+properties:
+  idStory:
+    type: integer
+    format: int64
+  cover:
+    type: boolean
+    description: Si es true genera la portada; si es false genera la siguiente página de la historia
+required:
+  - idStory

@@ -1,0 +1,19 @@
+allOf:
+  - $ref: "./actor.yaml"
+  - type: object
+    description: Revisión pendiente o confirmada de un personaje
+    properties:
+      characterId:
+        type: integer
+        format: int64
+      hint:
+        type: string
+      hintAccepted:
+        type: boolean
+      rejectedReason:
+        type: string
+        nullable: true
+      status:
+        $ref: "./enums/revision-status.yaml"
+      target:
+        $ref: "./enums/character-review-target.yaml"

@@ -1,0 +1,25 @@
+post:
+  operationId: confirmStoryPageReview
+  summary: Confirma o descarta la revisión de una página
+  description: Aplica (CONFIRMED) o descarta (DISCARDED) la revisión pendiente de una página
+  tags:
+    - Reviews
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/confirm-review-request.yaml"
+  responses:
+    "200":
+      description: Página resultante tras la confirmación o el descarte
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-page-response.yaml"
+    "409":
+      description: No hay una revisión pendiente para la página indicada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

@@ -1,0 +1,26 @@
+type: object
+description: Historia infantil generada
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  title:
+    type: string
+  summary:
+    type: string
+  size:
+    $ref: "./enums/story-size.yaml"
+  characters:
+    type: array
+    items:
+      $ref: "./actor.yaml"
+  pages:
+    type: array
+    items:
+      $ref: "./story-page.yaml"
+required:
+  - id
+  - title
+  - summary
+  - size

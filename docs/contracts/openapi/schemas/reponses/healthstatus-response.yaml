@@ -1,8 +1,0 @@
-allof:
-  - $ref: "./paths/health-service.yaml"
-  - type: object
-    properties:
-      data:
-        $ref: $'../health/service-status.yaml'
-    required:
-      - data

@@ -14,9 +14,11 @@ import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGenerati
 import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageReviewCommand;
+import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryPage;
@@ -42,20 +44,23 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
     private final ChatClient client;
     
     private final StoryPageRepository repository;
+    private final StoryPageReviewRepository reviewRepositoy;
     private final StoryRepository storyRepository;
 
     
 
-    public StoryPageService(OllamaPort ollama, 
+    public StoryPageService(OllamaPort ollama,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient client,
         StoryPageRepository repository,
+        StoryPageReviewRepository reviewRepository,
         StoryRepository storyRepository) {
             this.ollama = ollama;
             this.model = model;
             this.client = client;
             this.repository = repository;
             this.storyRepository = storyRepository;
+            this.reviewRepositoy = reviewRepository;
     }
 
     @Override
@@ -125,17 +130,45 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
     @Override
     public StoryPageReview getReview(Long entityId) {
-        return null;
+        repository.getPage(entityId);
+
+        return reviewRepositoy.getPendingReview(entityId);
     }
 
     @Override
     public StoryPageReview review(StoryPageReviewCommand review) {
+        if(!ollama.isAvailable(model))
+            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
+
+        StoryPage current =  getPage(review.pageId());
+
+        reviewRepositoy.changeStatus(review.pageId(), RevisionStatus.DISCARDED);
+
+        
+
+
         return null;
     }
 
     @Override
     public StoryPage confirmReview(ConfirmReviewRequestDto request) {
-        return null;
+        // 1. Obtenemos la pagina
+        StoryPage current = getPage(request.entityId());
+
+        // 2. Obtenemos el review
+        StoryPageReview review = getReview(request.entityId());
+        if(review == null)
+            throw new AppException("No hay una review pendiente para la story:" + current.getId(), HttpStatus.NOT_FOUND);
+
+        if(request.status() == RevisionStatus.DISCARDED)
+            reviewRepositoy.changeStatus(request.entityId(), request.status());
+        else if(request.status() == RevisionStatus.PENDING){
+            reviewRepositoy.changeStatus(request.entityId(), request.status());
+
+            
+            return repository.updateWithReview(current.getId(), review);
+        }
+        return current;
     }
 
     @Override

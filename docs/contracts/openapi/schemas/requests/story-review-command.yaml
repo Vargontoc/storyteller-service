@@ -1,0 +1,11 @@
+type: object
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  hint:
+    type: string
+required:
+  - storyId
+  - hint

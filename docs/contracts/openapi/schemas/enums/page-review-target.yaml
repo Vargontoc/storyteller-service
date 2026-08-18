@@ -1,0 +1,6 @@
+type: string
+description: Aspecto de la página sobre el que aplica la revisión
+enum:
+  - TEXT
+  - SCENE
+  - BOTH

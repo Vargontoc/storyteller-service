@@ -1,0 +1,8 @@
+type: string
+description: Preset de tono de voz para la narración; CUSTOM requiere customParams
+enum:
+  - CALM_STORYTELLER
+  - ADVENTURE_ENERGIC
+  - SLEEP_SOFT
+  - NEUTRO
+  - CUSTOM

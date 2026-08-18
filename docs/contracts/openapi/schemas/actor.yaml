@@ -1,0 +1,21 @@
+type: object
+description: Personaje de una historia
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  storyId:
+    type: integer
+    format: int64
+  name:
+    type: string
+  narrativeDescription:
+    type: string
+  visualDescription:
+    type: string
+required:
+  - id
+  - name
+  - narrativeDescription
+  - visualDescription

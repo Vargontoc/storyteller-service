@@ -1,0 +1,13 @@
+type: object
+additionalProperties: false
+properties:
+  entityId:
+    type: integer
+    format: int64
+    description: Id de la entidad (historia, actor o página) cuya revisión se confirma o descarta
+  status:
+    description: Solo se admiten CONFIRMED o DISCARDED
+    allOf:
+      - $ref: "../enums/revision-status.yaml"
+required:
+  - status

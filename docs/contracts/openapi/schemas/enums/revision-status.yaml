@@ -1,0 +1,6 @@
+type: string
+description: Estado de una revisión
+enum:
+  - PENDING
+  - CONFIRMED
+  - DISCARDED

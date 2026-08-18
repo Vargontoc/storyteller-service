@@ -1,0 +1,19 @@
+allOf:
+  - $ref: "./story-page.yaml"
+  - type: object
+    description: Revisión pendiente o confirmada de una página
+    properties:
+      idPage:
+        type: integer
+        format: int64
+      hint:
+        type: string
+      hintAccepted:
+        type: boolean
+      rejectedReason:
+        type: string
+        nullable: true
+      status:
+        $ref: "./enums/revision-status.yaml"
+      target:
+        $ref: "./enums/page-review-target.yaml"

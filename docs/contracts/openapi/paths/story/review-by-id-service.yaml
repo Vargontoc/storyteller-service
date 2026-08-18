@@ -1,0 +1,26 @@
+get:
+  operationId: getStoryReview
+  summary: Obtiene la revisión pendiente de una historia
+  description: Devuelve la revisión activa (PENDING) asociada a una historia
+  tags:
+    - Reviews
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Revisión encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-review-response.yaml"
+    "404":
+      description: No existe una revisión pendiente para la historia indicada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

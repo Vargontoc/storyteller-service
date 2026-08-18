@@ -1,0 +1,13 @@
+get:
+  operationId: getTopics
+  summary: Lista los temas generados
+  description: Obtiene el listado de temas ya persistidos
+  tags:
+    - Topics
+  responses:
+    "200":
+      description: Listado de temas
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/topics-list-response.yaml"
