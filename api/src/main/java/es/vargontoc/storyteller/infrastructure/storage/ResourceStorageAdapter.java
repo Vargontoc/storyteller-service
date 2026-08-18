@@ -7,14 +7,16 @@ import java.time.Instant;
 
 import org.springframework.stereotype.Component;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.domain.enums.KindImage;
 
 @Component
-public class CharacterImageStorage {
+public class ResourceStorageAdapter implements ResourceStorage {
     
     private final Path basePath = Path.of("stories");
 
-    public String save(Long storyId, KindImage kind, Long id, byte[] imageBytes) {
+    @Override
+    public String saveImage(Long storyId, KindImage kind, Long id, byte[] imageBytes) {
         try {
             Path dir = basePath.resolve(String.valueOf(storyId))
                 .resolve(kind == KindImage.ACTOR ? "characters" : "pages")
@@ -28,7 +30,8 @@ public class CharacterImageStorage {
         }
     }
 
-    public String save(Long storyId, Long id, byte[] audioBytes){
+    @Override
+    public String saveAudio(Long storyId, Long id, byte[] audioBytes) {
         try {
             Path dir = basePath.resolve(String.valueOf(storyId))
                 .resolve( "pages")
@@ -39,6 +42,19 @@ public class CharacterImageStorage {
             return file.toString();
         }catch(IOException e) {
             throw new IllegalStateException("No se pudo guardar el audio", e);
+        }
+    }
+
+    @Override
+    public byte[] getResource(String path) {
+        try {
+            Path file = basePath.resolve(path);
+            if(!Files.exists(file))
+                return null;
+
+            return Files.readAllBytes(file);
+        }catch(IOException e){
+            return null;
         }
     }
 }

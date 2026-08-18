@@ -1,0 +1,14 @@
+type: object
+description: Disponibilidad de cada agente Ollama configurado
+additionalProperties: false
+properties:
+  topic:
+    type: boolean
+  director:
+    type: boolean
+  scriptwriter:
+    type: boolean
+required:
+  - topic
+  - director
+  - scriptwriter

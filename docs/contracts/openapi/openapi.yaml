@@ -9,18 +9,23 @@ servers:
 security: []
 
 tags:
+  - name: Api
+    description: Estado de los servicios externos de la aplicación
   - name: Generators
     description: Generación de contenido mediante agentes (temas, historias, páginas)
   - name: Reviews
     description: Revisión, confirmación y descarte de contenido generado
   - name: Assets
     description: Generación de imágenes y audio
-  - name: Stories
-    description: Consulta de historias
+  - name: Storyteller
+    description: Consulta, listado y borrado de cuentos, personajes y páginas
   - name: Topics
     description: Consulta de temas
 
 paths:
+  /services:
+    $ref: "./paths/api/services-service.yaml"
+
   /assets/images/generate:
     $ref: "./paths/assets/image-service.yaml"
   /assets/audios/generate:
@@ -56,5 +61,18 @@ paths:
 
   /topic:
     $ref: "./paths/topic/topics-service.yaml"
-  /stories/{storyId}:
-    $ref: "./paths/story/stories-service.yaml"
+
+  /storyteller:
+    $ref: "./paths/storyteller/stories-service.yaml"
+  /storyteller/{storyId}:
+    $ref: "./paths/storyteller/story-service.yaml"
+  /storyteller/{storyId}/actors:
+    $ref: "./paths/storyteller/actors-service.yaml"
+  /storyteller/{storyId}/actors/{id}:
+    $ref: "./paths/storyteller/actor-service.yaml"
+  /storyteller/{storyId}/pages:
+    $ref: "./paths/storyteller/pages-service.yaml"
+  /storyteller/{storyId}/pages/{id}:
+    $ref: "./paths/storyteller/page-service.yaml"
+  /storyteller/asset:
+    $ref: "./paths/storyteller/asset-service.yaml"

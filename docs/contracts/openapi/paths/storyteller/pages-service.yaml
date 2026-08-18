@@ -1,0 +1,19 @@
+get:
+  operationId: getStorytellerPages
+  summary: Lista las páginas de un cuento
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Listado de páginas
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/page-summary-list-response.yaml"

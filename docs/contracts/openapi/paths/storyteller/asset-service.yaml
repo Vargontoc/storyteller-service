@@ -1,0 +1,20 @@
+post:
+  operationId: getStorytellerAsset
+  summary: Obtiene un recurso almacenado
+  description: Devuelve el contenido binario (imagen o audio) almacenado en la ruta indicada
+  tags:
+    - Storyteller
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/resource-request.yaml"
+  responses:
+    "200":
+      description: Recurso encontrado
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary

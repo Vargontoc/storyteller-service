@@ -1,0 +1,19 @@
+type: object
+description: Resumen de un personaje para listados
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  name:
+    type: string
+  role:
+    type: string
+  description:
+    type: string
+  image:
+    type: string
+    nullable: true
+required:
+  - id
+  - name

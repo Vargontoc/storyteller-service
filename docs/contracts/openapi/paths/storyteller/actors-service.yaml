@@ -1,0 +1,19 @@
+get:
+  operationId: getStorytellerActors
+  summary: Lista los personajes de un cuento
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Listado de personajes
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/actor-summary-list-response.yaml"

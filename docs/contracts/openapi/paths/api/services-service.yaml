@@ -1,0 +1,13 @@
+get:
+  operationId: getServicesStatus
+  summary: Consulta el estado de los servicios externos
+  description: Devuelve la disponibilidad de Ollama (por agente), Chatterbox y ComfyUI
+  tags:
+    - Api
+  responses:
+    "200":
+      description: Estado de los servicios externos
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-state-response.yaml"

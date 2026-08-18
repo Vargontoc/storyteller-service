@@ -1,0 +1,14 @@
+type: object
+description: Estado de disponibilidad de los servicios externos de la aplicación
+additionalProperties: false
+properties:
+  ollama:
+    $ref: "./ollama-api-response.yaml"
+  chatterbox:
+    type: boolean
+  comfy:
+    type: boolean
+required:
+  - ollama
+  - chatterbox
+  - comfy

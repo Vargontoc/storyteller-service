@@ -1,0 +1,31 @@
+get:
+  operationId: getStorytellerPage
+  summary: Obtiene una página de un cuento
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Página encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/page-summary-response.yaml"
+    "404":
+      description: No existe la página indicada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

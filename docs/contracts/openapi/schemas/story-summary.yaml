@@ -1,0 +1,27 @@
+type: object
+description: Resumen de una historia para listados
+additionalProperties: false
+properties:
+  cover:
+    type: string
+    nullable: true
+    description: Ruta/asset de la imagen de portada, si ya se generó
+  title:
+    type: string
+  synopsis:
+    type: string
+  actors:
+    type: integer
+    description: Número de personajes de la historia
+  size:
+    type: integer
+    description: Número de páginas objetivo según el tamaño elegido (StorySize)
+  pages:
+    type: integer
+    description: Número de páginas ya generadas (sin contar la portada)
+required:
+  - title
+  - synopsis
+  - actors
+  - size
+  - pages

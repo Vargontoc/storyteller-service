@@ -1,0 +1,40 @@
+get:
+  operationId: getStorytellerStory
+  summary: Obtiene el resumen de una historia
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Resumen de la historia encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-summary-response.yaml"
+    "404":
+      description: No existe una historia con el id indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+delete:
+  operationId: deleteStorytellerStory
+  summary: Elimina un cuento
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Historia eliminada correctamente

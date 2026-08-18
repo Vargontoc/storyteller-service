@@ -10,7 +10,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
-import es.vargontoc.storyteller.application.ports.in.persistence.StoryUseCase;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
@@ -31,7 +30,7 @@ import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
-public class StoryService implements StoryGeneration, StoryUseCase   {
+public class StoryService implements StoryGeneration   {
 
     @Value("classpath:/prompts/new_script.st")
     private Resource scriptResource;
@@ -62,10 +61,6 @@ public class StoryService implements StoryGeneration, StoryUseCase   {
         this.client  = client;
     }
 
-    @Override
-    public Story getStory(Long storyId) {
-        return repository.getStory(storyId);
-    }
 
     @Override
     public Story generate(StoryGenerateCommand cmd) {
@@ -163,6 +158,4 @@ public class StoryService implements StoryGeneration, StoryUseCase   {
             .map(c -> c.getName() + " ( " + c.getNarrativeDescription() + " / " + c.getVisualDescription() + " )")
             .collect(Collectors.joining("; "));
     }
-
-    
 }

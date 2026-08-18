@@ -1,0 +1,31 @@
+get:
+  operationId: getStorytellerActor
+  summary: Obtiene un personaje de un cuento
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Personaje encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/actor-summary-response.yaml"
+    "404":
+      description: No existe el personaje indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

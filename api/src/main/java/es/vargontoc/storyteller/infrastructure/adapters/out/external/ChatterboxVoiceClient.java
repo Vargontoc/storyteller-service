@@ -8,7 +8,6 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestClient;
 
 import es.vargontoc.storyteller.application.ports.out.external.VoiceLibraryPort;
 import es.vargontoc.storyteller.domain.model.VoiceInfo;
@@ -16,22 +15,26 @@ import es.vargontoc.storyteller.domain.response.VoiceLibraryResponse;
 import es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties;
 
 @Component
-public class ChatterboxVoiceClient implements  VoiceLibraryPort {
+public class ChatterboxVoiceClient extends ChatterboxAdapter implements  VoiceLibraryPort {
 
-    private final RestClient restClient;
-    
     public ChatterboxVoiceClient(ChatterboxProperties properties) {
-        this.restClient = RestClient.builder().baseUrl(properties.baseUrl()).build();
+        super(properties);
     }
 
     @Override
     public List<VoiceInfo> listVoices() {
+        if(!isAvailableService())
+            return List.of();
+        
         VoiceLibraryResponse response = restClient.get().uri("/voices").retrieve().body(VoiceLibraryResponse.class);
         return response  != null ? response.voices() : List.of();
     }
 
     @Override
     public void uploadVoice(String voiceName, byte[] audioBytes, String filename, String language) {
+        if(!isAvailableService())
+            return;
+
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         form.add("voice_name", voiceName);
         form.add("language", language);
@@ -47,6 +50,9 @@ public class ChatterboxVoiceClient implements  VoiceLibraryPort {
 
     @Override
     public void setDefaultVoice(String voiceName) {
+        if(!isAvailableService())
+            return;
+
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         form.add("voice_name", voiceName);
         restClient.post().uri("/voice/default").contentType(MediaType.APPLICATION_FORM_URLENCODED).body(form).retrieve().toBodilessEntity();
@@ -54,12 +60,17 @@ public class ChatterboxVoiceClient implements  VoiceLibraryPort {
 
     @Override
     public void deleteVoice(String voiceName) {
+        if(!isAvailableService())
+            return;
+
         restClient.delete().uri("/voices/{name}", voiceName).retrieve().toBodilessEntity();
     }
 
     @Override
     public void renameVoice(String oldName, String name) {
-        
+        if(!isAvailableService())
+            return;
+
         MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
         form.add("new_name", name);
         restClient.put().uri("/voices/{name}", oldName).contentType(MediaType.APPLICATION_FORM_URLENCODED).body(form).retrieve().toBodilessEntity();

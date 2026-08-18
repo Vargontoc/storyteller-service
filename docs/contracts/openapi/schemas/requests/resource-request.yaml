@@ -1,0 +1,8 @@
+type: object
+additionalProperties: false
+properties:
+  path:
+    type: string
+    description: Ruta relativa del recurso almacenado a recuperar
+required:
+  - path

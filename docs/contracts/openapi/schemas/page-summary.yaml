@@ -1,0 +1,22 @@
+type: object
+description: Resumen de una página para listados
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+  page:
+    type: integer
+  text:
+    type: string
+  scene:
+    type: string
+  image:
+    type: string
+    nullable: true
+  audio:
+    type: string
+    nullable: true
+required:
+  - id
+  - page

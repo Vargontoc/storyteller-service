@@ -1,0 +1,24 @@
+type: object
+description: Página de resultados paginada de resúmenes de historias
+additionalProperties: false
+properties:
+  items:
+    type: array
+    items:
+      $ref: "./story-summary.yaml"
+  pageSize:
+    type: integer
+  currentPage:
+    type: integer
+    description: Página actual (0-indexada)
+  totalPages:
+    type: integer
+  totalItems:
+    type: integer
+    format: int64
+required:
+  - items
+  - pageSize
+  - currentPage
+  - totalPages
+  - totalItems

@@ -19,7 +19,7 @@ import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.request.AudioGenerationRequest;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties;
-import es.vargontoc.storyteller.infrastructure.storage.CharacterImageStorage;
+import es.vargontoc.storyteller.infrastructure.storage.ResourceStorageAdapter;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 @Service
@@ -30,13 +30,13 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
 
     private final ImageGeneratorPort generator;
     private final AudioGeneratorPort audioGenerator;
-    private final CharacterImageStorage storage;
+    private final ResourceStorageAdapter storage;
 
     private final String defaultVoice;
 
 
     public AssetsGenerationService(ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
-            CharacterImageStorage storage) {
+            ResourceStorageAdapter storage) {
         this.actorUseCase = actorUseCase;
         this.pageUseCase = pageUseCase;
         this.generator = generator;
@@ -71,7 +71,7 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
         image = getResult(image);
 
         // 3. Guardamos la imagen
-        String path = storage.save(image.storyId, kind, id, image.result);
+        String path = storage.saveImage(image.storyId, kind, id, image.result);
 
         if(kind == KindImage.ACTOR)
             actorUseCase.setImagePath(id, path);
@@ -110,7 +110,7 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
         ));
 
         // 5. Guardamos el fichero audio
-        String path = storage.save(page.getStoryId(), page.getId(), bytes);
+        String path = storage.saveAudio(page.getStoryId(), page.getId(), bytes);
 
         // 5. Persistir el asset
         pageUseCase.setAudioPath(page.getId(), path);
