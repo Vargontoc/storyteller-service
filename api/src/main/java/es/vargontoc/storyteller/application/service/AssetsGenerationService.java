@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import java.util.List;
 import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
@@ -65,7 +66,7 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
                 throw new AppException("El id proporcionado no pertenece a una portada", HttpStatus.CONFLICT);
             image.storyId = page.getStoryId();
             String prompt = page.getScene();
-            image.request = ImageGenerationRequest.page(prompt);
+            image.request = ImageGenerationRequest.page(prompt, List.of());
         }
 
         image = getResult(image);

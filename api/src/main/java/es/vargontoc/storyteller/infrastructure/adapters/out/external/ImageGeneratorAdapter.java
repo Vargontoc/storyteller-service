@@ -7,6 +7,8 @@ import java.util.List;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.domain.enums.KindImage;
@@ -14,6 +16,7 @@ import es.vargontoc.storyteller.domain.model.ImageRef;
 import es.vargontoc.storyteller.domain.model.WorkflowProperties;
 import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.clients.ComfyUIClient;
+import es.vargontoc.storyteller.infrastructure.builder.SceneWorkflowGraphBuilder;
 import es.vargontoc.storyteller.infrastructure.config.ComfyUIProperties;
 import es.vargontoc.storyteller.infrastructure.storage.WorkflowTemplateLoader;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
@@ -25,6 +28,7 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
     private final WorkflowTemplateLoader loader;
     private final OllamaPort ollama;
     private final ComfyUIProperties config;
+    private final SceneWorkflowGraphBuilder builder;
 
     public ImageGeneratorAdapter(ComfyUIClient client, WorkflowTemplateLoader loader, OllamaPort ollama,
             ComfyUIProperties config) {
@@ -32,12 +36,19 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
         this.loader = loader;
         this.ollama = ollama;
         this.config = config;
+
+        builder = new SceneWorkflowGraphBuilder(config, client);
     }
 
     @Override
     public byte[] generateImage(ImageGenerationRequest request) {
+        
+        
         // 1. Detenemos los servicios activos en ollama
         ollama.stopAllServices();
+
+        if(request.kind() != KindImage.ACTOR && !request.references().isEmpty())
+            return generateWithIPdapter(request);
         
         // 2. Obtenemos workflow path segun tipo de peticion
         String workflowPath = getWorkflowPath(request.kind());
@@ -64,6 +75,31 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
 
         // 5. Devolvemos la imagen
         return client.viewImage(images.get(0));
+    }
+
+    private byte[] generateWithIPdapter(ImageGenerationRequest request) {
+        int[] dims = request.kind() == KindImage.COVER ?
+            new int[]{config.coverWidth(), config.coverHeight()} :
+            new int[]{config.pageWidth(), config.pageHeight()};
+
+        var graph = builder.build(buildPositive(request), buildPositive(request), dims[0], dims[1], request.seed() != null ? request.seed() : System.nanoTime(), request.references());        
+        try {
+            ObjectMapper om = new ObjectMapper();
+            String json = om.writeValueAsString(graph);
+    
+            String promptId = client.queuePrompt(json);
+    
+            // 4. Comprobamos las imagenes
+            List<ImageRef> images = pollUnitReady(promptId);
+            if(images == null || images.isEmpty())
+                throw new AppException("ComfyUI terminó sin generar imagenes para el prompt_id: " + promptId, HttpStatus.NOT_FOUND);
+    
+            // 5. Devolvemos la imagen
+            return client.viewImage(images.get(0));
+
+        }catch(Exception e) {
+            return new byte[]{};
+        }
     }
 
     private int[] getDimensions(KindImage kind) {

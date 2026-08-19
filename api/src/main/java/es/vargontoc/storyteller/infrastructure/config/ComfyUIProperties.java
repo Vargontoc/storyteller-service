@@ -26,5 +26,11 @@ public record ComfyUIProperties (
     String loraName,
     double loraStrengthModel,
     double loraStrengthClip,
-    String styleTriggerWord)
+    String styleTriggerWord,
+
+    String ipadapterModelName,
+    String clipVisionModelName,
+    int maxReferenceCharacters,
+    double ipadapterWeightBudget
+    )
 {}

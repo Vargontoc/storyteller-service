@@ -1,13 +1,21 @@
 package es.vargontoc.storyteller.infrastructure.adapters.in.rest.clients;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
+import org.jspecify.annotations.Nullable;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestClient;
 
 import es.vargontoc.storyteller.domain.model.ImageRef;
@@ -91,5 +99,33 @@ public class ComfyUIClient {
             .retrieve()
             .body(byte[].class);
             
+    }
+
+    
+    @SuppressWarnings("unchecked")
+    public String upload(Path localImage) {
+        try {
+            byte[] bytes = Files.readAllBytes(localImage);
+            MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+            form.add("image", new ByteArrayResource(bytes) {
+                @Override
+                public @Nullable String getFilename() {
+                    // TODO Auto-generated method stub
+                    return localImage.getFileName().toString();
+                }
+            });
+            form.add("overwrite", "true");
+
+            Map<String, Object> response = restClient.post()
+                .uri("/upload/image")
+                .contentType(MediaType.MULTIPART_FORM_DATA)
+                .body(form)
+                .retrieve()
+                .body(Map.class);
+
+            return (String)response.get("name");
+        }catch(IOException e){
+            throw new UncheckedIOException(e);
+        }
     }
 }

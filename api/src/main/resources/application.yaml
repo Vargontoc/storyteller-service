@@ -74,6 +74,12 @@ app:
         lora-strength-model: 0.85
         lora-strength-clip: 0.85
         style-trigger-word: "Storybook Illustration art style"
+
+        # -- IP Adapter
+        ipadapter-model-name: "ip-adapter_sd15.safetensors"
+        clip-vision-model-name: "CLIP-ViT-H-14-laion2B-s32B-b79K.safetensors"
+        max-reference-characters: 3
+        ipadapter-weight-budget: 0.6
     agents:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
