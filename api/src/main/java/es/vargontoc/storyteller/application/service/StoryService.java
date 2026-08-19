@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.client.ChatClient;
@@ -31,6 +32,8 @@ import jakarta.transaction.Transactional;
 @Service
 @Transactional
 public class StoryService implements StoryGeneration   {
+
+    private static final int MAX_ATTEMPTS = 3;
 
     @Value("classpath:/prompts/new_script.st")
     private Resource scriptResource;
@@ -72,11 +75,11 @@ public class StoryService implements StoryGeneration   {
             throw new ResourceNotFoundException("Topic requerido no encontrado");
         });
 
-        StoryAgentResult result = client.prompt().user(u -> u.text(scriptResource)
+        StoryAgentResult result = callAgent(() -> client.prompt().user(u -> u.text(scriptResource)
             .param("topic", topic.getType())
             .param("description", topic.getDescription())
             .param("pages", cmd.size().getPages()))
-        .call().entity(StoryAgentResult.class);
+        .call().entity(StoryAgentResult.class));
 
         return repository.create(result, cmd.size(), cmd.topicId());
     }
@@ -103,16 +106,16 @@ public class StoryService implements StoryGeneration   {
         reviewRepository.changeStatus(review.storyId(), RevisionStatus.DISCARDED);
 
         // 3. Llamamos al agente
-        StoryReviewAgentResult result = client.prompt().user(u -> u.text(reviewScriptResource)
+        StoryReviewAgentResult result = callAgent(() -> client.prompt().user(u -> u.text(reviewScriptResource)
             .param("topic", readTopic(t))
             .param("title", current.getTitle())
             .param("synopsis", current.getSummary())
             .param("pages", current.getSize().getPages())
             .param("hint", review.hint())
             .param("characters", describeCharacters(current)))
-        .call().entity(StoryReviewAgentResult.class);
+        .call().entity(StoryReviewAgentResult.class));
 
-        
+
         // 4. Devolvemos el resultado mapeado
         return reviewRepository.createStoryReview(result, review.storyId(), review.hint());
     }
@@ -140,6 +143,21 @@ public class StoryService implements StoryGeneration   {
         }
 
         return current;
+    }
+
+    private <T> T callAgent(Supplier<T> call) {
+        for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+            try {
+                return call.get();
+            } catch (RuntimeException e) {
+                if (attempt == MAX_ATTEMPTS) {
+                    throw new AppException(
+                        "El agente no devolvió una respuesta válida tras " + MAX_ATTEMPTS + " intentos: " + e.getMessage(),
+                        HttpStatus.BAD_REQUEST);
+                }
+            }
+        }
+        throw new AppException("El agente no devolvió una respuesta válida", HttpStatus.BAD_REQUEST);
     }
 
     private void applyChanges(Story story, StoryReview review) {

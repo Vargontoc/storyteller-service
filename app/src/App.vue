@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue'
 import { useServerStatusStore } from './stores/serverStatus'
+import ToastContainer from './components/ToastContainer.vue'
 import HeaderView from './views/HeaderView.vue';
 import StorytellerView from './views/StorytellerView.vue';
 const STATUS_POLL_INTERVAL_MS = 5_000
@@ -26,6 +27,8 @@ onUnmounted(() => {
       Sin conexión con el servidor.
     </p>
     <storyteller-view v-else></storyteller-view>
+
+    <toast-container />
   </main>
 </template>
 

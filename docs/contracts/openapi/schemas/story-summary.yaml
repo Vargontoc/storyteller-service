@@ -2,6 +2,9 @@ type: object
 description: Resumen de una historia para listados
 additionalProperties: false
 properties:
+  id:
+    type: integer
+    format: int64
   cover:
     type: string
     nullable: true
@@ -20,6 +23,7 @@ properties:
     type: integer
     description: Número de páginas ya generadas (sin contar la portada)
 required:
+  - id
   - title
   - synopsis
   - actors

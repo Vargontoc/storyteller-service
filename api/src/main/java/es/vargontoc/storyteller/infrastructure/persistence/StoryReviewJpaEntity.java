@@ -11,8 +11,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
@@ -24,7 +22,7 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
     @ManyToOne(optional = false)
     private StoryJpaEntity story;
 
-    @Column(name = "candidate_title", length = 30)
+    @Column(name = "candidate_title", length = 50)
     private String candidateTitle;
 
     @Column(name = "candidate_synopsis", length = 500)
@@ -33,10 +31,6 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
     @ElementCollection
     @CollectionTable(name = "story_review_character_draft", joinColumns = @JoinColumn(name = "review_id"))
     private List<CharacterDraft> candidateCharacters = new ArrayList<>();
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false)
-    private RevisionStatus status;
 
     public StoryReviewJpaEntity() { super(); }
 
