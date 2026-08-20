@@ -27,12 +27,48 @@
     }
   },
   "6": {
-    "class_type": "CLIPTextEncode",
-    "inputs": { "text": "{{POSITIVE_PROMPT}}", "clip": ["10", 1] }
+    "class_type": "smZ CLIPTextEncode",
+    "inputs": {
+      "text": "{{POSITIVE_PROMPT}}",
+      "clip": ["10", 1],
+      "parser": "A1111",
+      "mean_normalization": true,
+      "multi_conditioning": true,
+      "use_old_emphasis_implementation": false,
+      "with_SDXL": false,
+      "ascore": 6.0,
+      "width": 1024,
+      "height": 1024,
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": 1024,
+      "target_height": 1024,
+      "text_g": "",
+      "text_l": "",
+      "smZ_steps": 28
+    }
   },
   "7": {
-    "class_type": "CLIPTextEncode",
-    "inputs": { "text": "{{NEGATIVE_PROMPT}}", "clip": ["10", 1] }
+    "class_type": "smZ CLIPTextEncode",
+    "inputs": {
+      "text": "{{NEGATIVE_PROMPT}}",
+      "clip": ["10", 1],
+      "parser": "A1111",
+      "mean_normalization": true,
+      "multi_conditioning": true,
+      "use_old_emphasis_implementation": false,
+      "with_SDXL": false,
+      "ascore": 6.0,
+      "width": 1024,
+      "height": 1024,
+      "crop_w": 0,
+      "crop_h": 0,
+      "target_width": 1024,
+      "target_height": 1024,
+      "text_g": "",
+      "text_l": "",
+      "smZ_steps": 28
+    }
   },
   "8": {
     "class_type": "VAEDecode",

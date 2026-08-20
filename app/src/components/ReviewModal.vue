@@ -4,7 +4,7 @@
       <div v-if="open" class="overlay" @click.self="onClose" @keydown.esc="onClose">
         <div class="modal" role="dialog" aria-modal="true" aria-label="Revisar guión">
           <header class="modal-header">
-            <h2 class="title">Revisar guión</h2>
+            <h2 class="title">{{ title }}</h2>
             <button
               type="button"
               class="icon-button"
@@ -28,13 +28,25 @@
               <strong>El agente ha rechazado la revisión:</strong> {{ rejectedReason }}
             </p>
 
+            <div v-if="typeReview == 'ACTOR'" class="field">
+              <label for="topic-select">Campo para modificar:</label>
+              <div class="topic-row">
+                <select id="topic-select" v-model="actorTargetSelected" >
+                  <option :value="null" disabled>{{ 'Selecciona un objetivo de modificación...' }}</option>
+                  <option v-for="t in actorTarget" :key="t" :value="t">
+                    {{ getActorTargetText(t) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
             <div class="field">
               <label for="review-hint">Comentario</label>
               <textarea
                 id="review-hint"
                 v-model="hint"
                 rows="4"
-                placeholder="Indica qué te gustaría cambiar del guión..."
+                :placeholder="hintPlaceholder"
                 :disabled="submitting"
               ></textarea>
             </div>
@@ -53,44 +65,92 @@
 </template>
 
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { reviewStory, type StoryReview } from '../api/reviews'
+import { reviewActor, reviewStory, type ActorReview, type ReviewType, type StoryReview } from '../api/reviews'
+import { type ReviewActorTarget } from '../api/reviews'
 
 interface Props {
   open: boolean
   storyId: number | null
+  id: number | null
+  typeReview: ReviewType
 }
 
 const props = defineProps<Props>()
-const emit = defineEmits<{ close: []; accepted: [review: StoryReview] }>()
+const emit = defineEmits<{ close: []; accepted: [review: StoryReview | ActorReview] }>()
 
 const hint = ref('')
 const submitting = ref(false)
 const rejectedReason = ref<string | null>(null)
 const error = ref<string | null>(null)
+const actorTarget = ref<ReviewActorTarget[]>(['VISUAL', 'ROLE', 'BOTH'])
+const actorTargetSelected = ref<ReviewActorTarget | null>(null)
+const title = computed(() => {
+  switch(props.typeReview){
+    case 'ACTOR': return 'Revisar personaje'
+    case 'SCRIPT': return 'Revisar guión'
+    case 'COVER': return 'Revisar portada'
+    case 'PAGE': return 'Revisar página'
+  }
+})
 
-async function onSubmit() {
-  if (!props.storyId || !hint.value.trim()) return
+const hintPlaceholder = computed(() => {
+  let phrase = "Indica qué te gustaría cambiar ";
+    switch(props.typeReview){
+    case 'ACTOR': phrase += 'del personaje..'; break;
+    case 'SCRIPT': phrase += 'del guión...'; break;
+    case 'COVER': phrase += 'de la portada...'; break;
+    case 'PAGE': phrase += 'de la página...'; break;
+  }
+  return phrase;
+})
 
-  submitting.value = true
-  error.value = null
-  rejectedReason.value = null
-
-  try {
-    const review = await reviewStory(props.storyId, hint.value.trim())
-
-    if (review.rejectedReason) {
-      rejectedReason.value = review.rejectedReason
-    } else {
-      emit('accepted', review)
-    }
-  } catch (err) {
-    error.value = err instanceof ApiError ? err.message : 'Unexpected error'
-  } finally {
-    submitting.value = false
+function getActorTargetText(target: ReviewActorTarget){
+  switch(target) {
+    case 'VISUAL' : return 'Modificar visual';
+    case 'ROLE' : return 'Modificar rol';
+    case 'BOTH' : return 'Modificar rol y descripción'
   }
 }
+
+async function onSubmit() {
+    if(!props.storyId || !hint.value.trim()) return
+
+    submitting.value = true
+    error.value = null
+    rejectedReason.value = null
+
+    try {
+
+      switch(props.typeReview) {
+        case 'SCRIPT':
+          const review = await reviewStory(props.storyId, hint.value.trim())
+    
+          if (review.hintAccepted === false && review.rejectedReason) {
+            rejectedReason.value = review.rejectedReason
+          } else {
+            emit('accepted', review)
+          }
+          break;
+        case 'ACTOR':
+          if(!props.id || actorTargetSelected.value == null) return;
+
+          const actorReview = await reviewActor(props.storyId, props.id, actorTargetSelected.value, hint.value.trim())
+          if (actorReview.hintAccepted === false && actorReview.rejectedReason) {
+            rejectedReason.value = actorReview.rejectedReason
+          } else {
+            emit('accepted', actorReview)
+          }
+          break;
+      }
+    } catch (err) {
+      error.value = err instanceof ApiError ? err.message : 'Unexpected error'
+    } finally {
+      submitting.value = false
+    }
+}
+
 
 watch(
   () => props.open,
@@ -251,5 +311,21 @@ textarea {
 .modal-fade-enter-from,
 .modal-fade-leave-to {
   opacity: 0;
+}
+
+.topic-row {
+  display: flex;
+  gap: 8px;
+}
+
+.topic-row select {
+  flex: 1;
+  min-width: 0;
+  padding: 8px;
+  font: inherit;
+  color: var(--text-h);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
 }
 </style>

@@ -29,7 +29,7 @@
         </thead>
         <tbody>
           <tr v-for="story in items" :key="story.id" class="story-row" @dblclick="onRowDoubleClick(story)">
-            <td><story-cover :path="story.cover" /></td>
+            <td><path-image :path="story.cover" /></td>
             <td>{{ story.title }}</td>
             <td class="synopsis">{{ story.synopsis }}</td>
             <td>{{ story.size }}</td>
@@ -96,10 +96,9 @@ import { onMounted, ref } from 'vue'
 import { ApiError } from '../api/httpClient'
 import { deleteStory, getStory, getStories, type StorySummary } from '../api/storyteller'
 import ConfirmModal from '../components/ConfirmModal.vue'
-import StoryCover from '../components/StoryCover.vue'
-import StoryModal from '../components/StoryModal.vue'
+import PathImage from '../components/PathImage.vue'
 import TopicSelectionModal from '../components/TopicSelectionModal.vue'
-
+import StoryModal from '../components/StoryModal.vue'
 const PAGE_SIZE = 10
 
 const items = ref<StorySummary[]>([])

@@ -36,7 +36,7 @@ public class ResourceController {
 
     @PostMapping("/audios/generate")
     @Operation(description = "Genera audio del texto de una pagina")
-    public ResponseEntity<ApiResponse<byte[]>> generateImage(@RequestBody AudioGenerateCommand request) {
+    public ResponseEntity<ApiResponse<byte[]>> generateAudio(@RequestBody AudioGenerateCommand request) {
         return ResponseEntity.ok(ApiResponse.ok(audio.generateAudio(request)));
     }
     

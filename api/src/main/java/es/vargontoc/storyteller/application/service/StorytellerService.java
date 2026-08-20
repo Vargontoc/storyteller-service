@@ -95,7 +95,7 @@ public class StorytellerService implements StorytellerUseCase {
             entity.getId(),
             entity.getName(),
             entity.getNarrativeDescription(),
-            entity.getNarrativeDescription(),
+            entity.getVisualDescription(),
             entity.getImagePath());
     }
     @Override
@@ -136,5 +136,4 @@ public class StorytellerService implements StorytellerUseCase {
             throw new ResourceNotFoundException("Resource not found on path: " + path);
         return resource;
     }
-    
 }

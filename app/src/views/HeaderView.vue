@@ -1,6 +1,6 @@
 <template>
   <header class="header">
-    <p class="title">Storyteller Agent</p>
+    <p class="title">Agente Cuentacuentos</p>
 
     <div class="services">
       <div

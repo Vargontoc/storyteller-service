@@ -2,6 +2,7 @@ package es.vargontoc.storyteller.application.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -74,7 +75,7 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
         if(!ollama.isAvailable(model))
             throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
         
-        Story currentStory = storyRepository.getStory(review.id());
+        Story currentStory = storyRepository.getStory(review.storyId());
         
 
         // 2. Obtenemos el protagonista afectado
@@ -88,6 +89,7 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
         // 5. Llamamos al agente
         CharacterReviewAgentResult result = client.prompt().user(u -> u.text(reviewCharacterResource)
             .param("synopsis", currentStory.getSummary())
+            .param("other", readOtherCharacters(currentStory.getCharacters(), review.id()))
             .param("narrative", current.getNarrativeDescription())
             .param("visual", current.getVisualDescription())
             .param("target", review.target().toString())
@@ -98,6 +100,13 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
         return reviewRepository.createReview(result, review.id(), review.target(), review.hint());
     }
     
+    
+
+    private String readOtherCharacters(List<Actor> characters, long id) {
+        return characters.stream().filter(x -> x.getId() != id)
+            .map(c -> "( " + c.getNarrativeDescription() +" / " +  c.getVisualDescription()  + " )")
+            .collect(Collectors.joining(";"));
+    }
 
     @Override
     public ActorReview getReview(Long entityId) {

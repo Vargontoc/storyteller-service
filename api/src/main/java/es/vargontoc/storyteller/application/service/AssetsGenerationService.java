@@ -10,8 +10,11 @@ import es.vargontoc.storyteller.application.ports.in.generator.AudioGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.ImageGeneration;
 import es.vargontoc.storyteller.application.ports.out.external.AudioGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
+import es.vargontoc.storyteller.application.ports.out.external.PromptTranslatorPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
+import es.vargontoc.storyteller.application.utils.ReferenceCharacterSelector;
 import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
 import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;
@@ -28,23 +31,25 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
 
     private final CharacterRepository actorUseCase;
     private final StoryPageRepository pageUseCase;
-
+    private final StoryRepository storyRepository;
     private final ImageGeneratorPort generator;
     private final AudioGeneratorPort audioGenerator;
     private final ResourceStorageAdapter storage;
+    private final PromptTranslatorPort translator;
 
     private final String defaultVoice;
 
 
     public AssetsGenerationService(ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
-            ResourceStorageAdapter storage) {
+            ResourceStorageAdapter storage, PromptTranslatorPort translator, StoryRepository storyRepository) {
         this.actorUseCase = actorUseCase;
         this.pageUseCase = pageUseCase;
         this.generator = generator;
         this.storage = storage;
+        this.translator = translator;
         defaultVoice = chatterbox.defaultVoiceName();
         audioGenerator = audioPort;
-
+        this.storyRepository = storyRepository;
     }
 
 
@@ -55,18 +60,22 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
         if(kind == KindImage.ACTOR) {
             var actor = actorUseCase.getActor(id);
             image.storyId = actor.getStoryId();
-            String prompt = actor.getVisualDescription();
-            image.request = ImageGenerationRequest.actor(prompt);
+            var call = translator.translateCharacter(actor.getVisualDescription());
+            image.request = ImageGenerationRequest.actor(actor.getVisualDescription(), call.atributos());
         }
         else{
+
+            
             var page = pageUseCase.getPage(id);
+            var story = storyRepository.getStory(page.getStoryId());
+
             if(kind == KindImage.PAGE && page.getPage() == 0)
                 throw new AppException("El id proporcionado no pertenece a una página", HttpStatus.CONFLICT);
             if(kind == KindImage.COVER && page.getPage() != 0)
                 throw new AppException("El id proporcionado no pertenece a una portada", HttpStatus.CONFLICT);
             image.storyId = page.getStoryId();
-            String prompt = page.getScene();
-            image.request = ImageGenerationRequest.page(prompt, List.of());
+            String prompt = translator.translateToEnglish(page.getScene());
+            image.request = ImageGenerationRequest.page(prompt, ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
         }
 
         image = getResult(image);

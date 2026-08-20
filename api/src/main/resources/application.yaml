@@ -71,8 +71,8 @@ app:
         
         # -- LoRa properties
         lora-name: "childrens_book_illustration2_.safetensors"
-        lora-strength-model: 0.85
-        lora-strength-clip: 0.85
+        lora-strength-model: 0.65
+        lora-strength-clip: 0.65
         style-trigger-word: "Storybook Illustration art style"
 
         # -- IP Adapter
@@ -84,3 +84,4 @@ app:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
         scriptwriter: "${APP_AGENT_SCRIPTWRITER:storyteller-scriptwriter}"
+        translator: "${APP_AGENT_TRANSLATOR:qwen2.5:14b-instruct}"

@@ -21,6 +21,7 @@ public class ResourceStorageAdapter implements ResourceStorage {
             Path dir = basePath.resolve(String.valueOf(storyId))
                 .resolve(kind == KindImage.ACTOR ? "characters" : "pages")
                 .resolve(String.valueOf(id));
+            clearDirectory(dir, ".png");
             Files.createDirectories(dir);
             Path file = dir.resolve(Instant.now().toEpochMilli() + ".png");
             Files.write(file, imageBytes);
@@ -36,6 +37,7 @@ public class ResourceStorageAdapter implements ResourceStorage {
             Path dir = basePath.resolve(String.valueOf(storyId))
                 .resolve( "pages")
                 .resolve(String.valueOf(id));
+            clearDirectory(dir, ".wav");
             Files.createDirectories(dir);
             Path file = dir.resolve(Instant.now().toEpochMilli() + ".wav");
             Files.write(file, audioBytes);
@@ -45,10 +47,21 @@ public class ResourceStorageAdapter implements ResourceStorage {
         }
     }
 
+    private void clearDirectory(Path dir, String extension) throws IOException {
+        if (!Files.exists(dir))
+            return;
+
+        try (var entries = Files.list(dir)) {
+            for (Path entry : (Iterable<Path>) entries::iterator)
+                if (entry.getFileName().toString().endsWith(extension))
+                    Files.deleteIfExists(entry);
+        }
+    }
+
     @Override
     public byte[] getResource(String path) {
         try {
-            Path file = basePath.resolve(path);
+            Path file = Path.of(path);
             if(!Files.exists(file))
                 return null;
 

@@ -5,8 +5,8 @@
         <div class="modal-row">
           <div
             class="modal"
-            :class="{ 'modal-blocked': showReviewDetail }"
-            :inert="showReviewDetail"
+            :class="{ 'modal-blocked': showReviewDetail || isStateGeneration }"
+            :inert="showReviewDetail || isStateGeneration"
             role="dialog"
             aria-modal="true"
             :aria-label="title"
@@ -41,135 +41,60 @@
 
             <div class="tab-content">
               <div v-if="activeTab === 'guion'" class="guion-tab">
-                <p v-if="loadingStory">Cargando cuento...</p>
-                <p v-else-if="storyError" class="error">{{ storyError }}</p>
-
-                <template v-else-if="story">
-                  <button
-                    v-if="pendingReview"
-                    type="button"
-                    class="badge badge-button"
-                    @click="showReviewDetail = true"
-                  >
-                    Revisión pendiente
-                  </button>
-
-                  <dl class="guion-fields">
-                    <div class="guion-field">
-                      <dt>Tamaño</dt>
-                      <dd>{{ story.size }}</dd>
-                    </div>
-                    <div class="guion-field">
-                      <dt>Páginas generadas</dt>
-                      <dd>{{ story.pages }}</dd>
-                    </div>
-                    <div class="guion-field">
-                      <dt>Nº personajes</dt>
-                      <dd>{{ story.actors }}</dd>
-                    </div>
-                  </dl>
-
-                  <dl class="guion-field">
-                    <dt>Sinopsis</dt>
-                    <dd>{{ story.synopsis }}</dd>
-                  </dl>
-
-                  <div class="guion-actions">
-                    <div class="guion-actions-left">
-                      <button type="button" class="btn" @click="onGeneratePage">Generar página</button>
-                      <button
-                        type="button"
-                        class="btn"
-                        :disabled="!directorAgentActive"
-                        :title="directorAgentActive ? '' : 'El agente director no está disponible'"
-                        @click="showReviewModal = true"
-                      >
-                        Revisar guión
-                      </button>
-                    </div>
-
-                    <button type="button" class="btn btn-danger" @click="emit('delete', story)">
-                      Eliminar cuento
-                    </button>
-                  </div>
-                </template>
+                <story-content v-if="storyId"
+                  :story-id="storyId"
+                  @generate-page="onGeneratePage"
+                  @delete="onDelete"
+                  @review="showReview" />
               </div>
-              <div v-else-if="activeTab === 'portada'"></div>
-              <div v-else-if="activeTab === 'personajes'"></div>
-              <div v-else-if="activeTab === 'paginas'"></div>
-            </div>
-          </div>
+              <div v-else-if="activeTab === 'portada'">
+                <pages-content v-if="storyId"
+                  :story-id="storyId"
+                  :is-cover="true"
+                  @generate-asset="onAssetGeneration"></pages-content>
 
-          <div v-if="showReviewDetail && pendingReview" class="modal review-panel" role="dialog" aria-modal="true" aria-label="Revisión pendiente">
-            <header class="modal-header">
-              <h2 class="title">Revisión pendiente</h2>
-              <button
-                type="button"
-                class="icon-button"
-                aria-label="Cerrar"
-                title="Cerrar"
-                :disabled="resolvingReview"
-                @click="showReviewDetail = false"
-              >
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M6.7 5.3a1 1 0 0 0-1.4 1.4L10.6 12l-5.3 5.3a1 1 0 1 0 1.4 1.4L12 13.4l5.3 5.3a1 1 0 0 0 1.4-1.4L13.4 12l5.3-5.3a1 1 0 0 0-1.4-1.4L12 10.6 6.7 5.3Z"
-                  />
-                </svg>
-              </button>
-            </header>
-
-            <div class="review-body">
-              <p v-if="reviewActionError" class="error">{{ reviewActionError }}</p>
-
-              <dl class="guion-field">
-                <dt>Sinopsis propuesta</dt>
-                <dd>{{ pendingReview.previewStory.summary }}</dd>
-              </dl>
-
-              <dl class="guion-field">
-                <dt>Nº personajes</dt>
-                <dd>{{ pendingReview.previewStory.characters.length }}</dd>
-              </dl>
-
-              <dl class="guion-field">
-                <dt>Comentario del usuario</dt>
-                <dd>{{ pendingReview.hint }}</dd>
-              </dl>
-
-              <div class="review-actions">
-                <button type="button" class="btn" :disabled="resolvingReview" @click="onDiscardReview">
-                  Descartar
-                </button>
-                <button type="button" class="btn btn-primary" :disabled="resolvingReview" @click="onAcceptReview">
-                  Aceptar
-                </button>
+              </div>
+              <div v-else-if="activeTab === 'personajes'">
+                <actors-content v-if="storyId"
+                :story-id="storyId"
+                @review="showReview"
+                @generate-asset="onAssetGeneration"
+                
+                ></actors-content>
+              </div>
+              <div v-else-if="activeTab === 'paginas'">
+                <!-- review no existe todavía para páginas en backend: @review queda sin usar en pages-content hasta que exista -->
+                <pages-content v-if="storyId"
+                  :story-id="storyId"
+                  :is-cover="false"
+                  @generate-asset="onAssetGeneration"></pages-content>
               </div>
             </div>
           </div>
+
+          <review-details-modal
+            v-if="showReviewDetail"
+            @close="showReviewDetail = false"
+            @apply="applyReview"
+            :type="currentType"
+            :id="currentId" />
         </div>
       </div>
     </Transition>
   </Teleport>
-
-  <review-story-modal
-    :open="showReviewModal"
-    :story-id="storyId"
-    @close="showReviewModal = false"
-    @accepted="onReviewAccepted"
-  />
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { confirmStoryReview, getPendingStoryReview, type StoryReview } from '../api/reviews'
+import {  getPendingStoryReview, type ReviewType, type StoryReview, type RevisionStatus } from '../api/reviews'
 import { getStory, getStoryPages, type PageSummary, type StorySummary } from '../api/storyteller'
-import { useServerStatusStore } from '../stores/serverStatus'
 import { useToastStore } from '../stores/toast'
-import ReviewStoryModal from './ReviewStoryModal.vue'
-
+import ActorsContent from './content/ActorsContent.vue'
+import PagesContent from './content/PagesContent.vue'
+import StoryContent from './content/StoryContent.vue'
+import ReviewDetailsModal from './ReviewDetailsModal.vue'
+import { generatePage } from '../api/generations'
 type TabId = 'guion' | 'portada' | 'personajes' | 'paginas'
 
 interface Props {
@@ -181,9 +106,17 @@ interface Props {
 const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; delete: [story: StorySummary]; updated: [storyId: number] }>()
 
-const serverStatus = useServerStatusStore()
 const toastStore = useToastStore()
-const directorAgentActive = computed(() => serverStatus.data?.ollama.director ?? false)
+const currentType = computed((): ReviewType => {
+  switch(activeTab.value){
+    case 'guion': return 'SCRIPT';
+    case 'personajes': return 'ACTOR';
+    case 'portada': return 'COVER';
+    case 'paginas': return 'PAGE';
+  }
+})
+
+const currentId = ref<number | undefined>(undefined)
 
 const activeTab = ref<TabId>('guion')
 
@@ -194,16 +127,16 @@ const storyError = ref<string | null>(null)
 const pendingReview = ref<StoryReview | null>(null)
 const showReviewModal = ref(false)
 const showReviewDetail = ref(false)
-const resolvingReview = ref(false)
 const reviewActionError = ref<string | null>(null)
+const isStateGeneration = ref<boolean>(false)
 
 const hasCoverPage = computed(() => pages.value.some((page) => page.page === 0))
 const hasRegularPage = computed(() => pages.value.some((page) => page.page >= 1))
 
 const visibleTabs = computed<{ id: TabId; label: string }[]>(() => {
   const result: { id: TabId; label: string }[] = [{ id: 'guion', label: 'Guión' }]
-  if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
   result.push({ id: 'personajes', label: 'Personajes' })
+  if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
   if (hasRegularPage.value) result.push({ id: 'paginas', label: 'Páginas' })
   return result
 })
@@ -212,6 +145,9 @@ const unlockedTabs = computed<TabId[]>(() => (props.mode === 'create' ? ['guion'
 
 const title = computed(() => story.value?.title ?? (props.mode === 'create' ? 'Crear cuento' : 'Editar cuento'))
 
+function onAssetGeneration(run: boolean) {
+    isStateGeneration.value = run
+}
 function isUnlocked(tab: TabId) {
   return tab === 'portada' || tab === 'paginas' ? true : unlockedTabs.value.includes(tab)
 }
@@ -236,41 +172,27 @@ async function loadStory(storyId: number) {
   }
 }
 
-function onReviewAccepted(review: StoryReview) {
-  showReviewModal.value = false
-  pendingReview.value = review
-  toastStore.show('Revisión aceptada y creada')
+function showReview(id: number){
+  currentId.value = id;
+  showReviewDetail.value = true
 }
 
-async function resolveReview(status: 'CONFIRMED' | 'DISCARDED') {
+function onDelete(){
+  if(story.value == null)
+    return
+  emit('delete', story.value)
+}
+
+
+async function applyReview(status: RevisionStatus){
   if (!props.storyId) return
 
-  resolvingReview.value = true
-  reviewActionError.value = null
-
-  try {
-    await confirmStoryReview(props.storyId, status)
-    showReviewDetail.value = false
-    pendingReview.value = null
-    toastStore.show(status === 'CONFIRMED' ? 'Revisión confirmada' : 'Revisión descartada')
+  showReviewDetail.value = false
+  toastStore.show(status === 'CONFIRMED' ? 'Revisión confirmada' : 'Revisión descartada')
+  if(status == 'CONFIRMED'){
     await loadStory(props.storyId)
-
-    if (status === 'CONFIRMED') {
-      emit('updated', props.storyId)
-    }
-  } catch (err) {
-    reviewActionError.value = err instanceof ApiError ? err.message : 'Unexpected error'
-  } finally {
-    resolvingReview.value = false
+    emit('updated', props.storyId)
   }
-}
-
-function onAcceptReview() {
-  resolveReview('CONFIRMED')
-}
-
-function onDiscardReview() {
-  resolveReview('DISCARDED')
 }
 
 watch(
@@ -304,8 +226,27 @@ function onOverlayClose() {
   onClose()
 }
 
-function onGeneratePage() {
-  // TODO: wire up once the page generation flow is scoped.
+async function onGeneratePage() {
+  if(!props.storyId || !story.value) return
+  if(story.value.pages == story.value.size)
+  {
+    toastStore.show('Ya has alcanzado el número máximo de páginas')
+    return
+  }
+  isStateGeneration.value = true
+  try {
+    const [result] = await Promise.all([generatePage(props.storyId)])
+    toastStore.show(result.page == 0 ? 'Portada generada' : 'Nueva página generada')
+
+    await loadStory(props.storyId)
+    emit('updated', props.storyId)
+
+  }catch(err) {
+    toastStore.show('Algo fue mal en la generación de páginas')
+  }finally {
+    isStateGeneration.value = false
+  }
+
 }
 </script>
 

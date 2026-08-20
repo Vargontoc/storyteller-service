@@ -4,6 +4,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
@@ -21,9 +23,11 @@ import es.vargontoc.storyteller.infrastructure.config.ComfyUIProperties;
 import es.vargontoc.storyteller.infrastructure.storage.WorkflowTemplateLoader;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
+
 @Component
 public class ImageGeneratorAdapter implements ImageGeneratorPort {
-
+    private static final double SUBJECT_EMPHASIS_WEIGHT = 1.3;
+    private static final Logger LOG = LoggerFactory.getLogger(ImageGeneratorAdapter.class);
     private final ComfyUIClient client;
     private final WorkflowTemplateLoader loader;
     private final OllamaPort ollama;
@@ -53,17 +57,19 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
         // 2. Obtenemos workflow path segun tipo de peticion
         String workflowPath = getWorkflowPath(request.kind());
 
+    LOG.info("Path : {}", workflowPath);
+
         int[] dimensions = getDimensions(request.kind());
         
         // 3. Obtenemos prompt positive segun tipo de peticion
         String positivePrompt = buildPositive(request);
-
+    LOG.info("Positive: {}", positivePrompt);
         // 4. Obtenemos prompt negative
         String negativePrompt = buildNegative(request);
-
+    LOG.info("Negative: {}", negativePrompt);
         // 5. Obtenemos seed
         long seed = request.seed() != null ? request.seed() : System.nanoTime();
-
+        
         // 3. Cargamos el workflow
         String workflow = loader.render(new WorkflowProperties(workflowPath, positivePrompt, negativePrompt, seed, dimensions, config.loraName(), config.loraStrengthModel(), config.loraStrengthClip()));
         String promptId = client.queuePrompt(workflow);
@@ -121,10 +127,16 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
         String trigger = (config.styleTriggerWord() == null || config.styleTriggerWord().isBlank()) 
             ? "" : ", " + config.styleTriggerWord();
 
+            String subject = (request.kind() == KindImage.ACTOR && !request.attributes().isEmpty())
+        ? request.attributes().stream()
+            .map(attr -> "(%s:%.1f)".formatted(attr, SUBJECT_EMPHASIS_WEIGHT))
+            .collect(java.util.stream.Collectors.joining(", "))
+        : "(%s:%.1f)".formatted(request.visualDescription(), SUBJECT_EMPHASIS_WEIGHT);
+
         return switch (request.kind()){
-            case ACTOR -> config.stylePrefix() + ", " + config.characterFramingPrompt() + trigger + ", " +request.visualDescription();
-            case PAGE -> config.stylePrefix() + trigger + ", " + request.visualDescription();
-            case COVER -> config.stylePrefix() + "; " + config.coverFramingPrompt() + trigger + ", " + request.visualDescription();
+            case ACTOR -> request.visualDescription()+ ", " + config.stylePrefix() + ", " + config.characterFramingPrompt() + trigger;
+            case PAGE -> request.visualDescription() + ", " + config.stylePrefix() + trigger;
+            case COVER -> request.visualDescription() + ", "  + config.stylePrefix() + "; " + config.coverFramingPrompt() + trigger;
         };
     }
 

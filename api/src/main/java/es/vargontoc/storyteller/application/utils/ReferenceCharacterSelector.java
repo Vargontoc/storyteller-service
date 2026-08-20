@@ -8,7 +8,7 @@ import es.vargontoc.storyteller.domain.model.Actor;
 
 public class ReferenceCharacterSelector {
     
-    static List<Path> selectReferenceImages(List<Actor> actors, int max){
+    public static List<Path> selectReferenceImages(List<Actor> actors, int max){
         return actors.stream()
             .filter(a -> a.getImage() != null && !a.getImage().isBlank())
             .limit(max)

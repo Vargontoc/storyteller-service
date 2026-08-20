@@ -71,7 +71,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
         // 2. Obtenemos la story
         Story story = storyRepository.getStory(cmd.idStory());
-        if(cmd.cover())
+        if(story.getPages().isEmpty())
             return generateCover(story);
 
         List<StoryPage> pages = story.getPages().stream().filter(x -> x.getPage() != 0).toList();

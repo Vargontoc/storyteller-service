@@ -31,6 +31,20 @@ export function getStory(id: number) {
   return httpClient.get<ApiEnvelope<StorySummary>>(`/api/v1/storyteller/${id}`).then((envelope) => envelope.data)
 }
 
+export interface ActorSummary {
+  id: number,
+  name: string,
+  role: string,
+  description: string,
+  image: string | null
+}
+
+export function getStoryActors(storyId: number) {
+  return httpClient
+  .get<ApiEnvelope<ActorSummary[]>>(`/api/v1/storyteller/${storyId}/actors`)
+  .then((envelope) => envelope.data)
+}
+
 export interface PageSummary {
   id: number
   page: number

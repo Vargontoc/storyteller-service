@@ -1,5 +1,7 @@
 package es.vargontoc.storyteller.infrastructure.persistence;
 
+import java.time.LocalDateTime;
+
 import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.shared.ReviewBaseEntity;
@@ -54,6 +56,7 @@ public class CharacterReviewJpaEntity extends ReviewBaseEntity {
             result.setRejectedReason(rejectedReason);
             result.setCandidateNarrative(narrative);
             result.setCandidateVisual(visual);
+            result.setCreatedAt(LocalDateTime.now());
             if(hintAccepted)
                 result.setStatus(RevisionStatus.PENDING);
             else
