@@ -1,9 +1,11 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.persistence;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
@@ -24,17 +26,19 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     private final StoryPageJpaRepository repository;
     private final StoryJpaRepository storyRepository;
     private final StoryPageMapper mapper;
+    private final ResourceStorage storage;
 
     public StoryPageRepositoryAdapter(
         AbstractValidator<StoryPageAgentResult> validator,
         StoryPageJpaRepository repository,
         StoryJpaRepository storyRepository,
-        StoryPageMapper mapper
+        StoryPageMapper mapper, ResourceStorage storage
     ){
         this.validator = validator;
         this.mapper = mapper;
         this.repository = repository;
         this.storyRepository = storyRepository;
+        this.storage = storage;
     }
 
     @Override
@@ -71,6 +75,8 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
 
     @Override
     public StoryPage update(StoryPage page) {
+
+
         return null;
     }
 
@@ -104,6 +110,11 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     @Override
     public StoryPage updateWithReview(Long idPage, StoryPageReview review) {
         StoryPageJpaEntity entity = repository.findById(idPage).get();
+        if(entity.getPage() != 0)
+            validator.validate(new StoryPageAgentResult(review.getText(), review.getScene()));
+
+        List<Long> pages = repository.getPagesIdByStory(entity.getStory().getId(), entity.getPage());
+
         if(entity.getPage() == 0) {
             entity.setScenePrompt(review.getScene());
             entity.setImageAsset(null);
@@ -115,6 +126,11 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
             
             repository.deletePages(entity.getStory().getId(), entity.getPage());
         }
+        
+        var stored = repository.save(entity);
+
+        storage.deletePageAssets(stored.getStory().getId(), idPage, stored.getPage() == 0 ? List.of() : pages);
+
 
         return mapper.toModel(repository.save(entity));
 

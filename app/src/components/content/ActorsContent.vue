@@ -52,9 +52,7 @@
                     <button
                         type="button"
                         class="btn"
-                        :disabled="!directorAgentActive"
-                        :title="directorAgentActive ? '' : 'El agente director no está disponible'"
-                        @click="showReviewModal = true"
+                        @click="callReview"
                     >
                     Revisar personaje
                     </button>
@@ -117,6 +115,14 @@ async function refreshActor(id: number) {
     if (index !== -1) {
         actors.value[index] = updated
     }
+}
+
+function callReview(){
+    if(directorAgentActive.value == false){
+        toastStore.show("El Agente director está detenido o inaccesible")
+        return
+    }
+    showReviewModal.value = true
 }
 
 async function callGenerateImage() {

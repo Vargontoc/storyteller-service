@@ -5,34 +5,56 @@ import java.util.List;
 
 import org.springframework.stereotype.Repository;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
+import es.vargontoc.storyteller.infrastructure.validations.ActorValidation;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 
 @Repository
 public class CharacterRepositoryAdapter implements CharacterRepository {
 
     private final CharacterJpaRepository repository;
+    private final StoryPageJpaRepository pagesRepository;
+    private final ResourceStorage storage;
     private final CharacterMapper mapper;
+    private final ActorValidation validation;
 
-    public CharacterRepositoryAdapter(CharacterJpaRepository repository, CharacterMapper mapper) {
+    public CharacterRepositoryAdapter(CharacterJpaRepository repository,
+        StoryPageJpaRepository pagesRepository,
+        ResourceStorage storage,
+        ActorValidation validation, 
+        CharacterMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
+        this.validation = validation;
+        this.pagesRepository = pagesRepository;
+        this.storage = storage;
     }
 
 
 
     @Override
     public Actor update(Actor character) {
-        
+        // Validar 
+        validation.validate(character);
+
+        // Borramos paginas
+        pagesRepository.deletePages(character.getStoryId(), -1);
+
         CharacterJpaEntity stored = repository.findById(character.getId()).get();
         stored.setNarrativeDescription(character.getNarrativeDescription());
         stored.setVisualDescription(character.getVisualDescription());
         stored.setUpdatedAt(LocalDateTime.now());
         repository.save(stored);
+
+        // Borramos assets
+        storage.deleteCharacterAssets(character.getStoryId(), character.getId());
+        
         return character;
     }
 

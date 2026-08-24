@@ -29,6 +29,7 @@ public class SecurityConfig {
     @Value("${app.cors.allowed-origin-patterns:}")
     private String allowedOriginPatterns;
 
+    @SuppressWarnings("null")
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
@@ -50,6 +51,7 @@ public class SecurityConfig {
         return http.build();
     }
 
+    @SuppressWarnings("null")
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         var configuration = new CorsConfiguration();

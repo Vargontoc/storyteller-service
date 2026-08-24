@@ -6,4 +6,4 @@ Guión actual:
     Paginas: {pages}
     Personajes: {characters}
 Hint del adulto: {hint}
-Evalúa el hint segúnb tus reglas y devuelve el guión resultante
+Evalúa el hint según tus reglas y devuelve el guión resultante

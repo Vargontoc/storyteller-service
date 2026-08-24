@@ -1,6 +1,6 @@
 import { ApiError, httpClient } from './httpClient'
 import type { ApiEnvelope } from './envelope'
-import type { Actor, Story } from './generations'
+import type { Actor, Page, Story } from './generations'
 
 
 export type RevisionStatus = 'PENDING' | 'CONFIRMED' | 'DISCARDED'
@@ -78,16 +78,20 @@ export function confirmActorReview(actorId: number, status: RevisionStatus) {
     .then((envelope) => envelope.data)
 }
 
-export function isStoryReview(review: StoryReview | ActorReview): review is StoryReview {
+export function isStoryReview(review: StoryReview | ActorReview | PageReview): review is StoryReview {
   return 'previewStory' in review
 }
 
-export function isActorReview(review: StoryReview | ActorReview): review is ActorReview {
+export function isActorReview(review: StoryReview | ActorReview | PageReview): review is ActorReview {
   return 'characterId' in review
 }
 
+export function isPageReview(review: StoryReview | ActorReview | PageReview): review is PageReview {
+  return 'idPage' in review
+}
+
 export interface PageReview {
-  pageId: number
+  idPage: number
   text?: string
   scene?: string
   hint?: string
@@ -97,9 +101,9 @@ export interface PageReview {
 }
 
 
-export function reviewPage(storyId: number, id: number,  target: ReviewPageTarget, hint: string) {
+export function reviewPage(storyId: number, pageId: number,  target: ReviewPageTarget, hint: string) {
   return httpClient
-    .post<ApiEnvelope<StoryReview>>('/api/v1/reviews/page', { storyId, id, target, hint })
+    .post<ApiEnvelope<StoryReview>>('/api/v1/reviews/page', { storyId, pageId, target, hint })
     .then((envelope) => envelope.data)
 }
 
@@ -118,7 +122,7 @@ export async function getPageReview(id: number): Promise<PageReview | null> {
 
 export function confirmPageReview(id: number, status: RevisionStatus) {
   return httpClient
-    .post<ApiEnvelope<Story>>('/api/v1/reviews/page/confirm', { entityId: id, status })
+    .post<ApiEnvelope<Page>>('/api/v1/reviews/page/confirm', { entityId: id, status })
     .then((envelope) => envelope.data)
 }
 

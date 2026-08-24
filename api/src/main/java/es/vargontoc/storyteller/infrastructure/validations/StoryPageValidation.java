@@ -11,10 +11,10 @@ public class StoryPageValidation extends AbstractValidator<StoryPageAgentResult>
     @Override
     public void validate(StoryPageAgentResult target) {
 
-        requireNonBlank(target.text(), "title");
-        requireMaxLength(target.text(), 500, "title");
-        requireNonBlank(target.promptScene(), "title");
-        requireMaxLength(target.promptScene(), 2000, "title");
+        requireNonBlank(target.text(), "text");
+        requireMaxLength(target.text(), 500, "text");
+        requireNonBlank(target.promptScene(), "scene");
+        requireMaxLength(target.promptScene(), 2000, "scene");
     }
     
 }

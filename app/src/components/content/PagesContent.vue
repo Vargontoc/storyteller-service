@@ -8,7 +8,7 @@
             role="tab"
             class="tab"
             :class="{active: activeTab == actor.id}"
-            :aria-selected="activeTab == actor.id"
+            :aria-selected="activeTab == actor.id"  
             @click="activeTab = actor.id"
         >{{ 'Pagina ' + actor.page }}</button>
     </nav>
@@ -16,6 +16,12 @@
         <p v-if="loading">Cargando paginas...</p>
         <p v-else-if="error" class="error">{{ error }}</p>
         <template v-else>
+            <button 
+                v-if="currentPageHasReview"
+                type="button"
+                class="badge badge-button"
+                @click="$emit('review', getPageActive().id)">Revisión pendiente</button>
+
             <dl class="fields">
                 <div class="field">
                     <dt>Imagen</dt>
@@ -56,8 +62,29 @@
                     <dd>{{ getPageActive().scene }}</dd>
                 </div>
             </dl>
+
+            <div class="actions">
+                <div class="actions-left">
+                    <button
+                        type="button"
+                        class="btn"
+                        @click="callReview"
+                    >
+                    Revisar {{ props.isCover ? ' portada' : ' página' }}
+                    </button>
+                </div>
+            </div>
         </template>
     </div>
+
+    <review-modal
+        :open="showReviewModal"
+        :type-review="getPageActive().page == 0 ? 'COVER': 'PAGE'"
+        :story-id="storyId"
+        :id="getPageActive().id ?? null"
+        @close="showReviewModal = false"
+        @accepted="onReviewAccepted"
+    />
 </template>
 
 
@@ -66,8 +93,9 @@ import { computed, ref } from 'vue';
 import { getStoryPages, type PageSummary } from '../../api/storyteller';
 import { useServerStatusStore } from '../../stores/serverStatus';
 import { ApiError } from '../../api/httpClient';
-import { getPageReview, type PageReview } from '../../api/reviews';
+import { getPageReview, isPageReview, type ActorReview, type PageReview, type StoryReview } from '../../api/reviews';
 import { useToastStore } from '../../stores/toast';
+import ReviewModal from '../ReviewModal.vue';
 
 import PathImage from '../PathImage.vue';
 import PathAudio from '../PathAudio.vue';
@@ -86,10 +114,18 @@ const pages = ref<PageSummary[]>([])
 const loading = ref<boolean>(false)
 const error = ref<string | null>(null)
 const activeTab = ref<number | null>(null)
+const showReviewModal = ref<boolean>(false)
 const pendingReview = ref<PageReview[]>([])
 const writerAgentActive = computed(() => serverStatus.data?.ollama.scriptwriter ?? false )
 const audioServiceActive = computed(() => serverStatus.data?.chatterbox ?? false)
 const imageServiceActive = computed(() => serverStatus.data?.comfy ?? false)
+const currentPageHasReview = computed(() => {
+    let has = false
+    pendingReview.value.forEach((r) => {
+        if(r.idPage == getPageActive().id) { has = true }
+    })
+    return has;
+})
 
 async function refreshPage(id: number) {
     const result = await getStoryPages(props.storyId)
@@ -102,6 +138,14 @@ async function refreshPage(id: number) {
     }
 }
 
+
+function callReview(){
+    if(writerAgentActive.value == false){
+        toastStore.show("El Agente escritor está detenido o inaccesible")
+        return
+    }
+    showReviewModal.value = true
+}
 async function callGenerateAudio() {
     if(audioServiceActive.value == false){
         toastStore.show("El servicio de audio está detenido")
@@ -156,9 +200,9 @@ async function loadPages()
         const [result] = await Promise.all([getStoryPages(props.storyId)])
         pages.value = []
         result.forEach((p) => {
-            if(props.isCover && p.page == 0){
+            if(props.isCover === true && p.page == 0){
                 pages.value.push(p)
-            }else if(!props.isCover && p.page != 0) {
+            }else if(props.isCover === false && p.page != 0) {
                 pages.value.push(p)
             }
         })
@@ -175,6 +219,7 @@ async function loadPages()
 
 async function loadReview(id: number){
     const [review] = await  Promise.all([getPageReview(id)]);
+    console.log(review)
     if(review){
         pendingReview.value.push(review)
     }
@@ -188,6 +233,27 @@ function getPageActive() {
         }
     })
     return page;
+}
+
+function onReviewAccepted(review: StoryReview | ActorReview | PageReview){
+    if(!isPageReview(review)) return
+
+    showReviewModal.value = false
+    addOrUpdateReview(review)
+    toastStore.show('Revisión aceptada y creada')
+}
+
+function addOrUpdateReview(review: PageReview) {
+    let updated  = false
+    pendingReview.value.forEach((r, i) => {
+        if(r.idPage == review.idPage){
+            pendingReview.value[i] = review
+            updated = true
+        }
+    })
+
+    if(updated == false)
+        pendingReview.value.push(review)
 }
 
 loadPages()

@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 
@@ -69,5 +70,67 @@ public class ResourceStorageAdapter implements ResourceStorage {
         }catch(IOException e){
             return null;
         }
+    }
+
+    @Override
+    public void deleteStoryAssets(long idStory) {
+
+            Path dir = basePath.resolve(String.valueOf(idStory));
+            if(Files.exists(dir)) {
+                try {
+                    Files.deleteIfExists(dir);
+                }catch(IOException e) {
+                    
+                }
+            }
+
+    }
+
+    @Override
+    public void deleteCharacterAssets(long idStory, long characterId) {
+        // Borramos páginas
+        Path dir = basePath.resolve(String.valueOf(idStory)).resolve("pages");
+        if(Files.exists(dir)) {
+            try {
+                Files.deleteIfExists(dir);
+            }catch(IOException e) {
+                
+            }
+        }
+
+        // Borramos assets propios del character
+        dir = basePath.resolve(String.valueOf(idStory)).resolve("characters").resolve(String.valueOf(characterId));
+        if(Files.exists(dir)) {
+            try {
+                Files.deleteIfExists(dir);
+            }catch(IOException e) {
+                
+            }
+        }
+
+    }
+
+    @Override
+    public void deletePageAssets(long idStory, long pageId, List<Long> descendants) {
+
+        // Borramos los assets propios
+        Path dir = basePath.resolve(String.valueOf(idStory)).resolve("pages").resolve(String.valueOf(pageId));
+        if(Files.exists(dir)) {
+            try {
+                Files.deleteIfExists(dir);
+            }catch(IOException e) {
+                
+            }
+        }
+
+        // Borramos assets de paginas descendientes
+        descendants.forEach(d ->  {
+            Path desc = basePath.resolve(String.valueOf(idStory)).resolve("pages").resolve(String.valueOf(d));
+            try {
+                Files.deleteIfExists(desc);
+            }catch(IOException e) {
+                
+            }
+        });
     }
 }

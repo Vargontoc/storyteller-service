@@ -23,7 +23,9 @@ import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
+import es.vargontoc.storyteller.domain.response.StoryCoverReviewAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryPageReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
 import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
@@ -35,6 +37,9 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
     @Value("classpath:/prompts/new_cover.st")
     private Resource creatCoverResource;
+    @Value("classpath:/prompts/review_cover.st")
+    private Resource reviewCoverResource;
+
     @Value("classpath:/prompts/new_page.st")
     private Resource createPageResource;
 
@@ -95,6 +100,47 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
     }
 
     
+    @Override
+    public StoryPageReview review(StoryPageReviewCommand review) {
+        if(!ollama.isAvailable(model))
+            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
+
+        StoryPage current =  getPage(review.pageId());
+        Story story = storyRepository.getStory(current.getStoryId());
+
+        reviewRepositoy.changeStatus(review.pageId(), RevisionStatus.DISCARDED);
+
+        if(current.getPage() == 0)
+            return reviewCover(review, story, current);
+
+        List<StoryPage> pages = story.getPages().stream().filter(x -> x.getPage() != 0 && x.getPage() < current.getPage()).toList();
+        int totalPages = pages.size();
+        int currentPage = totalPages + 1;
+        int maxPages = story.getSize().getPages();
+
+        StoryPageReviewAgentResult result = client.prompt()
+            .user(u -> u.text(creatCoverResource)
+                .param("synopsis", story.getSummary())
+                .param("actors", readActors(story.getCharacters()))
+                .param("pages", readPages(pages))
+                .param("current", currentPage + 1)
+                .param("total", maxPages)
+                .param("text", current.getText())
+                .param("scene", current.getScene())
+                .param("target", review.target().name())
+                .param("hint", review.hint()))
+            .call().entity(StoryPageReviewAgentResult.class);
+
+        
+
+        return reviewRepositoy.createReview(result, review.pageId(), review.target(), review.hint());
+    }
+
+    @Override
+    public StoryPageReview getReview(Long entityId) {
+        repository.getPage(entityId);
+        return reviewRepositoy.getPendingReview(entityId);
+    }
 
     private String readPages(List<StoryPage> pages) {
         if(pages.isEmpty())
@@ -128,27 +174,23 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             .collect(Collectors.joining("; "));
     }
 
-    @Override
-    public StoryPageReview getReview(Long entityId) {
-        repository.getPage(entityId);
 
-        return reviewRepositoy.getPendingReview(entityId);
+    private StoryPageReview reviewCover(StoryPageReviewCommand cmd, Story story, StoryPage page) {
+
+        StoryCoverReviewAgentResult result = client.prompt()
+            .user(u -> u.text(reviewCoverResource)
+                .param("synopsis", story.getSummary())
+                .param("scene", page.getScene())
+                .param("hint", cmd.hint())
+                .param("actors", readActors(story.getCharacters())))
+            .call().entity(StoryCoverReviewAgentResult.class);
+
+        StoryPageReviewAgentResult r = new StoryPageReviewAgentResult("", result.scene(), result.hintAccepted(), result.rejectedReason());
+
+        return reviewRepositoy.createReview(r, cmd.pageId(), cmd.target(), cmd.hint());
     }
 
-    @Override
-    public StoryPageReview review(StoryPageReviewCommand review) {
-        if(!ollama.isAvailable(model))
-            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
 
-        StoryPage current =  getPage(review.pageId());
-
-        reviewRepositoy.changeStatus(review.pageId(), RevisionStatus.DISCARDED);
-
-        
-
-
-        return null;
-    }
 
     @Override
     public StoryPage confirmReview(ConfirmReviewRequestDto request) {

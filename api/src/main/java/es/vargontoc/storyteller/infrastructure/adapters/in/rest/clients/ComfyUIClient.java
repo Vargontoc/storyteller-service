@@ -110,7 +110,6 @@ public class ComfyUIClient {
             form.add("image", new ByteArrayResource(bytes) {
                 @Override
                 public @Nullable String getFilename() {
-                    // TODO Auto-generated method stub
                     return localImage.getFileName().toString();
                 }
             });

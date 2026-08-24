@@ -39,6 +39,7 @@ public class StorytellerService implements StorytellerUseCase {
     }
 
     private StorySummary toSummary(StoryJpaEntity entity) {
+        @SuppressWarnings("null")
         String cover = entity.getPages().stream()
             .filter(x -> x.getPage() == 0)
             .findFirst()
@@ -63,6 +64,7 @@ public class StorytellerService implements StorytellerUseCase {
     @Override
     public void deleteStory(Long id) {
         repository.deleteById(id);
+        storage.deleteStoryAssets(id);
     }
     @Override
     public StorySummary getStory(Long id) {

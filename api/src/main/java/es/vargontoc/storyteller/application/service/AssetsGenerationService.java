@@ -1,6 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
-import java.util.List;
+
 import java.util.Objects;
 
 import org.springframework.http.HttpStatus;
@@ -61,7 +61,7 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
             var actor = actorUseCase.getActor(id);
             image.storyId = actor.getStoryId();
             var call = translator.translateCharacter(actor.getVisualDescription());
-            image.request = ImageGenerationRequest.actor(actor.getVisualDescription(), call.atributos());
+            image.request = ImageGenerationRequest.actor(call.textoTraducido(), call.atributosVisuales());
         }
         else{
 

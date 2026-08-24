@@ -23,7 +23,7 @@
             <p v-if="reviewError" class="error">{{ reviewError }}</p>
             <review-actor-content v-if="props.type == 'ACTOR'" :id="props.id" />
             <review-story-content v-if="props.type == 'SCRIPT'" :id="props.id" />
-
+            <review-page-content v-if="props.type == 'COVER' || props.type == 'PAGE'" :id="props.id" />
             <div class="review-actions">
                 <button type="button" class="btn" :disabled="clickAction" @click="onResolveReview('DISCARDED')">
                     Descartar
@@ -38,9 +38,10 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
-import { confirmActorReview, confirmStoryReview, type RevisionStatus, type ReviewType } from '../api/reviews';
+import { confirmActorReview, confirmStoryReview, type RevisionStatus, type ReviewType, confirmPageReview } from '../api/reviews';
 import ReviewActorContent from './content/ReviewActorContent.vue';
 import ReviewStoryContent from './content/ReviewStoryContent.vue';
+import ReviewPageContent from './content/ReviewPageContent.vue';
 import { ApiError } from '../api/httpClient';
 
 interface Props {
@@ -62,7 +63,7 @@ function onResolveReview(status: RevisionStatus) {
 
     if(props.type == 'SCRIPT') {
         confirmStoryReview(props.id, status).then(() => {
-            
+            emit('apply', status)
         }).catch((err) => {
             reviewError.value =  err instanceof ApiError ? err.message : 'Unexpected error'
         }).finally(() => {
@@ -78,6 +79,17 @@ function onResolveReview(status: RevisionStatus) {
         }).finally(() => {
             clickAction.value = true
         })
+    }
+
+    if(props.type == 'COVER' || props.type == 'PAGE'){
+        confirmPageReview(props.id, status).then(() => {
+            emit('apply', status)
+        }).catch((err) => {
+            reviewError.value =  err instanceof ApiError ? err.message : 'Unexpected error'
+        }).finally(() => {
+            clickAction.value = true
+        })
+
     }
 }
 

@@ -40,6 +40,18 @@
               </div>
             </div>
 
+            <div v-if="typeReview == 'PAGE'" class="field">
+              <label for="topic-select">Campo para modificar:</label>
+              <div class="topic-row">
+                <select id="topic-select" v-model="pageTargetSelected" >
+                  <option :value="null" disabled>{{ 'Selecciona un objetivo de modificación...' }}</option>
+                  <option v-for="t in pageTarget" :key="t" :value="t">
+                    {{ getPageTargetText(t) }}
+                  </option>
+                </select>
+              </div>
+            </div>
+
             <div class="field">
               <label for="review-hint">Comentario</label>
               <textarea
@@ -67,7 +79,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { reviewActor, reviewStory, type ActorReview, type ReviewType, type StoryReview } from '../api/reviews'
+import { reviewActor, reviewPage, reviewStory, type ActorReview, type ReviewPageTarget, type ReviewType, type StoryReview } from '../api/reviews'
 import { type ReviewActorTarget } from '../api/reviews'
 
 interface Props {
@@ -85,7 +97,10 @@ const submitting = ref(false)
 const rejectedReason = ref<string | null>(null)
 const error = ref<string | null>(null)
 const actorTarget = ref<ReviewActorTarget[]>(['VISUAL', 'ROLE', 'BOTH'])
+const pageTarget = ref<ReviewPageTarget[]>(['TEXT', 'SCENE', 'BOTH'])
 const actorTargetSelected = ref<ReviewActorTarget | null>(null)
+const pageTargetSelected = ref<ReviewPageTarget | null>(null) 
+
 const title = computed(() => {
   switch(props.typeReview){
     case 'ACTOR': return 'Revisar personaje'
@@ -114,6 +129,14 @@ function getActorTargetText(target: ReviewActorTarget){
   }
 }
 
+function getPageTargetText(target: ReviewPageTarget){
+    switch(target) {
+    case 'TEXT' : return 'Modificar texto';
+    case 'SCENE' : return 'Modificar escena';
+    case 'BOTH' : return 'Modificar texto y escena'
+  }
+}
+
 async function onSubmit() {
     if(!props.storyId || !hint.value.trim()) return
 
@@ -133,6 +156,18 @@ async function onSubmit() {
             emit('accepted', review)
           }
           break;
+        case 'COVER':
+          if(!props.id) return;
+          const coverReview = await reviewPage(props.storyId, props.id, 'SCENE', hint.value.trim())
+    
+          if (coverReview.hintAccepted === false && coverReview.rejectedReason) {
+            rejectedReason.value = coverReview.rejectedReason
+          } else {
+            emit('accepted', coverReview)
+          }
+          break;
+          
+          break;
         case 'ACTOR':
           if(!props.id || actorTargetSelected.value == null) return;
 
@@ -142,6 +177,17 @@ async function onSubmit() {
           } else {
             emit('accepted', actorReview)
           }
+          break;
+        case 'PAGE':
+          if(!props.id || pageTargetSelected.value == null) return;
+
+          const pageReview = await reviewPage(props.storyId, props.id, pageTargetSelected.value, hint.value.trim())
+          if (pageReview.hintAccepted === false && pageReview.rejectedReason) {
+            rejectedReason.value = pageReview.rejectedReason
+          } else {
+            emit('accepted', pageReview)
+          }
+          break;
           break;
       }
     } catch (err) {

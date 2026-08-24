@@ -4,8 +4,10 @@ import java.time.LocalDateTime;
 
 import org.springframework.stereotype.Repository;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.enums.StorySize;
+import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryAgentResult;
@@ -13,6 +15,7 @@ import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
@@ -24,19 +27,25 @@ public class StoryRepositoryAdapter implements StoryRepository {
     private final AbstractValidator<StoryAgentResult> storyValidator;
     private final TopicJpaRepository topicRepository;
     private final CharacterJpaRepository characterJpaRepository;
+    private final StoryPageJpaRepository pagesRepository;
     private final StoryJpaRepository repository;
     private final AbstractMapper<StoryJpaEntity, Story> storyMapper;
+    private final ResourceStorage storage;
 
     public StoryRepositoryAdapter(AbstractValidator<StoryAgentResult> storyValidator, 
         TopicJpaRepository topicRepository,
         StoryJpaRepository repository,
         AbstractMapper<StoryJpaEntity, Story> mapper,
+        StoryPageJpaRepository pagesRepository,
+        ResourceStorage storage,
         CharacterJpaRepository characterRepository){
         this.storyValidator = storyValidator;
         this.topicRepository = topicRepository;
         this.repository = repository;
         this.storyMapper = mapper;
         this.characterJpaRepository = characterRepository;
+        this.pagesRepository = pagesRepository;
+        this.storage = storage;
     }
 
     @Override
@@ -58,9 +67,12 @@ public class StoryRepositoryAdapter implements StoryRepository {
 
     @Override
     public Story update(Story story) {
+        // 1. Validacion
+        storyValidator.validate(new StoryAgentResult(story.getTitle(), story.getSummary(), story.getCharacters().stream().map(this::toMap).toList()));
 
-        // 2. Borramos personajes
+        // 2. Borramos personajes y paginas
         characterJpaRepository.deleteFromStoryId(story.getId());
+        pagesRepository.deletePages(story.getId(), -1);
 
         // 1.  Obtenemos el story alamacenado
         StoryJpaEntity stored = repository.findById(story.getId()).get();
@@ -71,10 +83,17 @@ public class StoryRepositoryAdapter implements StoryRepository {
         // 3. Guardamos los cambios
         repository.save(stored);
 
-        // 4. Volvemos a asignar personajes
+        //4. Borramos assetts
+        storage.deleteStoryAssets(story.getId());
+        
+        // 5. Volvemos a asignar personajes
         story.getCharacters().forEach(c -> createCharacter(stored, c));
 
         return story;
+    }
+
+    private CharacterAgentResult toMap(Actor actor){
+        return new CharacterAgentResult(actor.getName(), actor.getNarrativeDescription(), actor.getVisualDescription());
     }
 
     private CharacterJpaEntity createCharacter(StoryJpaEntity stored, CharacterAgentResult c) {

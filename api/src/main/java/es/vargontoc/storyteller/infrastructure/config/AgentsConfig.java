@@ -57,7 +57,7 @@ public class AgentsConfig {
     @Bean(name = Constants.BeanNames.AGENT_TRANSLATOR)
     public ChatClient translatorAgent(OllamaChatModel ollama,
             @Qualifier(Constants.BeanNames.AGENT_TRANSLATOR_MODEL) String model,
-            @Value("classpath:/prompts/translate_visual.st") Resource systemPrompt) {
+            @Value("classpath:/prompts/translate_scene.st") Resource systemPrompt) {
         return ChatClient.builder(ollama)
             .defaultAdvisors(new SimpleLoggerAdvisor())
             .defaultOptions(ChatOptions.builder().model(model))
