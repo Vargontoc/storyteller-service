@@ -96,7 +96,7 @@ const hint = ref('')
 const submitting = ref(false)
 const rejectedReason = ref<string | null>(null)
 const error = ref<string | null>(null)
-const actorTarget = ref<ReviewActorTarget[]>(['VISUAL', 'ROLE', 'BOTH'])
+const actorTarget = ref<ReviewActorTarget[]>(['VISUAL', 'NARRATIVE', 'BOTH'])
 const pageTarget = ref<ReviewPageTarget[]>(['TEXT', 'SCENE', 'BOTH'])
 const actorTargetSelected = ref<ReviewActorTarget | null>(null)
 const pageTargetSelected = ref<ReviewPageTarget | null>(null) 
@@ -124,7 +124,7 @@ const hintPlaceholder = computed(() => {
 function getActorTargetText(target: ReviewActorTarget){
   switch(target) {
     case 'VISUAL' : return 'Modificar visual';
-    case 'ROLE' : return 'Modificar rol';
+    case 'NARRATIVE' : return 'Modificar rol';
     case 'BOTH' : return 'Modificar rol y descripción'
   }
 }

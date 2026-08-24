@@ -7,6 +7,7 @@ import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
+import es.vargontoc.storyteller.domain.enums.PageReviewTarget;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
@@ -111,7 +112,9 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     public StoryPage updateWithReview(Long idPage, StoryPageReview review) {
         StoryPageJpaEntity entity = repository.findById(idPage).get();
         if(entity.getPage() != 0)
-            validator.validate(new StoryPageAgentResult(review.getText(), review.getScene()));
+            validator.validate(new StoryPageAgentResult(
+                review.getTarget() == PageReviewTarget.TEXT || review.getTarget() == PageReviewTarget.BOTH ? review.getText(): entity.getText(),
+                review.getTarget() == PageReviewTarget.SCENE || review.getTarget() == PageReviewTarget.BOTH ? review.getScene(): entity.getText()));
 
         List<Long> pages = repository.getPagesIdByStory(entity.getStory().getId(), entity.getPage());
 
@@ -119,8 +122,13 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
             entity.setScenePrompt(review.getScene());
             entity.setImageAsset(null);
         }else {
-            entity.setScenePrompt(review.getScene());
-            entity.setText(review.getText());
+
+            if(review.getTarget() == PageReviewTarget.SCENE || review.getTarget() == PageReviewTarget.BOTH)
+                entity.setScenePrompt(review.getScene());
+
+            if(review.getTarget() == PageReviewTarget.TEXT || review.getTarget() == PageReviewTarget.BOTH)
+                entity.setText(review.getText());
+            
             entity.setImageAsset(null);
             entity.setAudioAsset(null);
             

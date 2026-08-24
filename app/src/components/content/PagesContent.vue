@@ -219,7 +219,6 @@ async function loadPages()
 
 async function loadReview(id: number){
     const [review] = await  Promise.all([getPageReview(id)]);
-    console.log(review)
     if(review){
         pendingReview.value.push(review)
     }

@@ -5,7 +5,7 @@ import type { Actor, Page, Story } from './generations'
 
 export type RevisionStatus = 'PENDING' | 'CONFIRMED' | 'DISCARDED'
 export type ReviewType = 'SCRIPT' | 'ACTOR' | 'COVER' | 'PAGE'
-export type ReviewActorTarget = 'VISUAL' | 'ROLE' | 'BOTH'
+export type ReviewActorTarget = 'VISUAL' | 'NARRATIVE' | 'BOTH'
 export type ReviewPageTarget = 'TEXT' | 'SCENE' | 'BOTH'
 
 export interface StoryReview {

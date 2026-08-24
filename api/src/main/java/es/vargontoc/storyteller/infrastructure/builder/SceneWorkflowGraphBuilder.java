@@ -21,7 +21,7 @@ public class SceneWorkflowGraphBuilder {
     public Map<String, Object> build(String positivePrompt, String negativePrompt, int width, int height, long seed, List<Path> references) {
         Map<String, Object> graph = new LinkedHashMap<>();
 
-        graph.put("4", node("CheckpointLoadersimple", Map.of("ckpt_name", properties.checkpointName())));
+        graph.put("4", node("CheckpointLoaderSimple", Map.of("ckpt_name", properties.checkpointName())));
 
         String lastLoraNodeId = "4";
         int loraNodeId = 30;
@@ -77,24 +77,24 @@ public class SceneWorkflowGraphBuilder {
                 previousModelRef = applyId;
                 previousOutput = 0;
             }
-
-            graph.put("KSampler", Map.of(
-                "seed", seed,
-                "steps", properties.steps(),
-                "cfg", properties.cfg(),
-                "sampler_name", properties.samplerName(),
-                "scheduler", properties.scheduler(),
-                "denoise", 1.0,
-                "model", ref(previousModelRef, previousOutput),
-                "positive", ref("6", 0),
-                "negative", ref("7", 0),
-                "latent_image", ref("5", 0)
-            ));
-
-            graph.put("8", node("VAEDecode", Map.of("samples", ref("3", 0), "vae", ref("4", 2))));
-            graph.put("9", node("SaveImage", Map.of("filename_prefix", "scene", "images", ref("8", 0))));
-
+            
         }
+        
+        graph.put("3", node("KSampler", Map.of(
+            "seed", seed,
+            "steps", properties.steps(),
+            "cfg", properties.cfg(),
+            "sampler_name", properties.samplerName(),
+            "scheduler", properties.scheduler(),
+            "denoise", 1.0,
+            "model", ref(previousModelRef, previousOutput),
+            "positive", ref("6", 0),
+            "negative", ref("7", 0),
+            "latent_image", ref("5", 0)
+        )));
+
+        graph.put("8", node("VAEDecode", Map.of("samples", ref("3", 0), "vae", ref("4", 2))));
+        graph.put("9", node("SaveImage", Map.of("filename_prefix", "scene", "images", ref("8", 0))));
 
         return graph;
     }

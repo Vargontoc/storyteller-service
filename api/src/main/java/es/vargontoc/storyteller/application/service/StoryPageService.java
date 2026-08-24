@@ -204,7 +204,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
         if(request.status() == RevisionStatus.DISCARDED)
             reviewRepositoy.changeStatus(request.entityId(), request.status());
-        else if(request.status() == RevisionStatus.PENDING){
+        else if(request.status() == RevisionStatus.CONFIRMED){
             reviewRepositoy.changeStatus(request.entityId(), request.status());
 
             

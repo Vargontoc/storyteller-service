@@ -42,6 +42,7 @@
             <div class="tab-content">
               <div v-if="activeTab === 'guion'" class="guion-tab">
                 <story-content v-if="storyId"
+                  :key="contentKey"
                   :story-id="storyId"
                   @generate-page="onGeneratePage"
                   @delete="onDelete"
@@ -49,24 +50,29 @@
               </div>
               <div v-else-if="activeTab === 'portada'">
                 <pages-content v-if="storyId"
+                  :key="contentKey"
                   :story-id="storyId"
                   :is-cover="true"
+                  @review="showReview"
                   @generate-asset="onAssetGeneration"></pages-content>
 
               </div>
               <div v-else-if="activeTab === 'personajes'">
                 <actors-content v-if="storyId"
+                :key="contentKey"
                 :story-id="storyId"
                 @review="showReview"
                 @generate-asset="onAssetGeneration"
-                
+
                 ></actors-content>
               </div>
               <div v-else-if="activeTab === 'paginas'">
                 <!-- review no existe todavía para páginas en backend: @review queda sin usar en pages-content hasta que exista -->
                 <pages-content v-if="storyId"
+                  :key="contentKey"
                   :story-id="storyId"
                   :is-cover="false"
+                  @review="showReview"
                   @generate-asset="onAssetGeneration"></pages-content>
               </div>
             </div>
@@ -129,6 +135,7 @@ const showReviewModal = ref(false)
 const showReviewDetail = ref(false)
 const reviewActionError = ref<string | null>(null)
 const isStateGeneration = ref<boolean>(false)
+const contentKey = ref(0)
 
 const hasCoverPage = computed(() => pages.value.some((page) => page.page === 0))
 const hasRegularPage = computed(() => pages.value.some((page) => page.page >= 1))
@@ -189,8 +196,9 @@ async function applyReview(status: RevisionStatus){
 
   showReviewDetail.value = false
   toastStore.show(status === 'CONFIRMED' ? 'Revisión confirmada' : 'Revisión descartada')
+  await loadStory(props.storyId)
+  contentKey.value++
   if(status == 'CONFIRMED'){
-    await loadStory(props.storyId)
     emit('updated', props.storyId)
   }
 }

@@ -12,6 +12,7 @@ import es.vargontoc.storyteller.infrastructure.mappers.CharacterMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.validations.ActorValidation;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 
@@ -20,19 +21,22 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
 
     private final CharacterJpaRepository repository;
     private final StoryPageJpaRepository pagesRepository;
+    private final StoryPageReviewJpaRepository pageReviewsRepository;
     private final ResourceStorage storage;
     private final CharacterMapper mapper;
     private final ActorValidation validation;
 
     public CharacterRepositoryAdapter(CharacterJpaRepository repository,
         StoryPageJpaRepository pagesRepository,
+        StoryPageReviewJpaRepository pageReviewsRepository,
         ResourceStorage storage,
-        ActorValidation validation, 
+        ActorValidation validation,
         CharacterMapper mapper) {
         this.repository = repository;
         this.mapper = mapper;
         this.validation = validation;
         this.pagesRepository = pagesRepository;
+        this.pageReviewsRepository = pageReviewsRepository;
         this.storage = storage;
     }
 
@@ -42,6 +46,11 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
     public Actor update(Actor character) {
         // Validar 
         validation.validate(character);
+
+        // Borramos reviews de las paginas afectadas (FK hacia story_page)
+        List<Long> pageIds = pagesRepository.getPagesIdByStory(character.getStoryId(), -1);
+        if (!pageIds.isEmpty())
+            pageReviewsRepository.deleteByPageIds(pageIds);
 
         // Borramos paginas
         pagesRepository.deletePages(character.getStoryId(), -1);

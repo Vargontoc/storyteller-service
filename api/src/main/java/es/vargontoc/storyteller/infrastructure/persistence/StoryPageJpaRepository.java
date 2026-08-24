@@ -15,7 +15,7 @@ public interface StoryPageJpaRepository extends JpaRepository<StoryPageJpaEntity
     @Query("DELETE FROM StoryPageJpaEntity p WHERE p.story.id = :storyId AND p.page > :numberPage")
     void deletePages(@Param("storyId") long storyId, @Param("numberPage") int numberPage);
 
-    @Query("SELECT P.id FROM StoryPageJpaEntity p WHERE p.story.id = :storyId AND p.page > :numberPage")
+    @Query("SELECT p.id FROM StoryPageJpaEntity p WHERE p.story.id = :storyId AND p.page > :numberPage")
     List<Long> getPagesIdByStory(@Param("storyId") long storyId, @Param("numberPage") int numberPage); 
     
 }
