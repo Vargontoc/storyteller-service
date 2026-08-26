@@ -10,9 +10,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
@@ -20,9 +24,12 @@ import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.ActorAction;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
+import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryCoverAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryCoverReviewAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryPageReviewAgentResult;
@@ -42,21 +49,33 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
 
     @Value("classpath:/prompts/new_page.st")
     private Resource createPageResource;
+    @Value("classpath:/prompts/review_page.st")
+    private Resource reviewPageResource;
 
+    @Value("classpath:/prompts/discover_character.st")
+    private Resource discoverCharacterResource;
+
+    private final ObjectMapper mapper = new ObjectMapper();
 
     private final OllamaPort ollama;
     private final String model;
     private final ChatClient client;
+    private final String directorModel;
+    private final ChatClient directorClient;
     
     private final StoryPageRepository repository;
     private final StoryPageReviewRepository reviewRepositoy;
     private final StoryRepository storyRepository;
+    private final CharacterRepository characterRepository;
 
     
 
     public StoryPageService(OllamaPort ollama,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient client,
+        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String directorModel,
+        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient directorClient,
+        CharacterRepository characterRepository,
         StoryPageRepository repository,
         StoryPageReviewRepository reviewRepository,
         StoryRepository storyRepository) {
@@ -66,6 +85,9 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             this.repository = repository;
             this.storyRepository = storyRepository;
             this.reviewRepositoy = reviewRepository;
+            this.directorModel = directorModel;
+            this.directorClient = directorClient;
+            this.characterRepository = characterRepository;
     }
 
     @Override
@@ -89,14 +111,16 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         
         StoryPageAgentResult result = client.prompt()
         .user(u -> u.text(createPageResource)
-            .param("synopsis", story.getSummary())
+            .param("synopsis", story.getSynopsis())
             .param("actors", readActors(story.getCharacters()))
-            .param("pages", readPages(pages))
+            .param("summary", story.getAgentSummary())
             .param("current", currentPage).param("total", maxPages))
         .call().entity(StoryPageAgentResult.class);
 
+        var r = repository.create(result, story.getId(), currentPage);
+        discoverCharacters(result.composition().actors(), story, result.composition().scene());
 
-        return repository.create(result, story.getId(), currentPage);
+        return r;
     }
 
     
@@ -119,16 +143,22 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         int maxPages = story.getSize().getPages();
 
         StoryPageReviewAgentResult result = client.prompt()
-            .user(u -> u.text(creatCoverResource)
-                .param("synopsis", story.getSummary())
-                .param("actors", readActors(story.getCharacters()))
-                .param("pages", readPages(pages))
-                .param("current", currentPage + 1)
-                .param("total", maxPages)
-                .param("text", current.getText())
-                .param("scene", current.getScene())
-                .param("target", review.target().name())
-                .param("hint", review.hint()))
+            .user(u -> {
+                try {
+                    u.text(creatCoverResource)
+                        .param("synopsis", story.getSynopsis())
+                        .param("actors", readActors(story.getCharacters()))
+                        .param("summary", story.getAgentSummary())
+                        .param("current", currentPage + 1)
+                        .param("total", maxPages)
+                        .param("text", current.getText())
+                        .param("scene", mapper.writeValueAsString(current.getComposition()))
+                        .param("target", review.target().name())
+                        .param("hint", review.hint());
+                } catch (JsonProcessingException e) {
+                    throw new AppException(e.getMessage(), HttpStatus.BAD_REQUEST);
+                }
+            })
             .call().entity(StoryPageReviewAgentResult.class);
 
         
@@ -142,54 +172,74 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         return reviewRepositoy.getPendingReview(entityId);
     }
 
-    private String readPages(List<StoryPage> pages) {
-        if(pages.isEmpty())
-            return "EMPTY";
-        
-        return pages.stream()
-            .map(c -> c.getPage() + " - ( " + c.getText() + " / " + c.getScene() + " )")
-            .collect(Collectors.joining("; "));
-    }
-
     private StoryPage generateCover(Story story) {
         if(story.getPages().stream().anyMatch(p -> p.getPage() == 0))
             throw new AppException("Ya hay una portada para esta story: " + story.getId(), HttpStatus.BAD_REQUEST);
 
-        StoryPageAgentResult result = client.prompt()
+        StoryCoverAgentResult result = client.prompt()
         .user(u -> u.text(creatCoverResource)
-            .param("synopsis", story.getSummary())
+            .param("synopsis", story.getSynopsis())
             .param("actors", readActors(story.getCharacters())))
-        .call().entity(StoryPageAgentResult.class);
+        .call().entity(StoryCoverAgentResult.class);
 
         StoryPage cover = new StoryPage();
         cover.setPage(0);
-        cover.setScene(result.promptScene());
+        cover.setComposition(result.scene());
 
-        return repository.create(result, story.getId(), 0);
+        return repository.create(
+            new StoryPageAgentResult(story.getTitle(), result.scene(), "")
+            , story.getId(), 0);
     }
 
     private String readActors(List<Actor> characters) {
         return characters.stream()
-            .map(c -> c.getName() + " ( " + c.getNarrativeDescription() + " / " + c.getVisualDescription() + " )")
-            .collect(Collectors.joining("; "));
+            .map(c ->"- " + c.getName() + " ( " + c.getNarrativeDescription() + " / " + c.getVisualDescription() + " )")
+            .collect(Collectors.joining(";\n"));
     }
 
 
     private StoryPageReview reviewCover(StoryPageReviewCommand cmd, Story story, StoryPage page) {
-
-        StoryCoverReviewAgentResult result = client.prompt()
-            .user(u -> u.text(reviewCoverResource)
-                .param("synopsis", story.getSummary())
-                .param("scene", page.getScene())
-                .param("hint", cmd.hint())
-                .param("actors", readActors(story.getCharacters())))
-            .call().entity(StoryCoverReviewAgentResult.class);
-
-        StoryPageReviewAgentResult r = new StoryPageReviewAgentResult("", result.scene(), result.hintAccepted(), result.rejectedReason());
-
-        return reviewRepositoy.createReview(r, cmd.pageId(), cmd.target(), cmd.hint());
+        
+            StoryCoverReviewAgentResult result = client.prompt()
+                .user(u -> {
+                    try {
+                        u.text(reviewCoverResource)
+                            .param("synopsis", story.getSynopsis())
+                            .param("actors", readActors(story.getCharacters()))
+                            .param("scene", mapper.writeValueAsString(page.getComposition()))
+                            .param("hint", cmd.hint());
+                    } catch (JsonProcessingException e) {
+                        throw new AppException(e.getMessage(), HttpStatus.BAD_REQUEST);
+                    }
+                })
+                .call().entity(StoryCoverReviewAgentResult.class);
+    
+            StoryPageReviewAgentResult r = new StoryPageReviewAgentResult(story.getTitle(), result.scene(), result.hintAccepted(), result.rejectedReason());
+    
+            return reviewRepositoy.createReview(r, cmd.pageId(), cmd.target(), cmd.hint());
     }
 
+
+    private void discoverCharacters(List<ActorAction> actors, Story story, String scene) {
+        if(!ollama.isAvailable(directorModel)) return;
+
+        var discovered = actors.stream().filter(x -> !story.getCharacters().stream().anyMatch(y -> y.getName().equalsIgnoreCase(x.name()))).toList();
+        discovered.forEach(d -> discoverCharacter(d,  story, scene));
+    }
+
+    private void discoverCharacter(ActorAction actor, Story story, String scene){
+        CharacterAgentResult result = directorClient
+            .prompt()
+            .user(u -> u.text(discoverCharacterResource)
+                .param("synopsis", story.getSynopsis())
+                .param("name", actor.name())
+                .param("appear", scene)
+                .param("actors", readActors(story.getCharacters())))
+            .call()
+            .entity(CharacterAgentResult.class);
+
+        characterRepository.createActor(story.getId(), result);
+    }
 
 
     @Override
@@ -206,10 +256,14 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             reviewRepositoy.changeStatus(request.entityId(), request.status());
         else if(request.status() == RevisionStatus.CONFIRMED){
             reviewRepositoy.changeStatus(request.entityId(), request.status());
-
+            StoryPage page = repository.update(current.getId(), review);
             
-            return repository.updateWithReview(current.getId(), review);
+            discoverCharacters(page.getComposition().actors(), storyRepository.getStory(page.getId()), page.getComposition().scene());
+
+            return page;
         }
+
+        
         return current;
     }
 

@@ -7,12 +7,12 @@ public class Constants {
         public static final String AGENT_TOPICS_MODEL = "topics-model";
         public static final String AGENT_DIRECTOR_MODEL = "director-model";
         public static final String AGENT_SCRIPTWRITER_MODEL = "scriptwriter-model";
-        public static final String AGENT_TRANSLATOR_MODEL = "translator-model";
+        public static final String AGENT_NARRATOR_MODEL = "narrator-model";
 
         public static final String AGENT_TOPICS = "topics-agent";
         public static final String AGENT_DIRECTOR = "director-agent";
         public static final String AGENT_SCRIPTWRITER = "scriptwriter-agent";
-        public static final String AGENT_TRANSLATOR = "translator-agent";
+        public static final String AGENT_NARRATOR = "narrator-agent";
 
         
     }

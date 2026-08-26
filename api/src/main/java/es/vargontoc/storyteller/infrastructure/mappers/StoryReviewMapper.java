@@ -24,9 +24,8 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         target.setHintAccepted(model.isHintAccepted());
         target.setRejectedReason(model.getRejectedReason());
         target.setStatus(model.getStatus());
-
         target.setCandidateTitle(model.getPreviewStory().getTitle());
-        target.setCandidateSynopsis(model.getPreviewStory().getSummary());
+        target.setCandidateSynopsis(model.getPreviewStory().getSynopsis());
         target.setCandidateCharacters(toDrafts(model.getPreviewStory().getCharacters()));
 
         StoryJpaEntity story = new StoryJpaEntity();
@@ -53,7 +52,7 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         
         Story target = new Story();
         target.setTitle(entity.getCandidateTitle());
-        target.setSummary(entity.getCandidateSynopsis());
+        target.setSynopsis(entity.getCandidateSynopsis());
         target.setCharacters(toCharacters(entity.getCandidateCharacters()));
         return target;
     }

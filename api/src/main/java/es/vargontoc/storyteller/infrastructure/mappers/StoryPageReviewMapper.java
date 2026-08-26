@@ -18,9 +18,8 @@ public class StoryPageReviewMapper extends AbstractReviewMapper<StoryPageReviewJ
         target.setHintAccepted(model.isHintAccepted());
         target.setRejectedReason(model.getRejectedReason());
         target.setStatus(model.getStatus());
-
+        target.setComposition(model.getComposition());
         target.setText(model.getText());
-        target.setScene(model.getScene());
         
         return target;
     }
@@ -34,8 +33,7 @@ public class StoryPageReviewMapper extends AbstractReviewMapper<StoryPageReviewJ
         target.setHintAccepted(entity.isHintAccepted());
         target.setRejectedReason(entity.getRejectedReason());
         target.setStatus(entity.getStatus());
-        
-        target.setScene(entity.getScene());
+        target.setComposition(entity.getComposition());
         target.setStoryId(entity.getPage().getStory().getId());
         target.setIdPage(entity.getPage().getId());
         target.setPage(entity.getPage().getPage());

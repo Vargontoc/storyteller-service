@@ -88,7 +88,7 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
 
         // 5. Llamamos al agente
         CharacterReviewAgentResult result = client.prompt().user(u -> u.text(reviewCharacterResource)
-            .param("synopsis", currentStory.getSummary())
+            .param("synopsis", currentStory.getSynopsis())
             .param("other", readOtherCharacters(currentStory.getCharacters(), review.id()))
             .param("narrativeDescription", current.getNarrativeDescription())
             .param("visualDescription", current.getVisualDescription())

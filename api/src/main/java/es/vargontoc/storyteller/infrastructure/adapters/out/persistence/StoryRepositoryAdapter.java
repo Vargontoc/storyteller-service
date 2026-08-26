@@ -69,12 +69,14 @@ public class StoryRepositoryAdapter implements StoryRepository {
 
         // 2. Transformamos a story
         StoryJpaEntity entity = StoryJpaEntity.draft(topicRepository.findById(topic).get(), size, result.title(), result.synopsis());
+        entity.setSummary("");
         entity.setCreatedAt(LocalDateTime.now());
         StoryJpaEntity stored = repository.save(entity);
         
         // 3. Creamos los personajes
         result.characters().forEach(c -> stored.getCharacters().add(createCharacter(stored, c)));
         
+
         // 4. Devolvemos el resultado mapeado
         return storyMapper.toModel(stored);
     }
@@ -82,12 +84,13 @@ public class StoryRepositoryAdapter implements StoryRepository {
     @Override
     public Story update(Story story) {
         // 1. Validacion
-        storyValidator.validate(new StoryAgentResult(story.getTitle(), story.getSummary(), story.getCharacters().stream().map(this::toMap).toList()));
+        storyValidator.validate(new StoryAgentResult(story.getTitle(), story.getSynopsis(), story.getCharacters().stream().map(this::toMap).toList()));
 
         // 2. Borramos reviews y luego personajes y paginas (FK hacia character/story_page)
         characterReviewsRepository.deleteByStoryId(story.getId());
         characterJpaRepository.deleteFromStoryId(story.getId());
 
+    
         List<Long> pageIds = pagesRepository.getPagesIdByStory(story.getId(), -1);
         if (!pageIds.isEmpty())
             pageReviewsRepository.deleteByPageIds(pageIds);
@@ -95,7 +98,8 @@ public class StoryRepositoryAdapter implements StoryRepository {
 
         // 1.  Obtenemos el story alamacenado
         StoryJpaEntity stored = repository.findById(story.getId()).get();
-        stored.setSynopsis(story.getSummary());
+        stored.setSynopsis(story.getSynopsis());
+        stored.setSummary("");
         stored.setTitle(story.getTitle());
         stored.setUpdatedAt(LocalDateTime.now());
 

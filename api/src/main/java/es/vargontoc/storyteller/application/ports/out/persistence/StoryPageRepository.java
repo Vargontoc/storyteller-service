@@ -10,9 +10,7 @@ public interface StoryPageRepository {
 
     StoryPage getPage(Long idPage);
 
-    StoryPage update(StoryPage page);
-
-    StoryPage updateWithReview(Long idPage, StoryPageReview review);
+    StoryPage update(Long idPage, StoryPageReview review);
 
     void setImagePath(Long idPage, String path);
 

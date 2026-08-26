@@ -2,10 +2,15 @@ package es.vargontoc.storyteller.infrastructure.persistence;
 
 import java.time.LocalDateTime;
 
+import org.hibernate.annotations.ColumnTransformer;
+
 import es.vargontoc.storyteller.domain.enums.PageReviewTarget;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.SceneComposition;
+import es.vargontoc.storyteller.infrastructure.converters.SceneCompositionConverter;
 import es.vargontoc.storyteller.shared.ReviewBaseEntity;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -28,8 +33,10 @@ public class StoryPageReviewJpaEntity extends ReviewBaseEntity{
     @Column(name = "candidate_text", nullable = false, length = 500)
     private String text;
 
-    @Column(name = "candidate_prompt_scene", nullable = false, length = 2000)
-    private String scene;
+    @Convert(converter =  SceneCompositionConverter.class)
+    @ColumnTransformer(write = "?::jsonb")
+    @Column(name = "scene_compose", columnDefinition = "jsonb")
+    private SceneComposition composition;
 
     public StoryPageJpaEntity getPage() { return page; }
     public void setPage(StoryPageJpaEntity page) { this.page = page; }
@@ -37,20 +44,18 @@ public class StoryPageReviewJpaEntity extends ReviewBaseEntity{
     public void setTarget(PageReviewTarget target) { this.target = target; }
     public String getText() { return text; }
     public void setText(String text) { this.text = text; }
-    public String getScene() { return scene; }
-    public void setScene(String scene) { this.scene = scene; }
+    public SceneComposition getComposition() { return composition; }
+    public void setComposition(SceneComposition composition) { this.composition = composition; }
 
     public static StoryPageReviewJpaEntity candidate(StoryPageJpaEntity page,
         String hint,
         boolean hintAccepted,
         String rejectionReason,
         PageReviewTarget targetPage,
-        String text,
-        String scene) {
+        String text) {
         StoryPageReviewJpaEntity target = new StoryPageReviewJpaEntity();
         target.setPage(page);
         target.setText(text);
-        target.setScene(scene);
         target.setHint(hint);
         target.setRejectedReason(rejectionReason);
         target.setTarget(targetPage);

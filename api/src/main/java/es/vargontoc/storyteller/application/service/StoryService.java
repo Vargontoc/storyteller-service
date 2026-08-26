@@ -13,7 +13,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonParseException;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -118,7 +117,7 @@ public class StoryService implements StoryGeneration   {
         StoryReviewAgentResult result = callAgent(() -> client.prompt().user(u -> u.text(reviewScriptResource)
             .param("topic", readTopic(t))
             .param("title", current.getTitle())
-            .param("synopsis", current.getSummary())
+            .param("synopsis", current.getSynopsis())
             .param("pages", current.getSize().getPages())
             .param("hint", review.hint())
             .param("characters", describeCharacters(current)))
@@ -171,7 +170,7 @@ public class StoryService implements StoryGeneration   {
 
     private void applyChanges(Story story, StoryReview review) {
         story.setTitle(review.getPreviewStory().getTitle());
-        story.setSummary(review.getPreviewStory().getSummary());
+        story.setSynopsis(review.getPreviewStory().getSynopsis());
         story.setCharacters(review.getPreviewStory().getCharacters());
     }
 

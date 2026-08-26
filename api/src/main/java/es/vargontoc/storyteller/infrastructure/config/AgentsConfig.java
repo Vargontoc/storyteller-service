@@ -25,8 +25,8 @@ public class AgentsConfig {
     @Bean(name = Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)
     public String scriptwriterModel(@Value("${app.agents.scriptwriter}") String value) { return value;}
 
-    @Bean(name = Constants.BeanNames.AGENT_TRANSLATOR_MODEL)
-    public String translatorModel(@Value("${app.agents.translator}") String value) { return value;}
+    @Bean(name = Constants.BeanNames.AGENT_NARRATOR_MODEL)
+    public String narratorModel(@Value("${app.agents.narrator}") String value) { return value;}
 
 
 
@@ -54,9 +54,9 @@ public class AgentsConfig {
             .build();
     }
 
-    @Bean(name = Constants.BeanNames.AGENT_TRANSLATOR)
+    @Bean(name = Constants.BeanNames.AGENT_NARRATOR)
     public ChatClient translatorAgent(OllamaChatModel ollama,
-            @Qualifier(Constants.BeanNames.AGENT_TRANSLATOR_MODEL) String model,
+            @Qualifier(Constants.BeanNames.AGENT_NARRATOR_MODEL) String model,
             @Value("classpath:/prompts/translate_scene.st") Resource systemPrompt) {
         return ChatClient.builder(ollama)
             .defaultAdvisors(new SimpleLoggerAdvisor())

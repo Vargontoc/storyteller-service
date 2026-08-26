@@ -1,7 +1,7 @@
 SINOPSIS: {synopsis}
 REPARTO DISPONIBLE:
     {actors}
-RESUMEN ACUMULADO: {continuidad}
+RESUMEN ACUMULADO: {summary}
 NUMERO PAGINA: {current} / {total}
 PAGINA ACTUAL:
     texto: {text}

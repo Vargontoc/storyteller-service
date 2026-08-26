@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageReviewRepository;
 import es.vargontoc.storyteller.domain.enums.PageReviewTarget;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.SceneComposition;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.StoryPageReviewMapper;
@@ -54,16 +55,17 @@ public class StoryPageReviewRepositoryAdapter implements StoryPageReviewReposito
         StoryPageJpaEntity page = pageRepository.findById(pageId).get();
 
         String resultText = getRealTextByPage(page, target, result.text());
-        String resultScene = getSceneByTarget(page, target, result.scene());
+        SceneComposition resultScene = getSceneByTarget(page, target, result.scene());
 
-        StoryPageReviewJpaEntity entity = StoryPageReviewJpaEntity.candidate(page, hint,result.hintAccepted(), result.rejectedReason(), target ,resultText, resultScene);
+        StoryPageReviewJpaEntity entity = StoryPageReviewJpaEntity.candidate(page, hint,result.hintAccepted(), result.rejectedReason(), target ,resultText);
+        entity.setComposition(resultScene);
         
         return mapper.toModel(repository.save(entity));
     }
 
-    private String getSceneByTarget(StoryPageJpaEntity page, PageReviewTarget target, String scene) {
+    private SceneComposition getSceneByTarget(StoryPageJpaEntity page, PageReviewTarget target, SceneComposition scene) {
             return switch (target) {
-                case TEXT -> page.getScenePrompt();
+                case TEXT -> page.getSceneComposition();
                 case SCENE, BOTH -> scene;
             };
     }

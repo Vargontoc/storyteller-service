@@ -13,9 +13,8 @@ public class StoryPageMapper extends AbstractMapper<StoryPageJpaEntity, StoryPag
     public StoryPageJpaEntity toEntity(StoryPage model) {
         StoryPageJpaEntity target = new StoryPageJpaEntity();
         target.setId(model.getId());
-        target.setCover(model.getPage() == 0);
         target.setText(model.getText());
-        target.setScenePrompt(model.getScene());
+        target.setSceneComposition(model.getComposition());
         return target;
     }
 
@@ -26,8 +25,8 @@ public class StoryPageMapper extends AbstractMapper<StoryPageJpaEntity, StoryPag
         target.setCoverText(entity.getStory().getTitle());
         target.setStoryId(entity.getStory().getId());
         target.setPage(entity.getPage());
-        target.setScene(entity.getScenePrompt());
         target.setText(entity.getText());
+        target.setComposition(entity.getSceneComposition());
         return target;
     }
     

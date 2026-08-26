@@ -12,7 +12,8 @@ public class StoryPage  extends BaseModel {
     private String scene;
     private String imageAsset;
     private String audioAsset;
-    
+    private SceneComposition composition;
+
     public Long getId() {
         return id;
     }
@@ -61,4 +62,12 @@ public class StoryPage  extends BaseModel {
     public void setCoverText(String coverText) {
         this.coverText = coverText;
     }
+    public SceneComposition getComposition() {
+        return composition;
+    }
+    public void setComposition(SceneComposition composition) {
+        this.composition = composition;
+    }
+
+    
 }

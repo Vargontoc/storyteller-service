@@ -10,6 +10,7 @@ public class StoryPageReview extends StoryPage {
     private String rejectedReason;
     private RevisionStatus status;
     private PageReviewTarget target;
+    private String storySummary;
 
     public long getIdPage() { return idPage; }
     public void setIdPage(long idPage) { this.idPage = idPage; }
@@ -23,5 +24,7 @@ public class StoryPageReview extends StoryPage {
     public void setTarget(PageReviewTarget target) { this.target = target;}
     public String getRejectedReason() { return rejectedReason; }
     public void setRejectedReason(String rejectedReason) { this.rejectedReason = rejectedReason; }
+    public String getStorySummary() { return storySummary; }
+    public void setStorySummary(String storySummary) { this.storySummary = storySummary; }
     
 }

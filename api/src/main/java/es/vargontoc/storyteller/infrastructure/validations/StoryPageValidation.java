@@ -13,8 +13,8 @@ public class StoryPageValidation extends AbstractValidator<StoryPageAgentResult>
 
         requireNonBlank(target.text(), "text");
         requireMaxLength(target.text(), 500, "text");
-        requireNonBlank(target.promptScene(), "scene");
-        requireMaxLength(target.promptScene(), 2000, "scene");
+        requireNonBlank(target.composition().scene(), "composition.scene");
+        requireMaxLength(target.composition().scene(), 2000, "composition.scene");
     }
     
 }

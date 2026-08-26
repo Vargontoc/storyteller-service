@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.persistence;
 
+import es.vargontoc.storyteller.infrastructure.adapters.in.rest.web.ApiController;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -8,9 +9,12 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
+import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.validations.ActorValidation;
@@ -19,8 +23,10 @@ import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 @Repository
 public class CharacterRepositoryAdapter implements CharacterRepository {
 
+
     private final CharacterJpaRepository repository;
     private final StoryPageJpaRepository pagesRepository;
+    private final StoryJpaRepository storyRepository;
     private final StoryPageReviewJpaRepository pageReviewsRepository;
     private final ResourceStorage storage;
     private final CharacterMapper mapper;
@@ -28,6 +34,7 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
 
     public CharacterRepositoryAdapter(CharacterJpaRepository repository,
         StoryPageJpaRepository pagesRepository,
+        StoryJpaRepository storyRepository,
         StoryPageReviewJpaRepository pageReviewsRepository,
         ResourceStorage storage,
         ActorValidation validation,
@@ -38,13 +45,14 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
         this.pagesRepository = pagesRepository;
         this.pageReviewsRepository = pageReviewsRepository;
         this.storage = storage;
+        this.storyRepository = storyRepository;
     }
 
 
 
     @Override
     public Actor update(Actor character) {
-        // Validar 
+        // Validar
         validation.validate(character);
 
         // Borramos reviews de las paginas afectadas (FK hacia story_page)
@@ -60,7 +68,7 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
         stored.setVisualDescription(character.getVisualDescription());
         stored.setUpdatedAt(LocalDateTime.now());
         repository.save(stored);
-
+        storyRepository.setSummary(character.getStoryId(), "");
         // Borramos assets
         storage.deleteCharacterAssets(character.getStoryId(), character.getId());
         
@@ -92,6 +100,19 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
         CharacterJpaEntity  entity = repository.findById(id).get();
         entity.setImagePath(path);
         repository.save(entity);
+    }
+
+
+
+    @Override
+    public Actor createActor(Long idStory, CharacterAgentResult result) {
+        var story =  storyRepository.findById(idStory).get();
+        CharacterJpaEntity entity = CharacterJpaEntity.draft(result.mainCharacter(), result.name(), result.visualDescription(), result.narrativeDescription(),
+            new ActorMetadata(result.visualDescriptionEn(), result.visualAttributes()));
+
+        entity.setStory(story);
+        entity.setCreatedAt(LocalDateTime.now());
+        return mapper.toModel(repository.save(entity));
     }
     
 }

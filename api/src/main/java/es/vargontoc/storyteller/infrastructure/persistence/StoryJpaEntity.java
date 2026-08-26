@@ -16,7 +16,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "story")
@@ -42,66 +41,31 @@ public class StoryJpaEntity extends BaseEntity {
     @Column(name = "status", nullable = false)
     private StoryStatus status;
     
+    @Column(name = "summary", length = 1000)
+    private String summary;
+
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CharacterJpaEntity> characters = new ArrayList<>();
 
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StoryPageJpaEntity> pages = new ArrayList<>();
 
-    @Transient
-    private Long reviewId;
-
-
-    public String getTitle() {
-        return title;
-    }
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public StorySize getSize() {
-        return size;
-    }
-    public void setSize(StorySize size) {
-        this.size = size;
-    }
-    public TopicJpaEntity getTopic() {
-        return topic;
-    }
-    public void setTopic(TopicJpaEntity topic) {
-        this.topic = topic;
-    }
-    public String getSynopsis() {
-        return synopsis;
-    }
-    public void setSynopsis(String synopsis) {
-        this.synopsis = synopsis;
-    }
-    public StoryStatus getStatus() {
-        return status;
-    }
-    public void setStatus(StoryStatus status) {
-        this.status = status;
-    }
-    public List<CharacterJpaEntity> getCharacters() {
-        return characters;
-    }
-    public void setCharacters(List<CharacterJpaEntity> characters) {
-        this.characters = characters;
-    }
-    public Long getReviewId() {
-        return reviewId;
-    }
-    public void setReviewId(Long reviewId) {
-        this.reviewId = reviewId;
-    }
-    
-    public List<StoryPageJpaEntity> getPages() {
-        return pages;
-    }
-    public void setPages(List<StoryPageJpaEntity> pages) {
-        this.pages = pages;
-    }
+    public String getTitle() { return title; }
+    public void setTitle(String title) { this.title = title; }
+    public StorySize getSize() { return size; }
+    public void setSize(StorySize size) { this.size = size;}
+    public TopicJpaEntity getTopic() { return topic; }
+    public void setTopic(TopicJpaEntity topic) { this.topic = topic; }
+    public String getSynopsis() { return synopsis; }
+    public void setSynopsis(String synopsis) { this.synopsis = synopsis; }
+    public StoryStatus getStatus() {  return status; }
+    public void setStatus(StoryStatus status) { this.status = status; }
+    public String getSummary() { return summary; }
+    public void setSummary(String summary) { this.summary = summary; }
+    public List<CharacterJpaEntity> getCharacters() { return characters;}
+    public void setCharacters(List<CharacterJpaEntity> characters) { this.characters = characters; }
+    public List<StoryPageJpaEntity> getPages() { return pages; }
+    public void setPages(List<StoryPageJpaEntity> pages) { this.pages = pages; }
     
 
     public static StoryJpaEntity draft(TopicJpaEntity topic, StorySize size, String title, String synopsis) {
@@ -114,5 +78,4 @@ public class StoryJpaEntity extends BaseEntity {
         story.setCreatedAt(LocalDateTime.now());
         return story;
     }
-
 }

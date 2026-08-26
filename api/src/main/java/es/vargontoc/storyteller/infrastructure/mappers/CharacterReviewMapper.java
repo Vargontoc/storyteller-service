@@ -21,6 +21,7 @@ public class CharacterReviewMapper extends AbstractReviewMapper<CharacterReviewJ
         target.setTarget(model.getTarget());
         target.setCandidateNarrative(model.getNarrativeDescription());
         target.setCandidateVisual(model.getVisualDescription());
+        target.setMetadata(model.getMetadata());
 
         CharacterJpaEntity character = new CharacterJpaEntity();
         character.setId(model.getCharacterId());
@@ -42,6 +43,7 @@ public class CharacterReviewMapper extends AbstractReviewMapper<CharacterReviewJ
         target.setName(entity.getCharacter() != null ? entity.getCharacter().getName() : null);
         target.setNarrativeDescription(entity.getCandidateNarrative());
         target.setVisualDescription(entity.getCandidateVisual());
+        target.setMetadata(entity.getMetadata());
         return target;
     }
 }

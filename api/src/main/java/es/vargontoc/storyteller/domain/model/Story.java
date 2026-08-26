@@ -11,7 +11,8 @@ public class Story  extends BaseModel {
     private String title;
     private List<Actor> characters;
     private List<StoryPage> pages;
-    private String summary;
+    private String synopsis;
+    private String agentSummary;
     private StorySize size;
 
     public Long getId() {
@@ -32,11 +33,11 @@ public class Story  extends BaseModel {
     public void setCharacters(List<Actor> characters) {
         this.characters = characters;
     }
-    public String getSummary() {
-        return summary;
+    public String getSynopsis() {
+        return synopsis;
     }
-    public void setSummary(String summary) {
-        this.summary = summary;
+    public void setSynopsis(String summary) {
+        this.synopsis = summary;
     }
     public StorySize getSize() {
         return size;
@@ -50,4 +51,11 @@ public class Story  extends BaseModel {
     public void setPages(List<StoryPage> pages) {
         this.pages = pages;
     }
+    public String getAgentSummary() {
+        return agentSummary;
+    }
+    public void setAgentSummary(String agentSummary) {
+        this.agentSummary = agentSummary;
+    }
+    
 }

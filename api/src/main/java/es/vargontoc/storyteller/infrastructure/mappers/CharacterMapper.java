@@ -16,6 +16,7 @@ public class CharacterMapper  extends AbstractMapper<CharacterJpaEntity, Actor>{
         target.setName(model.getName());
         target.setNarrativeDescription(model.getNarrativeDescription());
         target.setVisualDescription(model.getVisualDescription());
+        target.setMetadata(model.getMetadata());
 
         return target;
     }

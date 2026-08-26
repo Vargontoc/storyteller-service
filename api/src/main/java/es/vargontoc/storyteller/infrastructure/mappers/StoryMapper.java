@@ -24,10 +24,11 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         StoryJpaEntity target = new StoryJpaEntity();
         target.setId(model.getId());
         target.setTitle(model.getTitle());
-        target.setSynopsis(model.getSummary());
+        target.setSynopsis(model.getSynopsis());
         target.setSize(model.getSize());
         target.setCharacters(characterMapper.toEntity(model.getCharacters()));
         target.setPages(pageMapper.toEntity(model.getPages()));
+        target.setSummary(model.getAgentSummary());
         return target;
     }
 
@@ -36,11 +37,12 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         Story target = new Story();
         target.setId(entity.getId());
         target.setSize(entity.getSize());
-        target.setSummary(entity.getSynopsis());
+        target.setSynopsis(entity.getSynopsis());
         target.setTitle(entity.getTitle());
 
         target.setCharacters(characterMapper.toModel(entity.getCharacters()));
         target.setPages(pageMapper.toModel(entity.getPages()));
+        target.setAgentSummary(entity.getSummary());
         return target;
     }
     

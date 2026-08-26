@@ -10,7 +10,6 @@ import es.vargontoc.storyteller.application.ports.in.generator.AudioGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.ImageGeneration;
 import es.vargontoc.storyteller.application.ports.out.external.AudioGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
-import es.vargontoc.storyteller.application.ports.out.external.PromptTranslatorPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
@@ -33,25 +32,21 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
 
     private final CharacterRepository actorUseCase;
     private final StoryPageRepository pageUseCase;
-    private final StoryRepository storyRepository;
     private final ImageGeneratorPort generator;
     private final AudioGeneratorPort audioGenerator;
     private final ResourceStorageAdapter storage;
-    private final PromptTranslatorPort translator;
 
     private final String defaultVoice;
 
 
-    public AssetsGenerationService(ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
-            ResourceStorageAdapter storage, PromptTranslatorPort translator, StoryRepository storyRepository) {
+    public AssetsGenerationService( ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryRepository storyRepository, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
+            ResourceStorageAdapter storage) {
         this.actorUseCase = actorUseCase;
         this.pageUseCase = pageUseCase;
         this.generator = generator;
         this.storage = storage;
-        this.translator = translator;
         defaultVoice = chatterbox.defaultVoiceName();
         audioGenerator = audioPort;
-        this.storyRepository = storyRepository;
     }
 
 
@@ -62,26 +57,26 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
         if(kind == KindImage.ACTOR) {
             var actor = actorUseCase.getActor(id);
             image.storyId = actor.getStoryId();
-            var call = translator.translateCharacter(actor.getVisualDescription());
-            image.request = ImageGenerationRequest.actor(call.textoTraducido(), call.atributosVisuales());
+            
+            image.request = ImageGenerationRequest.actor(actor.getMetadata().translate(), actor.getMetadata().attributes());
         }
         else{
 
             
             var page = pageUseCase.getPage(id);
-            var story = storyRepository.getStory(page.getStoryId());
 
             if(kind == KindImage.PAGE && page.getPage() == 0)
                 throw new AppException("El id proporcionado no pertenece a una página", HttpStatus.CONFLICT);
             if(kind == KindImage.COVER && page.getPage() != 0)
                 throw new AppException("El id proporcionado no pertenece a una portada", HttpStatus.CONFLICT);
             image.storyId = page.getStoryId();
-            String prompt = translator.translateToEnglish(page.getScene());
-
-            if(kind == KindImage.PAGE)
-                image.request = ImageGenerationRequest.page(prompt, ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
-            else
-                image.request = ImageGenerationRequest.cover(prompt,  ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
+            /*
+                if(kind == KindImage.PAGE)
+                    image.request = ImageGenerationRequest.page(page.getComposition().background(), ReferenceCharacterSelector.selectReferenceImages(page.getComposition()., 3));
+                else
+                    image.request = ImageGenerationRequest.cover(prompt,  ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
+                
+            */
         }
 
         image = getResult(image);

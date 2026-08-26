@@ -61,6 +61,7 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
         entity.setStory(story);
         repository.save(entity);
 
+        storyRepository.setSummary(storyId, result.summary());
         // 4. Devolvemos objeto mapeado
         return mapper.toModel(entity);
     }
@@ -68,21 +69,12 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     private StoryPageJpaEntity createPage(StoryPageAgentResult result, int page, int maxPages) {
         StoryPageJpaEntity entity = new StoryPageJpaEntity();
         entity.setPage(page);
-        entity.setLastPage(page == maxPages);
-        entity.setCover(page == 0);
-        entity.setScenePrompt(result.promptScene());
+        entity.setSceneComposition(result.composition());
         entity.setText(result.text());
         entity.setCreatedAt(LocalDateTime.now());
 
 
         return entity;
-    }
-
-    @Override
-    public StoryPage update(StoryPage page) {
-
-
-        return null;
     }
 
     @Override
@@ -113,22 +105,19 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     }
 
     @Override
-    public StoryPage updateWithReview(Long idPage, StoryPageReview review) {
+    public StoryPage update(Long idPage, StoryPageReview review) {
         StoryPageJpaEntity entity = repository.findById(idPage).get();
-        if(entity.getPage() != 0)
-            validator.validate(new StoryPageAgentResult(
-                review.getTarget() == PageReviewTarget.TEXT || review.getTarget() == PageReviewTarget.BOTH ? review.getText(): entity.getText(),
-                review.getTarget() == PageReviewTarget.SCENE || review.getTarget() == PageReviewTarget.BOTH ? review.getScene(): entity.getText()));
+        
 
         List<Long> pages = repository.getPagesIdByStory(entity.getStory().getId(), entity.getPage());
 
         if(entity.getPage() == 0) {
-            entity.setScenePrompt(review.getScene());
+            entity.setSceneComposition(review.getComposition());
             entity.setImageAsset(null);
         }else {
 
             if(review.getTarget() == PageReviewTarget.SCENE || review.getTarget() == PageReviewTarget.BOTH)
-                entity.setScenePrompt(review.getScene());
+                entity.setSceneComposition(review.getComposition());
 
             if(review.getTarget() == PageReviewTarget.TEXT || review.getTarget() == PageReviewTarget.BOTH)
                 entity.setText(review.getText());
@@ -144,7 +133,7 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
         var stored = repository.save(entity);
 
         storage.deletePageAssets(stored.getStory().getId(), idPage, stored.getPage() == 0 ? List.of() : pages);
-
+        storyRepository.setSummary(stored.getStory().getId(), review.getStorySummary());
 
         return mapper.toModel(repository.save(entity));
 

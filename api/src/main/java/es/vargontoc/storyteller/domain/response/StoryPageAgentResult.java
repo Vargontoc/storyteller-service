@@ -1,3 +1,5 @@
 package es.vargontoc.storyteller.domain.response;
 
-public record StoryPageAgentResult(String text, String promptScene) {}
+import es.vargontoc.storyteller.domain.model.SceneComposition;
+
+public record StoryPageAgentResult(String text, SceneComposition composition, String summary) {}
