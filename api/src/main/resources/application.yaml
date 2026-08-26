@@ -58,12 +58,12 @@ app:
         cfg: 7.0
 
         # -- Character template
-        style-prefix: "children's book ilustration, soft watercolor style, warn color, simple shapes, gentle lighting"
+        style-prefix: "children's book illustration, warm colors, simple shapes, gentle lighting"
         character-framing-prompt: "(solo:1.3), (one single character:1.3), full body portrait, centered composition, plain simple background"
         character-negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, (extra limbs:1.4), (extra legs:1.4), (extra arms:1.4), (missing limbs:1.3), (malformed limbs:1.4), (bad anatomy:1.3), (mutated:1.3), (fused limbs:1.3), disfigured, (two characters:1.4), (multiple poses:1.4), (character sheet:1.4), (turnaround:1.4), (split screen:1.3), (multiple views:1.3), duplicate, clone, twins, multiple characters, group, crowd, background clutter, scenery, landscape, buildings, furniture, cluttered, busy background, frame, border, patterned background"
         
         # -- Cover / Scene temprate
-        scene-negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, extra limbs, disfigured, blurry, deformed"
+        page-negative-prompt: "photo, photorealistic, realistic, scary, dark, gore, violence, text, watermark, signature, extra limbs, disfigured, blurry, deformed"
         cover-framing-prompt: "book cover illustration, protagonists featured together, inviting warn composition"
         
         ## -- Actor properties
@@ -83,7 +83,7 @@ app:
             - name: "StorybookRedmondV2-KidsBook-KidsRedmAF.safetensors"
               strength-model: 0.6
               strength-clip: 0.6
-              trigger-word: "KidsRemAF, Kids Book"
+              trigger-word: "KidsRedmAF, Kids Book"
             - name: "CuteCartoonRedmond-CuteCartoon-CuteCartoonAF.safetensors"
               strength-model: 0.4
               strength-clip: 0.4

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.persistence.StorytellerUseCase;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.model.ActorSummary;
 import es.vargontoc.storyteller.domain.model.PageSummary;
 import es.vargontoc.storyteller.domain.model.PaginatedResponse;
@@ -28,9 +29,11 @@ public class StorytellerService implements StorytellerUseCase {
 
     private final StoryJpaRepository repository;
     private final ResourceStorage storage;
-    public StorytellerService(StoryJpaRepository repository, ResourceStorage storage){
+    private final StoryRepository storyRepository;
+    public StorytellerService(StoryJpaRepository repository, ResourceStorage storage, StoryRepository storyRepository){
         this.repository = repository;
         this.storage = storage;
+        this.storyRepository = storyRepository;
     }
     @Override
     public PaginatedResponse<StorySummary> getStories(PageRequest request) {
@@ -63,7 +66,7 @@ public class StorytellerService implements StorytellerUseCase {
 
     @Override
     public void deleteStory(Long id) {
-        repository.deleteById(id);
+        storyRepository.delete(id);
         storage.deleteStoryAssets(id);
     }
     @Override

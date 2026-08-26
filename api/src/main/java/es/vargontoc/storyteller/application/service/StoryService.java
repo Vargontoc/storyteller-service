@@ -1,14 +1,21 @@
 package es.vargontoc.storyteller.application.service;
 
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonParseException;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
@@ -18,6 +25,7 @@ import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepositor
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.domain.model.Topic;
@@ -33,6 +41,7 @@ import jakarta.transaction.Transactional;
 @Transactional
 public class StoryService implements StoryGeneration   {
 
+    private static final Logger LOG = LoggerFactory.getLogger(StoryService.class);
     private static final int MAX_ATTEMPTS = 3;
 
     @Value("classpath:/prompts/new_script.st")
@@ -173,7 +182,35 @@ public class StoryService implements StoryGeneration   {
 
     private String describeCharacters(Story story) {
         return story.getCharacters().stream()
-            .map(c -> c.getName() + " ( " + c.getNarrativeDescription() + " / " + c.getVisualDescription() + " )")
-            .collect(Collectors.joining("; "));
+            .map(this::jsonCharacter)
+            .collect(Collectors.joining(";\n"));
+    }
+
+    private String jsonCharacter(Actor actor) {
+        try {
+            ObjectMapper mapper = new ObjectMapper();
+            Map.of(
+                "name", actor.getName(),
+                "mainCharacter" , actor.isMain(),
+                "narrativeDescription", actor.getNarrativeDescription(),
+                "visualDescription", actor.getVisualDescription(),
+                "visualDescriptionEn", actor.getMetadata().translate(),
+                "visualAttributes", actor.getMetadata().attributes()
+            );
+
+            return "- " + mapper.writeValueAsString(Map.of(
+                "name", actor.getName(),
+                "mainCharacter" , actor.isMain(),
+                "narrativeDescription", actor.getNarrativeDescription(),
+                "visualDescription", actor.getVisualDescription(),
+                "visualDescriptionEn", actor.getMetadata().translate(),
+                "visualAttributes", actor.getMetadata().attributes()
+            ));
+        
+        }catch(JsonProcessingException e){
+            LOG.error(e.getMessage(), e);
+            throw new AppException("Algo fue mal en el parseo de personajes", HttpStatus.BAD_REQUEST);
+        }
+        
     }
 }

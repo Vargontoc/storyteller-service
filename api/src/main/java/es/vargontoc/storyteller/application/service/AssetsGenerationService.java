@@ -25,8 +25,10 @@ import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties;
 import es.vargontoc.storyteller.infrastructure.storage.ResourceStorageAdapter;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
+import jakarta.transaction.Transactional;
 
 @Service
+@Transactional
 public class AssetsGenerationService implements ImageGeneration, AudioGeneration {
 
     private final CharacterRepository actorUseCase;
@@ -75,7 +77,11 @@ public class AssetsGenerationService implements ImageGeneration, AudioGeneration
                 throw new AppException("El id proporcionado no pertenece a una portada", HttpStatus.CONFLICT);
             image.storyId = page.getStoryId();
             String prompt = translator.translateToEnglish(page.getScene());
-            image.request = ImageGenerationRequest.page(prompt, ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
+
+            if(kind == KindImage.PAGE)
+                image.request = ImageGenerationRequest.page(prompt, ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
+            else
+                image.request = ImageGenerationRequest.cover(prompt,  ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
         }
 
         image = getResult(image);

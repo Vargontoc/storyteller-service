@@ -16,6 +16,7 @@ import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 
@@ -25,6 +26,7 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     private final AbstractValidator<StoryPageAgentResult> validator;
 
     private final StoryPageJpaRepository repository;
+    private final StoryPageReviewJpaRepository pageReviewsRepository;
     private final StoryJpaRepository storyRepository;
     private final StoryPageMapper mapper;
     private final ResourceStorage storage;
@@ -32,12 +34,14 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     public StoryPageRepositoryAdapter(
         AbstractValidator<StoryPageAgentResult> validator,
         StoryPageJpaRepository repository,
+        StoryPageReviewJpaRepository pageReviewsRepository,
         StoryJpaRepository storyRepository,
         StoryPageMapper mapper, ResourceStorage storage
     ){
         this.validator = validator;
         this.mapper = mapper;
         this.repository = repository;
+        this.pageReviewsRepository = pageReviewsRepository;
         this.storyRepository = storyRepository;
         this.storage = storage;
     }
@@ -131,7 +135,9 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
             
             entity.setImageAsset(null);
             entity.setAudioAsset(null);
-            
+
+            if (!pages.isEmpty())
+                pageReviewsRepository.deleteByPageIds(pages);
             repository.deletePages(entity.getStory().getId(), entity.getPage());
         }
         

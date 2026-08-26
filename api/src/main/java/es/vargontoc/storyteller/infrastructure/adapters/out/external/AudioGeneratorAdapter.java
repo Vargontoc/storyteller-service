@@ -44,7 +44,7 @@ public class AudioGeneratorAdapter implements AudioGeneratorPort {
         body.put("response_format", "wav");
         body.put("exaggeration", request.exageration());
         body.put("cfg_weight", request.cfgWeight());
-        body.put("temperarture", request.temperature());
+        body.put("temperature", request.temperature());
 
         return restClient.post().uri("/audio/speech").contentType(MediaType.APPLICATION_JSON).body(body).retrieve().body(byte[].class);
     }

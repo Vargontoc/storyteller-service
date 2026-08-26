@@ -1,3 +1,5 @@
 package es.vargontoc.storyteller.domain.response;
 
-public record CharacterAgentResult(String name, String narrativeDescription, String visualDescription) { }
+import java.util.List;
+
+public record CharacterAgentResult(boolean mainCharacter, String name, String narrativeDescription, String visualDescription, String visualDescriptionEn, List<String> visualAttributes) { }

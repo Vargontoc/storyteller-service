@@ -1,0 +1,23 @@
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    
+    <changeSet id="011__new_fields_to_characters" author="vargontoc">
+        <addColumn tableName="character">
+            <column name="main_character" type="boolean" defaultValue="false"></column>
+            <column name="metadata" type="jsonb" ></column>
+        </addColumn>
+
+        <addColumn tableName="character_review">
+            <column name="main_character" type="boolean" defaultValue="false"></column>
+            <column name="metadata" type="jsonb" ></column>
+        </addColumn>
+        
+        <addColumn tableName="story_review_character_draft">
+            <column name="main_character" type="boolean" defaultValue="false"></column>
+            <column name="metadata" type="jsonb" ></column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

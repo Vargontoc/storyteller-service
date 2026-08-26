@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterReviewRepository;
 import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
 import es.vargontoc.storyteller.domain.model.ActorReview;
 import es.vargontoc.storyteller.domain.response.CharacterReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterReviewMapper;
@@ -70,14 +71,17 @@ public class CharacterReviewRepositoryAdapter implements CharacterReviewReposito
             case NARRATIVE -> {
                 entity.setCandidateNarrative(result.narrativeDescription());
                 entity.setCandidateVisual(character.getVisualDescription());
+                entity.setMetadata(character.getMetadata());
             }
             case VISUAL -> {
                 entity.setCandidateNarrative(character.getNarrativeDescription());
                 entity.setCandidateVisual(result.visualDescription());
+                entity.setMetadata(new ActorMetadata(result.visualDescriptionEn(), result.visualAttributes()));
             }
             case BOTH -> {
                 entity.setCandidateNarrative(result.narrativeDescription());
                 entity.setCandidateVisual(result.visualDescription());
+                entity.setMetadata(new ActorMetadata(result.visualDescriptionEn(), result.visualAttributes()));
             }
         }
         return mapper.toModel(repository.save(entity));

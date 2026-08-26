@@ -1,8 +1,13 @@
 package es.vargontoc.storyteller.infrastructure.persistence;
 
 import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
+import es.vargontoc.storyteller.infrastructure.converters.ActorMetadataConverter;
 import es.vargontoc.storyteller.shared.BaseEntity;
+import org.hibernate.annotations.ColumnTransformer;
+
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -14,6 +19,9 @@ import jakarta.persistence.Transient;
 public class CharacterJpaEntity extends BaseEntity {
     
     public CharacterJpaEntity() { super(); }
+
+    @Column(name = "main_character")
+    private boolean main;
 
     @Column(name = "name", nullable = false, length = 20)
     private String name;
@@ -27,6 +35,11 @@ public class CharacterJpaEntity extends BaseEntity {
 
     @Column(name = "narrative_description", nullable = false, length = 1000)
     private String narrativeDescription;
+
+    @Convert(converter =  ActorMetadataConverter.class)
+    @ColumnTransformer(write = "?::jsonb")
+    @Column(name = "metadata", columnDefinition = "jsonb")
+    private ActorMetadata metadata;
 
     @Column(name = "image_path")
     private String imagePath;
@@ -46,13 +59,18 @@ public class CharacterJpaEntity extends BaseEntity {
     public void setReviewId(Long reviewId) { this.reviewId = reviewId; }
     public String getImagePath() { return imagePath; }
     public void setImagePath(String imagePath) { this.imagePath = imagePath; }
+    public boolean isMain() { return main; }
+    public void setMain(boolean main) { this.main = main; }
+    public ActorMetadata getMetadata() { return metadata; }
+    public void setMetadata(ActorMetadata metadata) { this.metadata = metadata; }
     
-
-    public static CharacterJpaEntity draft(String name, String visual, String narrative){
+    public static CharacterJpaEntity draft(boolean main, String name, String visual, String narrative, ActorMetadata metadata){
         CharacterJpaEntity c = new CharacterJpaEntity();
+        c.setMain(main);
         c.setName(name);
         c.setNarrativeDescription(narrative);
         c.setVisualDescription(visual);
+        c.setMetadata(metadata);
         return c;
     }
 

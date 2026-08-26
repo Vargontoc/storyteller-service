@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryReviewAgentResult;
@@ -72,7 +73,7 @@ public class StoryReviewRepositoryAdapter implements StoryReviewRepository {
 
     private List<CharacterDraft> getCharacterDrafts(List<CharacterAgentResult> characters){
         return characters.stream()
-            .map(c -> new CharacterDraft(c.name(), c.narrativeDescription(), c.visualDescription()))
+            .map(c -> new CharacterDraft(c.mainCharacter(), c.name(), c.narrativeDescription(), c.visualDescription(), new ActorMetadata(c.visualDescriptionEn(),c.visualAttributes())))
             .collect(Collectors.toList());
     }
 

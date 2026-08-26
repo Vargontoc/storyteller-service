@@ -63,7 +63,7 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
             return new ArrayList<>();
         }
         return characters.stream()
-            .map(c -> new CharacterDraft(c.getName(), c.getNarrativeDescription(), c.getVisualDescription()))
+            .map(c -> new CharacterDraft(c.isMain(), c.getName(), c.getNarrativeDescription(), c.getVisualDescription(), c.getMetadata()))
             .toList();
     }
 

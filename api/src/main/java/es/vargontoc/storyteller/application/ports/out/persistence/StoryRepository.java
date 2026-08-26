@@ -12,4 +12,6 @@ public interface StoryRepository {
 
     Story getStory(Long idStory);
 
+    void delete(Long idStory);
+
 }

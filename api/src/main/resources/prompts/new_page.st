@@ -1,9 +1,9 @@
 SINOPSIS: {synopsis}
-PERSONAJES:
+REPARTO DISPONIBLE:
     {actors}
-PAGINAS PREVIAS:
-     {pages}
+RESUMEN ACUMULADO: {continuidad}
 NUMERO PAGINA: {current} / {total}
-
-Genera texto corto de 3 frases como máximo y prompt escena detallada para esta pagina del cuento.
-Sigue las reglas de edad y coherencia narrativa
+ 
+Genera el texto (máximo 3 frases), la escena (scene, background, scene_actors) y el resumenAcumulado actualizado para esta página del cuento.
+Sigue las reglas de edad, ritmo narrativo y coherencia con la sinopsis y el resumen acumulado.
+ 

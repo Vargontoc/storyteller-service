@@ -1,5 +1,5 @@
 SINOPSIS: {synopsis}
 PERSONAJES:
     {actors}
-Genera un prompt adecuado y detallado para una portada del cuento.
+Genera la escena de portada (scene, background, scene_actors) según tus reglas de generación de páginas.
 Sigue las reglas de edad y coherencia con el tema del cuento.

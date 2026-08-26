@@ -4,10 +4,15 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.hibernate.annotations.ColumnTransformer;
+
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
+import es.vargontoc.storyteller.infrastructure.converters.ActorMetadataConverter;
 import es.vargontoc.storyteller.shared.ReviewBaseEntity;
 import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
@@ -71,20 +76,27 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
 
     @Embeddable
     public static class CharacterDraft {
-        
+        @Column(name = "main_character")
+        private Boolean mainCharacter;
         @Column(name = "name", length = 20)
         private String name;
         @Column(name = "narrative_description", length = 1000)
         private String narrativeDescription;
         @Column(name = "visual_description", length = 1000)
         private String visualDescription;
+        @Convert(converter =  ActorMetadataConverter.class)
+        @ColumnTransformer(write = "?::jsonb")
+        @Column(name = "metadata", columnDefinition = "jsonb")
 
+        private ActorMetadata metadata;
         protected CharacterDraft() {}
 
-        public CharacterDraft(String name, String narrativeDescription, String visualDescription){
+        public CharacterDraft(Boolean main, String name, String narrativeDescription, String visualDescription, ActorMetadata metada){
+            this.mainCharacter   = main;
             this.name = name;
             this.narrativeDescription = narrativeDescription;
             this.visualDescription = visualDescription;
+            this.metadata = metada;
         }
 
         public String getName() { return name; }
@@ -93,5 +105,10 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
         public void setNarrativeDescription(String narrativeDescription) { this.narrativeDescription = narrativeDescription; }
         public String getVisualDescription() { return visualDescription; }
         public void setVisualDescription(String visualDescription) { this.visualDescription = visualDescription; }
+        public Boolean getMainCharacter() { return mainCharacter; }
+        public void setMainCharacter(Boolean mainCharacter) { this.mainCharacter = mainCharacter; }
+        public ActorMetadata getMetadata() { return metadata; }
+        public void setMetadata(ActorMetadata metadata) { this.metadata = metadata; }
+        
     }
 }

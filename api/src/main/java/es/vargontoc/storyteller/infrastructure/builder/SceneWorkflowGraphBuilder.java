@@ -18,7 +18,7 @@ public class SceneWorkflowGraphBuilder {
         this.client = client;
     }
 
-    public Map<String, Object> build(String positivePrompt, String negativePrompt, int width, int height, long seed, List<Path> references) {
+    public Map<String, Object> build(String positivePrompt, String negativePrompt, int width, int height, long seed, List<Path> references, boolean removeBackground) {
         Map<String, Object> graph = new LinkedHashMap<>();
 
         graph.put("4", node("CheckpointLoaderSimple", Map.of("ckpt_name", properties.checkpointName())));
@@ -50,8 +50,7 @@ public class SceneWorkflowGraphBuilder {
         int previousOutput = 0;
 
         if(!references.isEmpty()){
-            graph.put("20", node("IPAdapterUnifiedLoader", Map.of("preset",properties.ipadapterPreset(), "model", ref("10", 0))));
-            previousModelRef = "20";
+            graph.put("20", node("IPAdapterUnifiedLoader", Map.of("preset", properties.ipadapterPreset(), "model", ref(previousModelRef, previousOutput))));            previousModelRef = "20";
 
             double weightPerReference = properties.ipadapterWeightBudget() / references.size();
             int nodeId = 100;
@@ -93,8 +92,16 @@ public class SceneWorkflowGraphBuilder {
             "latent_image", ref("5", 0)
         )));
 
+        String imageSave = "8";
         graph.put("8", node("VAEDecode", Map.of("samples", ref("3", 0), "vae", ref("4", 2))));
-        graph.put("9", node("SaveImage", Map.of("filename_prefix", "scene", "images", ref("8", 0))));
+        if(removeBackground){
+            graph.put("14", node("Image Remove Background (rembg)", Map.of(
+                "model_name", "isnet-anime",
+                "image", ref("8", 0)
+            )));
+            imageSave = "14";
+        }
+        graph.put("9", node("SaveImage", Map.of("filename_prefix", "scene", "images", ref(imageSave, 0))));
 
         return graph;
     }

@@ -4,6 +4,7 @@ Guión actual:
     Titulo: {title}
     Sinopsis: {synopsis}
     Paginas: {pages}
-    Personajes: {characters}
+    Personajes:
+        {characters}
 Hint del adulto: {hint}
 Evalúa el hint según tus reglas y devuelve el guión resultante

@@ -65,7 +65,16 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
             
 
         
-        var graph = builder.build(positivePrompt, negativePrompt, dims[0], dims[1], seed, request.kind() == KindImage.ACTOR ? List.of() : request.references());
+        var graph = builder.build(positivePrompt, negativePrompt, dims[0], dims[1], seed, request.kind() == KindImage.ACTOR ? List.of() : request.references(), request.kind() == KindImage.ACTOR);
+        
+        try {
+            ObjectMapper om = new ObjectMapper();
+            String json = om.writeValueAsString(graph);
+            LOG.info("Prompt: {}", json);
+        }catch(Exception e){
+            LOG.error(e.getMessage(), e);
+        }
+        
         return generate(graph);
     }
 
@@ -100,7 +109,8 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
     private String buildNegative(ImageGenerationRequest request) {
         return switch(request.kind()) {
             case ACTOR -> config.characterNegativePrompt();
-            case PAGE, COVER -> config.pageNegativePrompt();
+            case COVER -> config.pageNegativePrompt();
+            case PAGE -> config.pageNegativePrompt();
         };
     }
 
