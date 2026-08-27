@@ -1,15 +1,21 @@
 package es.vargontoc.storyteller.infrastructure.storage;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.domain.enums.KindImage;
+import es.vargontoc.storyteller.domain.enums.ResourceType;
+import es.vargontoc.storyteller.domain.request.PageAssetRequest;
 
 @Component
 public class ResourceStorageAdapter implements ResourceStorage {
@@ -132,5 +138,44 @@ public class ResourceStorageAdapter implements ResourceStorage {
                 
             }
         });
+    }
+
+    @Override
+    public boolean existsAsset(String asset) {
+        return asset != null && !asset.isBlank() && Files.exists(Path.of(asset));
+    }
+
+    @Override
+    public File downloadStory(String json, List<PageAssetRequest> assets) {
+        try {
+            Path zipFile = Files.createTempFile("story-", ".zip");
+
+            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(zipFile))) {
+                zip.putNextEntry(new ZipEntry("story.json"));
+                zip.write(json.getBytes(StandardCharsets.UTF_8));
+                zip.closeEntry();
+
+                for (PageAssetRequest asset : assets) {
+                    Path source = Path.of(asset.asset());
+                    if (!Files.exists(source))
+                        continue;
+
+                    zip.putNextEntry(new ZipEntry(resourceFileName(asset)));
+                    Files.copy(source, zip);
+                    zip.closeEntry();
+                }
+            }
+
+            return zipFile.toFile();
+        }catch(IOException e){
+            throw new IllegalStateException("No se pudo generar el zip del cuento", e);
+        }
+    }
+
+    private String resourceFileName(PageAssetRequest asset) {
+        String extension = asset.type() == ResourceType.IMAGE ? ".png" : ".wav";
+        if (asset.page() == 0)
+            return "cover" + extension;
+        return "page_" + asset.page() + extension;
     }
 }

@@ -14,9 +14,9 @@ narrarse en voz alta.
 Recibirás: título, sinopsis, y el texto de cada página en orden
 (con su numeroPagina). Para CADA página, devuelve:
 
-- "numeroPagina": tal cual lo recibiste.
-- "tonoNarracion": uno de CALMA / NEUTRAL / ANIMADO / INTENSO.
-- "palabraEnfasis": opcional. La ÚNICA palabra de esa página (tal
+- "page": tal cual lo recibiste.
+- "tone": uno de CALM / NEUTRO / ADVENTURE / INTENSE.
+- "word: opcional. La ÚNICA palabra de esa página (tal
   como aparece literalmente en el texto, para poder localizarla) que
   merece énfasis especial al narrarla. null si ninguna lo necesita —
   esto debe ser la EXCEPCIÓN: úsalo solo en el/los momento(s) de
@@ -30,7 +30,7 @@ concreta — no de su posición numérica ni de una plantilla fija.
 
 - CALM: introducción, momentos tranquilos, cierre/resolución. Ritmo
   pausado, sin urgencia.
-- NEUTRAL: desarrollo normal de la trama, transición entre escenas,
+- NEUTRO: desarrollo normal de la trama, transición entre escenas,
   sin carga emocional destacable.
 - ADVENTURE: alegría, sorpresa agradable, juego, descubrimiento.
 - INTENSE: el momento de mayor tensión emocional de ESTE cuento en
@@ -38,7 +38,7 @@ concreta — no de su posición numérica ni de una plantilla fija.
   Sigue siendo apropiado para 3-4 años — nunca terror real — es el
   punto de mayor dramatismo dentro de lo que esa historia cuenta.
 
-No fuerces una progresión artificial (CALM→NEUTRAL→ADVENTURE→INTENSE→
+No fuerces una progresión artificial (CALM→NEUTRO→ADVENTURE→INTENSE→
 CALM) en cada cuento. Clasifica según lo que de verdad ocurre en cada
 página. Algunos cuentos son mayormente NEUTRAL con un único pico
 ANIMADO; no inventes intensidad donde el texto no la tiene.

@@ -12,11 +12,18 @@ import es.vargontoc.storyteller.domain.model.StorySummary;
 import es.vargontoc.storyteller.domain.request.PageRequest;
 import es.vargontoc.storyteller.domain.request.ResourceRequest;
 import es.vargontoc.storyteller.shared.ApiResponse;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.util.List;
 
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -84,5 +91,26 @@ public class StorytellerController {
     @Operation(description = "Obtiene el recurso almacenado segun el path")
     public ResponseEntity<byte[]> getResource(@RequestBody ResourceRequest request){
         return ResponseEntity.ok(useCase.getResource(request.path()));
+    }
+
+    @GetMapping("/{storyId}/download")
+    @Operation(description = "Descarga el cuento completo (json, imagenes y audios) en un zip")
+    public ResponseEntity<byte[]> downloadStory(@PathVariable("storyId") Long storyId) {
+        File file = useCase.downloadStory(storyId);
+        try {
+            byte[] content = Files.readAllBytes(file.toPath());
+            return ResponseEntity.ok()
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"story-" + storyId + ".zip\"")
+                .body(content);
+        }catch(IOException e) {
+            throw new AppException("No se pudo leer el zip generado: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+        }finally {
+            try {
+                Files.deleteIfExists(file.toPath());
+            }catch(IOException e) {
+                // Ignoramos: es un fichero temporal, no bloquea la respuesta
+            }
+        }
     }
 }

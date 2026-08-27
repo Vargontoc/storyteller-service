@@ -100,4 +100,4 @@ app:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
         scriptwriter: "${APP_AGENT_SCRIPTWRITER:storyteller-scriptwriter}"
-        translator: "${APP_AGENT_TRANSLATOR:qwen2.5:14b-instruct}"
+        narrator: "${APP_AGENT_TRANSLATOR:storyteller-narrator}"
