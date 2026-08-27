@@ -4,9 +4,9 @@ import es.vargontoc.storyteller.domain.model.AudioToneParams;
 
 public enum VoiceTonePreset {
     
-    CALM_STORYTELLER(0.45, 0.5, 0.8),
-    ADVENTURE_ENERGIC(0.85, 0.4, 0.9),
-    SLEEP_SOFT(0.3, 0.6, 0.6),
+    CALM(0.45, 0.5, 0.8),
+    ADVENTURE(0.85, 0.4, 0.9),
+    INTENSE(0.3, 0.6, 0.6),
     NEUTRO(0.5, 0.5, 0.8),
     CUSTOM(null, null, null);
 

@@ -13,7 +13,6 @@ import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPor
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
-import es.vargontoc.storyteller.application.utils.ReferenceCharacterSelector;
 import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
 import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;

@@ -19,10 +19,11 @@ public class AudioGeneratorAdapter implements AudioGeneratorPort {
 
     private final OllamaPort ollama;
     private final RestClient restClient;
-
+    private final String defaultVoice;
     
     public AudioGeneratorAdapter(ChatterboxProperties properties, OllamaPort ollama) {
         this.ollama = ollama;
+        this.defaultVoice = properties.defaultVoiceName();
         this.restClient = RestClient.builder()
             .baseUrl(properties.baseUrl())
             .requestFactory(new org.springframework.http.client.SimpleClientHttpRequestFactory() {{
@@ -37,10 +38,10 @@ public class AudioGeneratorAdapter implements AudioGeneratorPort {
     public byte[] generateAudio(AudioGenerationRequest request) {
 
         ollama.stopAllServices();
-
+        String voice = request.voiceName() == null || request.voiceName().isBlank() ? defaultVoice : request.voiceName();
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("input", request.text());
-        body.put("voice", request.voiceName());
+        body.put("voice", voice);
         body.put("response_format", "wav");
         body.put("exaggeration", request.exageration());
         body.put("cfg_weight", request.cfgWeight());
