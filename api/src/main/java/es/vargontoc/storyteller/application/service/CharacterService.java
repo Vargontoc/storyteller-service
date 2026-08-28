@@ -90,11 +90,12 @@ public class CharacterService implements ActorGeneration, ActorUseCase {
         CharacterReviewAgentResult result = client.prompt().user(u -> u.text(reviewCharacterResource)
             .param("synopsis", currentStory.getSynopsis())
             .param("other", readOtherCharacters(currentStory.getCharacters(), review.id()))
-            .param("narrativeDescription", current.getNarrativeDescription())
-            .param("visualDescription", current.getVisualDescription())
+            .param("name", current.getName())
+            .param("narrative", current.getNarrativeDescription())
+            .param("visual", current.getVisualDescription())
             .param("target", review.target().toString())
             .param("hint", review.hint())
-            .param("visualAttributes", current.getMetadata().attributes().stream().collect(Collectors.joining(";\n"))))
+            .param("attributes", current.getMetadata().attributes().stream().collect(Collectors.joining(";\n"))))
         .call().entity(CharacterReviewAgentResult.class);
 
         // 6. Persistimos y devolvemos resultado

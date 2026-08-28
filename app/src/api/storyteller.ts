@@ -67,3 +67,8 @@ export function getStorytellerAsset(path: string) {
 export function deleteStory(id: number) {
   return httpClient.delete<void>(`/api/v1/storyteller/${id}`)
 }
+
+
+export function downloadStory(id: number) {
+  return httpClient.getForBlob(`/api/v1/storyteller/${id}/download`)
+}

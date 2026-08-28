@@ -2,7 +2,7 @@
   <Teleport to="body">
     <div class="toast-container" aria-live="polite">
       <TransitionGroup name="toast">
-        <div v-for="toast in toastStore.toasts" :key="toast.id" class="toast">
+        <div v-for="toast in toastStore.toasts" :key="toast.id" class="toast" :class="`toast-${toast.type}`">
           {{ toast.message }}
         </div>
       </TransitionGroup>
@@ -32,9 +32,20 @@ const toastStore = useToastStore()
   padding: 10px 18px;
   color: #fff;
   white-space: nowrap;
-  background: #111827;
   border-radius: 8px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+.toast-info {
+  background: #2563eb;
+}
+
+.toast-error {
+  background: #dc2626;
+}
+
+.toast-success {
+  background: #16a34a;
 }
 
 .toast-enter-active,

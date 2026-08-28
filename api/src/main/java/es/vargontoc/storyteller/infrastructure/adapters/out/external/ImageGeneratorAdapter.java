@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.external;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -64,36 +65,58 @@ public class ImageGeneratorAdapter implements ImageGeneratorPort {
         long seed = request.seed() != null ? request.seed() : System.nanoTime();
             
 
-        
-        var graph = builder.build(positivePrompt, negativePrompt, dims[0], dims[1], seed, request.kind() == KindImage.ACTOR ? List.of() : request.references(), request.kind() == KindImage.ACTOR);
-        
+        if(request.kind() == KindImage.COVER || request.kind() == KindImage.ACTOR)
+            return generate(builder.build(positivePrompt, negativePrompt, dims[0], dims[1], seed, request.kind() == KindImage.ACTOR ? List.of() : request.references(), request.kind() == KindImage.ACTOR));
+        else {
+            try {
+                return generateScene(builder.buildScene(request.scene(), seed),seed);
+            } catch (IOException e) {
+                throw new AppException(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+    
+    private byte[] generateScene(Map<String, Object> graph, long seed) {
         try {
             ObjectMapper om = new ObjectMapper();
             String json = om.writeValueAsString(graph);
             LOG.info("Prompt: {}", json);
-        }catch(Exception e){
+            
+            String promptId = client.queuePrompt(json);
+            
+            // 4. Comprobamos las imagenes
+            List<ImageRef> images = pollUnitReady(promptId);
+            if(images == null || images.isEmpty())
+                throw new AppException("ComfyUI terminó sin generar imagenes para el prompt_id: " + promptId, HttpStatus.NOT_FOUND);
+            
+            byte[] sceneBytes = client.viewImage(images.get(0));
+            String uploadedFilename = client.upload(sceneBytes, images.get(0).filename());
+            return generate(builder.buildRefinementPass(uploadedFilename, "", seed));
+            
+        }catch(Exception e) {
             LOG.error(e.getMessage(), e);
+            return new byte[]{};
         }
-        
-        return generate(graph);
     }
 
     private byte[] generate(Map<String, Object> graph) {
         try {
             ObjectMapper om = new ObjectMapper();
             String json = om.writeValueAsString(graph);
-    
+            LOG.info("Prompt: {}", json);
+            
             String promptId = client.queuePrompt(json);
-    
+            
             // 4. Comprobamos las imagenes
             List<ImageRef> images = pollUnitReady(promptId);
             if(images == null || images.isEmpty())
                 throw new AppException("ComfyUI terminó sin generar imagenes para el prompt_id: " + promptId, HttpStatus.NOT_FOUND);
-    
+            
             // 5. Devolvemos la imagen
             return client.viewImage(images.get(0));
-
+            
         }catch(Exception e) {
+            LOG.error(e.getMessage(), e);
             return new byte[]{};
         }
     }

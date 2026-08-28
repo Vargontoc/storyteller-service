@@ -52,29 +52,26 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
     @Value("classpath:/prompts/review_page.st")
     private Resource reviewPageResource;
 
-    @Value("classpath:/prompts/discover_character.st")
-    private Resource discoverCharacterResource;
+
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     private final OllamaPort ollama;
     private final String model;
     private final ChatClient client;
-    private final String directorModel;
-    private final ChatClient directorClient;
+
     
     private final StoryPageRepository repository;
     private final StoryPageReviewRepository reviewRepositoy;
     private final StoryRepository storyRepository;
-    private final CharacterRepository characterRepository;
 
+    private final DiscoverCharacterService discoverService;
     
 
     public StoryPageService(OllamaPort ollama,
+        DiscoverCharacterService discover,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient client,
-        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String directorModel,
-        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient directorClient,
         CharacterRepository characterRepository,
         StoryPageRepository repository,
         StoryPageReviewRepository reviewRepository,
@@ -85,9 +82,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             this.repository = repository;
             this.storyRepository = storyRepository;
             this.reviewRepositoy = reviewRepository;
-            this.directorModel = directorModel;
-            this.directorClient = directorClient;
-            this.characterRepository = characterRepository;
+            this.discoverService = discover;
     }
 
     @Override
@@ -118,8 +113,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         .call().entity(StoryPageAgentResult.class);
 
         var r = repository.create(result, story.getId(), currentPage);
-        discoverCharacters(result.composition().actors(), story, result.composition().scene());
-
+        discoverService.discoverCharacters(result.composition().actors(), story, result.composition().scene());
         return r;
     }
 
@@ -220,28 +214,6 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
     }
 
 
-    private void discoverCharacters(List<ActorAction> actors, Story story, String scene) {
-        if(!ollama.isAvailable(directorModel)) return;
-
-        var discovered = actors.stream().filter(x -> !story.getCharacters().stream().anyMatch(y -> y.getName().equalsIgnoreCase(x.name()))).toList();
-        discovered.forEach(d -> discoverCharacter(d,  story, scene));
-    }
-
-    private void discoverCharacter(ActorAction actor, Story story, String scene){
-        CharacterAgentResult result = directorClient
-            .prompt()
-            .user(u -> u.text(discoverCharacterResource)
-                .param("synopsis", story.getSynopsis())
-                .param("name", actor.name())
-                .param("appear", scene)
-                .param("actors", readActors(story.getCharacters())))
-            .call()
-            .entity(CharacterAgentResult.class);
-
-        characterRepository.createActor(story.getId(), result);
-    }
-
-
     @Override
     public StoryPage confirmReview(ConfirmReviewRequestDto request) {
         // 1. Obtenemos la pagina
@@ -258,7 +230,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             reviewRepositoy.changeStatus(request.entityId(), request.status());
             StoryPage page = repository.update(current.getId(), review);
             
-            discoverCharacters(page.getComposition().actors(), storyRepository.getStory(page.getId()), page.getComposition().scene());
+            discoverService.discoverCharacters(page.getComposition().actors(), storyRepository.getStory(page.getId()), page.getComposition().scene());
 
             return page;
         }

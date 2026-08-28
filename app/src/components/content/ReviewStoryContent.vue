@@ -1,8 +1,8 @@
 <template>
-    <div class="fields">
+    <div class="fields" v-if="review">
         <dl class="field">
             <dt>Sinopsis propuesta</dt>
-            <dd>{{ review.previewStory.summary }}</dd>
+            <dd>{{ review.previewStory.synopsis }}</dd>
         </dl>
 
         <dl class="field">
@@ -24,7 +24,7 @@ import { getPendingStoryReview, type StoryReview } from '../../api/reviews';
 interface Props { id: number | undefined }
 const props = defineProps<Props>()
 
-const review = ref<StoryReview>({} as StoryReview);
+const review = ref<StoryReview | null>(null);
 
 async function loadReview(id: number | undefined) {
     if(id == undefined) return

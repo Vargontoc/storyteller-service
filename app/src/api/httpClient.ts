@@ -86,4 +86,5 @@ export const httpClient = {
       body: body !== undefined ? JSON.stringify(body) : undefined,
       headers: { Accept: 'application/octet-stream' },
     }),
+  getForBlob: (path: string) => requestBlob(path, { method: 'GET', headers: { Accept: 'application/octet-stream' } }),
 }

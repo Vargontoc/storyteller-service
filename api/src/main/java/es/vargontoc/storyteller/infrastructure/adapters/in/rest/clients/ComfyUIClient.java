@@ -102,29 +102,34 @@ public class ComfyUIClient {
     }
 
     
-    @SuppressWarnings("unchecked")
     public String upload(Path localImage) {
         try {
             byte[] bytes = Files.readAllBytes(localImage);
-            MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
-            form.add("image", new ByteArrayResource(bytes) {
-                @Override
-                public @Nullable String getFilename() {
-                    return localImage.getFileName().toString();
-                }
-            });
-            form.add("overwrite", "true");
-
-            Map<String, Object> response = restClient.post()
-                .uri("/upload/image")
-                .contentType(MediaType.MULTIPART_FORM_DATA)
-                .body(form)
-                .retrieve()
-                .body(Map.class);
-
-            return (String)response.get("name");
+            return upload(bytes, localImage.getFileName().toString());
         }catch(IOException e){
             throw new UncheckedIOException(e);
         }
+    }
+
+    /** Sube bytes de imagen (p.ej. una salida ya generada por ComfyUI) al directorio de input, para poder reusarla en otro workflow */
+    @SuppressWarnings("unchecked")
+    public String upload(byte[] imageBytes, String filename) {
+        MultiValueMap<String, Object> form = new LinkedMultiValueMap<>();
+        form.add("image", new ByteArrayResource(imageBytes) {
+            @Override
+            public @Nullable String getFilename() {
+                return filename;
+            }
+        });
+        form.add("overwrite", "true");
+
+        Map<String, Object> response = restClient.post()
+            .uri("/upload/image")
+            .contentType(MediaType.MULTIPART_FORM_DATA)
+            .body(form)
+            .retrieve()
+            .body(Map.class);
+
+        return (String)response.get("name");
     }
 }

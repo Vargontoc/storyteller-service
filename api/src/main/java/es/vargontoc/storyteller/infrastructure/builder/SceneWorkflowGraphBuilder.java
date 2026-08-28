@@ -24,12 +24,12 @@ public class SceneWorkflowGraphBuilder {
         this.client = client;
     }
 
-    public Map<String, Object> buildScene(SceneRequest request)  throws IOException {
+    public Map<String, Object> buildScene(SceneRequest request, long seed)  throws IOException {
         Map<String, Object> graph = new LinkedHashMap<>();
         
         graph.put("4", node("CheckpointLoaderSimple", Map.of("ckpt_name", properties.checkpointName())));
 
-        String lastLoraNodeId = "4";
+        String lastLoraNodeId = "4"; 
         int loraNodeId = 30;
 
         for(var lora : properties.loras()) {
@@ -52,12 +52,12 @@ public class SceneWorkflowGraphBuilder {
         String triggerSuffix = trigger.isBlank() ? "": ", " + trigger;
         String styleSuffix = ", " + properties.stylePrefix() + triggerSuffix;
 
-        graph.put("5", node("EmptyLatentImage", Map.of("width", request.width(), "height", request.height(), "batch_size", 1)));
+        graph.put("5", node("EmptyLatentImage", Map.of("width", properties.pageWidth(), "height", properties.pageHeight(), "batch_size", 1)));
 
 
         // -- Masks
         Path tmpDir = Files.createTempDirectory("scene-masks");
-        Path[] masks = RegionMaskGenerator.generateMasks(request.width(), request.height(), 30, tmpDir);
+        Path[] masks = RegionMaskGenerator.generateMasks(properties.pageWidth(), properties.pageHeight(), 30, tmpDir);
         String maskLLeft = client.upload(masks[0]);
         String maskRight = client.upload(masks[1]);
 
@@ -70,15 +70,15 @@ public class SceneWorkflowGraphBuilder {
 
         // -- Characters
 
-        String text1 = "(%:1.3), %s, %s%s".formatted(request.actor2Visual(), request.actor1Action(), request.background(), styleSuffix);
-        String text2 = "(%:1.3), %s, %s%s".formatted(request.actor2Visual(), request.actor2Action(), request.background(), styleSuffix);
+        String text1 = "(%s:1.3), %s, %s%s".formatted(request.actor1Visual(), request.actor1Action(), request.background(), styleSuffix);
+        String text2 = "(%s:1.3), %s, %s%s".formatted(request.actor2Visual(), request.actor2Action(), request.background(), styleSuffix);
         
         graph.put("60", node("CLIPTextEncode", Map.of("text", text1, "clip", ref(clipId, 1))));
         graph.put("61", node("ConditioningSetMask", Map.of(
             "conditioning", ref("60", 0),
             "mask", ref("107", 0),
             "strength", 1.0,
-            "set_con_area", "mask_bounds"
+            "set_cond_area", "mask bounds"
         )));
 
         graph.put("62", node("CLIPTextEncode", Map.of("text", text2, "clip", ref(clipId, 1))));
@@ -86,7 +86,7 @@ public class SceneWorkflowGraphBuilder {
             "conditioning", ref("62", 0),
             "mask", ref("109", 0),
             "strength", 1.0,
-            "set_con_area", "mask_bounds"
+            "set_cond_area", "mask bounds"
         )));
 
         graph.put("64", node("ConditioningCombine", Map.of("conditioning_1", ref("61", 0), "conditioning_2", ref("63", 0))));
@@ -115,7 +115,7 @@ public class SceneWorkflowGraphBuilder {
         )));
  
         graph.put("3", node("KSampler", Map.of(
-            "seed", request.seed(), "steps", properties.steps(), "cfg", properties.cfg(),
+            "seed", seed, "steps", properties.steps(), "cfg", properties.cfg(),
             "sampler_name", properties.samplerName(), "scheduler", properties.scheduler(), "denoise", 1.0,
             "model", ref("103", 0), "positive", ref("64", 0), "negative", ref("7", 0), "latent_image", ref("5", 0)
         )));

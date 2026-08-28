@@ -96,6 +96,7 @@ import { ApiError } from '../api/httpClient'
 import {  getPendingStoryReview, type ReviewType, type StoryReview, type RevisionStatus } from '../api/reviews'
 import { getStory, getStoryPages, type PageSummary, type StorySummary } from '../api/storyteller'
 import { useToastStore } from '../stores/toast'
+import { useWebsocketStore } from '../stores/websocket'
 import ActorsContent from './content/ActorsContent.vue'
 import PagesContent from './content/PagesContent.vue'
 import StoryContent from './content/StoryContent.vue'
@@ -113,6 +114,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; delete: [story: StorySummary]; updated: [storyId: number] }>()
 
 const toastStore = useToastStore()
+const websocketStore = useWebsocketStore()
 const currentType = computed((): ReviewType => {
   switch(activeTab.value){
     case 'guion': return 'SCRIPT';
@@ -218,6 +220,22 @@ watch(
 
     if (storyId) {
       loadStory(storyId)
+    }
+  },
+)
+
+watch(
+  () => websocketStore.lastEvent?.id,
+  () => {
+    const event = websocketStore.lastEvent
+    if (!event || !props.open || !props.storyId) return
+    if (event.type !== 'ERROR' && event.type !== 'SUCCESS') return
+
+    loadStory(props.storyId)
+    contentKey.value++
+
+    if (event.type === 'SUCCESS') {
+      emit('updated', props.storyId)
     }
   },
 )

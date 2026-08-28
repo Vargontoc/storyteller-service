@@ -40,6 +40,9 @@
                 >
                 Revisar guión
                 </button>
+                <button v-if="story.pages == story.size" type="button"   class="btn" @click="callAudioStory()">
+                    Generar narración
+                </button>
             </div>
 
             <button type="button" class="btn btn-danger" @click="emit('delete')">
@@ -65,6 +68,7 @@ import { type ActorReview, getPendingStoryReview, isStoryReview, type StoryRevie
 import { ApiError } from '../../api/httpClient';
 import ReviewModal from '../ReviewModal.vue';
 import { useToastStore } from '../../stores/toast';
+import { generateStoryAudio } from '../../api/generations.ts';
 const toastStore = useToastStore()
 interface Props {
     storyId: number
@@ -78,11 +82,9 @@ const showReviewModal = ref<boolean>(false)
 const loading = ref<boolean>()
 const error = ref<string | null>(null)
 const story = ref<StorySummary | null>(null)
-
+const hasReview = ref<boolean>(false)
 const directorAgentActive = computed(() => serverStatus.data?.ollama.director ?? false)
-const hasReview = computed(() => {
-    return !getPendingStoryReview(props.storyId)
-})
+
 
 function onReviewAccepted(review: StoryReview | ActorReview) {
     if (!isStoryReview(review)) return
@@ -96,13 +98,22 @@ async function loadStory() {
     error.value = null
 
     try{
-        const [result] = await Promise.all([getStory(props.storyId)])
+        const [result, review] = await Promise.all([getStory(props.storyId), getPendingStoryReview(props.storyId)])
         story.value = result
+        if(review) {
+            hasReview.value = true
+        }
+        
     }catch(err) {
         error.value = err instanceof ApiError ? err.message : 'Unexpected error'
     } finally {
         loading.value = false
     }
+}
+
+async function callAudioStory() {
+    if(!props.storyId) return;
+    await generateStoryAudio(props.storyId)
 }
 
 loadStory()

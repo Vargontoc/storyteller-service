@@ -1,22 +1,29 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.persistence;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.domain.enums.PageReviewTarget;
+import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.StoryPageMapper;
+import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
+import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 
@@ -139,5 +146,33 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
 
     }
 
+    @Override
+    public List<Actor> getSceneActors(Long storyId, List<String> actorNames, boolean isCover) {
+
+        List<CharacterJpaEntity> actors = repository.getCharactersFromPage(storyId, actorNames);
+        if(actors.isEmpty()) {
+            throw new AppException("No hay ningun personbaje coincidente", HttpStatus.BAD_REQUEST);
+        }
+        if(isCover) {
+            CharacterJpaEntity actor = repository.getMainCharacter(storyId).orElse(actors.getFirst());
+            actors = List.of(actor);
+        }
+        
+        return exclusiveMap(actors);
+    }
+
+    private List<Actor> exclusiveMap(List<CharacterJpaEntity> actors) {
+        List<Actor> result = new ArrayList<>();
+        actors.forEach(x -> {
+            Actor a = new Actor();
+            a.setImage(x.getImagePath());
+            a.setName(x.getName());
+            a.setMetadata(x.getMetadata());
+            result.add(a);
+        });
+        return result;
+    }
+
+    
     
 }

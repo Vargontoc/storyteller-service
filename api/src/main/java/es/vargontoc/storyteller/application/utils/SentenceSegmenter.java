@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.regex.Pattern;
 
 
+
 public class SentenceSegmenter {
     private static final Pattern SPLIT = Pattern.compile(
         "(?<=[.!?…])\\s+(?=[¿¡\"A-ZÁÉÍÓÚÑ])"

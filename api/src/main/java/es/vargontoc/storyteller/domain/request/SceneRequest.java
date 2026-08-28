@@ -11,11 +11,7 @@ public record SceneRequest(
     
     String actor2Visual,
     String actor2Action,
-    Path actor2path,
-
-    int width,
-    int height,
-    long seed
+    Path actor2path
 ){
     
 }

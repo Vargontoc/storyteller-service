@@ -51,6 +51,22 @@
                   />
                 </svg>
               </button>
+              <button
+                v-if="story.pages === story.size"
+                type="button"
+                class="icon-button"
+                aria-label="Descargar cuento"
+                title="Descargar cuento"
+                :disabled="downloadingId === story.id"
+                @click.stop="onDownloadStory(story)"
+              >
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+                  <path
+                    fill="currentColor"
+                    d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H5Z"
+                  />
+                </svg>
+              </button>
             </td>
           </tr>
           <tr v-if="items.length === 0">
@@ -94,12 +110,15 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { deleteStory, getStory, getStories, type StorySummary } from '../api/storyteller'
+import { deleteStory, getStory, getStories, type StorySummary, downloadStory } from '../api/storyteller'
+import { useToastStore } from '../stores/toast'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import PathImage from '../components/PathImage.vue'
 import TopicSelectionModal from '../components/TopicSelectionModal.vue'
 import StoryModal from '../components/StoryModal.vue'
 const PAGE_SIZE = 10
+
+const toastStore = useToastStore()
 
 const items = ref<StorySummary[]>([])
 const currentPage = ref(0)
@@ -107,6 +126,7 @@ const totalPages = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const deletingId = ref<number | null>(null)
+const downloadingId = ref<number | null>(null)
 const pendingDelete = ref<StorySummary | null>(null)
 const showTopicModal = ref(false)
 const showStoryModal = ref(false)
@@ -136,6 +156,32 @@ function goToPage(page: number) {
 
 function onDeleteClick(story: StorySummary) {
   pendingDelete.value = story
+}
+
+function sanitizeFileName(name: string) {
+  return name.replace(/[^a-z0-9-_]+/gi, '_').replace(/^_+|_+$/g, '') || 'story'
+}
+
+async function onDownloadStory(story: StorySummary) {
+  downloadingId.value = story.id
+
+  try {
+    const blob = await downloadStory(story.id)
+    const url = URL.createObjectURL(blob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${sanitizeFileName(story.title)}.zip`
+    document.body.appendChild(link)
+    link.click()
+    link.remove()
+
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    toastStore.show(err instanceof ApiError ? err.message : 'No se pudo descargar el cuento', 'error')
+  } finally {
+    downloadingId.value = null
+  }
 }
 
 async function confirmDelete() {

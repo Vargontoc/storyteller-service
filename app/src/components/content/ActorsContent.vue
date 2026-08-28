@@ -216,6 +216,7 @@ loadActors();
     gap: 4px;
     padding: 16px 20px 0;
     border-bottom: 1px solid var(--border);
+    overflow-y: auto;
 }
 
 .tab {

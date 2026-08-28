@@ -8,7 +8,7 @@ export type PresetVoice = 'CALM_STORYTELLER' | 'ADVENTURE_ENERGIC' | 'SLEEP_SOFT
 export interface Story {
   id: number
   title: string
-  summary: string
+  synopsis: string
   size: StorySize
   characters: Actor[]
   pages: Page[]
@@ -41,6 +41,17 @@ export interface AudioRequest {
   customParams?: AudioParams
 }
 
+export interface AudioPage {
+  page: number
+  text: String
+  tone: PresetVoice
+  word?: String
+}
+
+export interface AudioStory {
+  pages: AudioPage[]
+}
+
 export function generateTopic() {
   return httpClient.post<ApiEnvelope<Topic>>('/api/v1/generations/topic').then((envelope) => envelope.data)
 }
@@ -69,3 +80,9 @@ export function generateAudio(request: AudioRequest) {
     .then((envelope) => envelope.data)
 }
 
+
+export function generateStoryAudio(id: number) {
+  return httpClient
+    .get<ApiEnvelope<AudioStory>>(`/api/v1/generations/story/${id}/audio`)
+    .then((envelope) => envelope.data)
+}

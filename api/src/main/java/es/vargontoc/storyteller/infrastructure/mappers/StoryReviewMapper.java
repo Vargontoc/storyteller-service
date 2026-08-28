@@ -76,6 +76,7 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
                 c.setName(d.getName());
                 c.setNarrativeDescription(d.getNarrativeDescription());
                 c.setVisualDescription(d.getVisualDescription());
+                c.setMetadata(d.getMetadata());
                 return c;
             })
             .toList();

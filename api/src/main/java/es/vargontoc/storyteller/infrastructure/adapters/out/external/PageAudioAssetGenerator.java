@@ -8,16 +8,18 @@ import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
+import es.vargontoc.storyteller.application.ports.in.WebsocketUseCase;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.external.AudioGeneratorPort;
 import es.vargontoc.storyteller.application.utils.AudioAssembler;
 import es.vargontoc.storyteller.application.utils.SentenceSegmenter;
 import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;
+import es.vargontoc.storyteller.domain.events.WebsocketNotificationEvent;
 import es.vargontoc.storyteller.domain.model.AudioPage;
 import es.vargontoc.storyteller.domain.model.AudioToneParams;
 import es.vargontoc.storyteller.domain.request.AudioGenerationRequest;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
-import jakarta.transaction.Transactional;
+import jakarta.transaction.Transactional; 
 
 @Component
 @Transactional
@@ -28,18 +30,24 @@ public class PageAudioAssetGenerator {
     private final AudioGeneratorPort audioPort;
     private final ResourceStorage storage;
     private final StoryPageJpaRepository pagesRepository;
+    private final WebsocketUseCase websocket;
 
-    public PageAudioAssetGenerator(AudioGeneratorPort audioPort, ResourceStorage storage, StoryPageJpaRepository pagesRepository) {
+    public PageAudioAssetGenerator(AudioGeneratorPort audioPort,
+        WebsocketUseCase websocket,
+        ResourceStorage storage,
+        StoryPageJpaRepository pagesRepository) {
         this.audioPort = audioPort;
         this.storage = storage;
         this.pagesRepository = pagesRepository;
+        this.websocket = websocket;
     }
 
     @Async
     public void generatePageAudios(Long storyId, List<AudioPage> pages) {
         pages.forEach(p -> {
-            LOG.info("Generando audio para pagina: {}", p.page());
+            websocket.sendNotification(WebsocketNotificationEvent.info("Generando audio para página: " + p.page()));
 
+            LOG.info("Generando audio para pagina: {}", p.page());
             List<String> sentences = SentenceSegmenter.split(p.text());
             List<byte[]> clips = new ArrayList<>();
 
@@ -56,8 +64,13 @@ public class PageAudioAssetGenerator {
             LOG.info("Asset generado: {}", asset);
             pagesRepository.setAudio(storyId, p.page(), asset);
             LOG.info("Audio generado y guardado para la pagina: {}", p.page());
+
+            websocket.sendNotification(WebsocketNotificationEvent.info("Audio generado con exito página: " + p.page()));
         });
+
+        websocket.sendNotification(WebsocketNotificationEvent.success("Se ha generado el cuento completo"));
     }
+
 
     private AudioToneParams resolveParams(String sentence, VoiceTonePreset  tone, String emphasysWord){
         AudioToneParams base = tone.toParams();

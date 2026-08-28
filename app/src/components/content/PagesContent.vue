@@ -37,11 +37,7 @@
                 <div class="field" v-if="!isCover">
                     <dt>Audio</dt>
                     <dd>
-                        <path-audio :path="getPageActive().audio" >
-                            <button type="button" class="btn" @click="callGenerateAudio">
-                                Generar Audio
-                            </button>
-                        </path-audio>
+                        <path-audio :path="getPageActive().audio" ></path-audio>
                     </dd>
                 </div>
                 <div class="field">
@@ -270,6 +266,7 @@ loadPages()
     gap: 4px;
     padding: 16px 20px 0;
     border-bottom: 1px solid var(--border);
+    overflow-y: auto;
 }
 
 .tab {

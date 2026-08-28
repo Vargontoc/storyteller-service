@@ -1,130 +1,65 @@
 package es.vargontoc.storyteller.application.service;
 
 
-import java.util.Objects;
-
-import org.springframework.http.HttpStatus;
+import java.util.List;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.AudioGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.ImageGeneration;
-import es.vargontoc.storyteller.application.ports.out.external.AudioGeneratorPort;
-import es.vargontoc.storyteller.application.ports.out.external.ImageGeneratorPort;
-import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.AudioGenerateCommand;
 import es.vargontoc.storyteller.domain.enums.KindImage;
-import es.vargontoc.storyteller.domain.enums.VoiceTonePreset;
-import es.vargontoc.storyteller.domain.model.AudioToneParams;
+import es.vargontoc.storyteller.domain.model.AudioPage;
 import es.vargontoc.storyteller.domain.model.StoryPage;
-import es.vargontoc.storyteller.domain.request.AudioGenerationRequest;
-import es.vargontoc.storyteller.domain.request.ImageGenerationRequest;
-import es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties;
-import es.vargontoc.storyteller.infrastructure.storage.ResourceStorageAdapter;
-import es.vargontoc.storyteller.shared.exceptions.AppException;
+import es.vargontoc.storyteller.infrastructure.adapters.out.external.ActorAssetGenerator;
+import es.vargontoc.storyteller.infrastructure.adapters.out.external.PageAudioAssetGenerator;
+import es.vargontoc.storyteller.infrastructure.adapters.out.external.SceneAssetGenerator;
+
 import jakarta.transaction.Transactional;
 
 @Service
 @Transactional
 public class AssetsGenerationService implements ImageGeneration, AudioGeneration {
 
-    private final CharacterRepository actorUseCase;
+
     private final StoryPageRepository pageUseCase;
-    private final ImageGeneratorPort generator;
-    private final AudioGeneratorPort audioGenerator;
-    private final ResourceStorageAdapter storage;
+    private final ActorAssetGenerator actorGenerator;
+    private final SceneAssetGenerator sceneGenerator;
+    private final PageAudioAssetGenerator sceneAudioGenerator;
+    
 
-    private final String defaultVoice;
 
-
-    public AssetsGenerationService( ChatterboxProperties chatterbox, AudioGeneratorPort audioPort, CharacterRepository actorUseCase, StoryRepository storyRepository, StoryPageRepository pageUseCase, ImageGeneratorPort generator,
-            ResourceStorageAdapter storage) {
-        this.actorUseCase = actorUseCase;
+    public AssetsGenerationService(StoryPageRepository pageUseCase, ActorAssetGenerator actorGenerator,
+            SceneAssetGenerator sceneGenerator, PageAudioAssetGenerator sceneAudioGenerator) {
         this.pageUseCase = pageUseCase;
-        this.generator = generator;
-        this.storage = storage;
-        defaultVoice = chatterbox.defaultVoiceName();
-        audioGenerator = audioPort;
+        this.actorGenerator = actorGenerator;
+        this.sceneGenerator = sceneGenerator;
+        this.sceneAudioGenerator = sceneAudioGenerator;
     }
-
 
     @Override
     public byte[] generateImage(KindImage kind, long id) {
 
-        ImageResult image = new ImageResult();
         if(kind == KindImage.ACTOR) {
-            var actor = actorUseCase.getActor(id);
-            image.storyId = actor.getStoryId();
-            
-            image.request = ImageGenerationRequest.actor(actor.getMetadata().translate(), actor.getMetadata().attributes());
+            actorGenerator.generateImageActor(id);
         }
         else{
-
-            
-            var page = pageUseCase.getPage(id);
-
-            if(kind == KindImage.PAGE && page.getPage() == 0)
-                throw new AppException("El id proporcionado no pertenece a una página", HttpStatus.CONFLICT);
-            if(kind == KindImage.COVER && page.getPage() != 0)
-                throw new AppException("El id proporcionado no pertenece a una portada", HttpStatus.CONFLICT);
-            image.storyId = page.getStoryId();
-            /*
-                if(kind == KindImage.PAGE)
-                    image.request = ImageGenerationRequest.page(page.getComposition().background(), ReferenceCharacterSelector.selectReferenceImages(page.getComposition()., 3));
-                else
-                    image.request = ImageGenerationRequest.cover(prompt,  ReferenceCharacterSelector.selectReferenceImages(story.getCharacters(), 3));
-                
-            */
+            sceneGenerator.generateImageScene(id);
         }
-
-        image = getResult(image);
-
-        // 3. Guardamos la imagen
-        String path = storage.saveImage(image.storyId, kind, id, image.result);
-
-        if(kind == KindImage.ACTOR)
-            actorUseCase.setImagePath(id, path);
-        else
-            pageUseCase.setImagePath(id, path);
-        
-        // 5. Debolvemos la respuesta
-        return image.result;
+        return new byte[]{};
     }
     
-    private ImageResult getResult(ImageResult result) {
-        result.result = generator.generateImage(result.request);
-        return result;
-    }
 
-    class ImageResult { long storyId; ImageGenerationRequest request; byte[] result; }
 
     @Override
     public byte[] generateAudio(AudioGenerateCommand cmd) {
         // 1. Obtenemos la pagina de la peticion
         StoryPage page = pageUseCase.getPage(cmd.pageId());
 
-        // 2. Obtenemos el nombre
-        String voiceName = cmd.voiceName() != null && !cmd.voiceName().isBlank() ? cmd.voiceName() : defaultVoice;
-
-        // 3. Establecemos parametros
-        AudioToneParams params = cmd.preset() == VoiceTonePreset.CUSTOM ? Objects.requireNonNull(cmd.customParams(), "customParams requerido con preset CUSTOM") : cmd.preset().toParams();
-
-        // 4. Generacion del audio
-        byte[] bytes = audioGenerator.generateAudio(new AudioGenerationRequest(
-            page.getPage() != 0 ? page.getText() : page.getCoverText(),
-            voiceName,
-            params.exageration(),
-            params.cfgWeight(),
-            params.temperature()
+        sceneAudioGenerator.generatePageAudios(page.getStoryId(), List.of(
+            new AudioPage(page.getPage(), page.getText(), cmd.preset(), null)
         ));
 
-        // 5. Guardamos el fichero audio
-        String path = storage.saveAudio(page.getStoryId(), page.getId(), bytes);
-
-        // 5. Persistir el asset
-        pageUseCase.setAudioPath(page.getId(), path);
-
-        return bytes;
+        return new byte[]{};
     }
 }

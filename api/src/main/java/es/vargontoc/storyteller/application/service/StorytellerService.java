@@ -2,6 +2,7 @@ package es.vargontoc.storyteller.application.service;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 
@@ -89,7 +90,11 @@ public class StorytellerService implements StorytellerUseCase {
             throw new ResourceNotFoundException("Story not found with id: " + storyId);
         });
 
-        return story.getCharacters().stream().map(this::toActorSummary).toList();
+        return story.getCharacters().stream()
+            .sorted(Comparator.comparing(CharacterJpaEntity::isMain).reversed()
+                .thenComparing(CharacterJpaEntity::getName))
+            .map(this::toActorSummary)
+            .toList();
     }
 
     @Override
@@ -116,7 +121,10 @@ public class StorytellerService implements StorytellerUseCase {
         StoryJpaEntity story = repository.findById(storyId).orElseThrow(() -> {
             throw new ResourceNotFoundException("Story not found with id: " + storyId);
         });
-        return story.getPages().stream().map(this::toPageSummary).toList();
+        return story.getPages().stream()
+            .map(this::toPageSummary)
+            .sorted(Comparator.comparingInt(PageSummary::page))
+            .toList();
     }
     @Override
     public PageSummary getPage(Long storyId, Long pageId) {
