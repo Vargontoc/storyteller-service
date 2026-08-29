@@ -99,5 +99,5 @@ app:
     agents:
         topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
-        scriptwriter: "${APP_AGENT_SCRIPTWRITER:storyteller-scriptwriter}"
-        narrator: "${APP_AGENT_TRANSLATOR:storyteller-narrator}"
+        scriptwriter: "${APP_AGENT_WRITER:storyteller-writer}"
+        narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"
