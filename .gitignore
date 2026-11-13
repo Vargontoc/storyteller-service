@@ -4,5 +4,10 @@ api/target/**
 data/**
 stories/**
 .vscode/*
+.sdd
+.opencode
+.claude
+.codex
+.agents
 
 app/node_modules/**

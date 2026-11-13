@@ -3,9 +3,7 @@ package es.vargontoc.storyteller.application.utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.SequenceInputStream;
 import java.time.Duration;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.sound.sampled.AudioFileFormat;
@@ -35,21 +33,29 @@ public class AudioAssembler {
     }
 
     public static byte[] concat(List<byte[]> clips) {
-        List<AudioInputStream> streams = new ArrayList<>();
+        try {
+            AudioFormat format = null;
+            ByteArrayOutputStream pcm = new ByteArrayOutputStream();
 
-        try{
-            for(byte[] clip : clips) {
-                streams.add(AudioSystem.getAudioInputStream(new ByteArrayInputStream(clip)));
+            for (byte[] clip : clips) {
+                try (AudioInputStream in = AudioSystem.getAudioInputStream(new ByteArrayInputStream(clip))) {
+                    if (format == null)
+                        format = in.getFormat();
+                    in.transferTo(pcm);
+                }
             }
 
-            AudioInputStream appended = streams.get(0);
-            for(int i = 1; i < streams.size(); i++) {
-                appended = new AudioInputStream(new SequenceInputStream(appended, streams.get(i)), appended.getFormat(), appended.getFrameLength()   + streams.get(i).getFrameLength());
-            }
+            if (format == null)
+                throw new AppException("No hay clips de audio que ensamblar", HttpStatus.BAD_REQUEST);
 
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            AudioSystem.write(appended, AudioFileFormat.Type.WAVE, out);
-            return out.toByteArray();
+            byte[] pcmBytes = pcm.toByteArray();
+            long frames = pcmBytes.length / format.getFrameSize();
+
+            try (AudioInputStream appended = new AudioInputStream(new ByteArrayInputStream(pcmBytes), format, frames)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                AudioSystem.write(appended, AudioFileFormat.Type.WAVE, out);
+                return out.toByteArray();
+            }
         }catch(IOException | UnsupportedAudioFileException e){
             throw new AppException("Error esamblando audio: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }

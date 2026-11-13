@@ -24,11 +24,9 @@ import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
-import es.vargontoc.storyteller.domain.model.ActorAction;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
-import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryCoverAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryCoverReviewAgentResult;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
@@ -139,7 +137,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         StoryPageReviewAgentResult result = client.prompt()
             .user(u -> {
                 try {
-                    u.text(creatCoverResource)
+                    u.text(reviewPageResource)
                         .param("synopsis", story.getSynopsis())
                         .param("actors", readActors(story.getCharacters()))
                         .param("summary", story.getAgentSummary())

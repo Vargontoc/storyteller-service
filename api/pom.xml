@@ -67,6 +67,18 @@
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-websocket</artifactId>
     </dependency>
+    
+    <dependency>
+        <groupId>ws.schild</groupId>
+        <artifactId>jave-core</artifactId>
+        <version>3.3.1</version> <!-- Asegúrate de usar la versión estable más reciente -->
+    </dependency>
+    <!-- Esto incluye los binarios de FFmpeg para tu sistema operativo de forma automática -->
+    <dependency>
+        <groupId>ws.schild</groupId>
+        <artifactId>jave-nativebin-win64</artifactId> <!-- Cambia según tu OS: linux64, osx64 -->
+        <version>3.3.1</version>
+    </dependency>
 
     <dependency>
       <groupId>org.springframework.ai</groupId>

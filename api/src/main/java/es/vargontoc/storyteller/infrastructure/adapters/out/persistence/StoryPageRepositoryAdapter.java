@@ -3,7 +3,6 @@ package es.vargontoc.storyteller.infrastructure.adapters.out.persistence;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Repository;
@@ -17,7 +16,6 @@ import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.StoryPageMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
-import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaEntity;

@@ -1,5 +1,7 @@
 package es.vargontoc.storyteller.infrastructure.storage;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -10,12 +12,19 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
+
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.enums.ResourceType;
 import es.vargontoc.storyteller.domain.request.PageAssetRequest;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
+import ws.schild.jave.Encoder;
+import ws.schild.jave.MultimediaObject;
+import ws.schild.jave.encode.AudioAttributes;
+import ws.schild.jave.encode.EncodingAttributes;
 
 @Component
 public class ResourceStorageAdapter implements ResourceStorage {
@@ -159,9 +168,12 @@ public class ResourceStorageAdapter implements ResourceStorage {
                     Path source = Path.of(asset.asset());
                     if (!Files.exists(source))
                         continue;
-
+                    
                     zip.putNextEntry(new ZipEntry(resourceFileName(asset)));
-                    Files.copy(source, zip);
+                    if (asset.type() == ResourceType.AUDIO)
+                        zip.write(convertWavToMp3(source.toFile()));
+                    else
+                        Files.copy(source, zip);
                     zip.closeEntry();
                 }
             }
@@ -173,9 +185,32 @@ public class ResourceStorageAdapter implements ResourceStorage {
     }
 
     private String resourceFileName(PageAssetRequest asset) {
-        String extension = asset.type() == ResourceType.IMAGE ? ".png" : ".wav";
+        String extension = asset.type() == ResourceType.IMAGE ? ".png" : ".mp3";
         if (asset.page() == 0)
             return "cover" + extension;
         return "page_" + asset.page() + extension;
+    }
+
+    private byte[] convertWavToMp3(File source) throws IOException {
+        try {
+            AudioAttributes audio = new AudioAttributes();
+            audio.setCodec("libmp3lame");
+            audio.setBitRate(128000);
+            audio.setChannels(1);
+            audio.setSamplingRate(44100);
+
+            EncodingAttributes attrs = new EncodingAttributes();
+            attrs.setOutputFormat("mp3");
+            attrs.setAudioAttributes(audio);
+
+            Encoder encoder = new Encoder();
+            MultimediaObject mo = new MultimediaObject(source);
+            File f = new File(source.getName() + ".mp3");
+            encoder.encode(mo, f, attrs);
+
+            return Files.readAllBytes(f.toPath());
+        } catch (Exception e) {
+            throw new AppException("Error conversion a mp3", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }
