@@ -50,3 +50,29 @@ boolean hasImages = imageConditions.hasGeneratedImages(catalogCharacterId);
 ```
 
 **Notas:** Es un puerto de solo lectura; su implementación productiva pertenece al módulo de assets.
+
+## CharacterCatalogUseCase
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterCatalogUseCase.java`
+**Para qué sirve:** Crea una ficha del catálogo mediante el agente; una respuesta rechazada no se persiste.
+
+```java
+CatalogCharacterAgentResult result = catalog.create(new CatalogCharacterCreateCommand("Una zorra curiosa"));
+if (!result.accepted()) {
+    String reason = result.rejectionReason();
+}
+```
+
+**Notas:** Una respuesta rechazada o incompleta no crea ninguna ficha; la persistencia solo ocurre tras validar una respuesta aceptada y completa.
+
+## CharacterCatalogUseCase (consulta)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterCatalogUseCase.java`
+**Para qué sirve:** Consulta fichas y renombra solo el maestro del catálogo.
+
+```java
+CatalogCharacterView character = catalog.get(catalogCharacterId);
+CatalogCharacterView renamed = catalog.rename(catalogCharacterId, "Luna la zorra");
+```
+
+**Notas:** La consulta requiere el proveedor de retrato; si assets no lo configura, devuelve un error de integración en vez de inventar el estado de borrador.

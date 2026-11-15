@@ -47,6 +47,16 @@
       <version>${vargontoc-framework.version}</version>
     </dependency>
     <dependency>
+      <groupId>es.vargontoc.framework</groupId>
+      <artifactId>framework-json</artifactId>
+      <version>${vargontoc-framework.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>es.vargontoc.framework</groupId>
+      <artifactId>framework-persistence-jpa</artifactId>
+      <version>${vargontoc-framework.version}</version>
+    </dependency>
+    <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
     </dependency>
@@ -60,6 +70,11 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-validation</artifactId>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-actuator</artifactId>
     </dependency>
 
     <dependency>
