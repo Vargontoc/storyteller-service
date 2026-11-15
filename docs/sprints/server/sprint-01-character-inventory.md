@@ -85,6 +85,6 @@ El puerto de imágenes solo consulta condiciones; ni el adaptador, ni la generac
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: pendiente (prueba específica TASK-001 correcta, confirmada por el usuario: `mvn -U test -Dtest=CharacterAgentAdapterTest`)
 - Integración: pendiente
 - Validación manual: pendiente

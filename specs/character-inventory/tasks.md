@@ -10,10 +10,10 @@ El trabajo se divide entre la definición del agente de personaje, los casos de 
 
 ## Tareas
 
-### [ ] TASK-001 Definir el agente de personaje y su contrato de salida textual
+### [x] TASK-001 Definir el agente de personaje y su contrato de salida textual
 
 - **Cubre:** REQ-003, REQ-004, REQ-008, DEC-002
-- **Componente:** character-agent | agents/character-agent/Modelfile
+- **Componente:** character-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiCharacterAgent.java
 - **Depende de:** -
 - **Alcance:** Definir el agente Ollama propio para generar fichas textuales, validar entradas y proponer revisiones, usando las reglas de edad y especies de la configuración compartida.
 - **Hecho cuando:** el agente dispone de una definición cargable con Modelfile y prompts que permiten obtener nombre, descripción narrativa y descripción visual, además de distinguir entradas aceptadas y rechazadas con motivo.

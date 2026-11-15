@@ -101,3 +101,7 @@ app:
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
         scriptwriter: "${APP_AGENT_WRITER:storyteller-writer}"
         narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"
+        character: "${APP_AGENT_CHARACTER:storyteller-character}"
+        character-rules:
+            audience: "niños y niñas de 3 a 4 años"
+            allowed-species: "animales fáciles de dibujar y personajes humanos infantiles"

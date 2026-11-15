@@ -30,8 +30,22 @@
     <java.version>21</java.version>
     <spring-ai.version>2.0.0</spring-ai.version>
     <springdoc.version>3.1.0</springdoc.version>
+    <vargontoc-framework.version>0.1.0</vargontoc-framework.version>
   </properties>
+  <repositories>
+    <repository>
+      <id>github</id>
+      <url>https://maven.pkg.github.com/Vargontoc/vargontoc-framework</url>
+      <releases><enabled>true</enabled></releases>
+      <snapshots><enabled>false</enabled></snapshots>
+    </repository>
+  </repositories>
   <dependencies>
+    <dependency>
+      <groupId>es.vargontoc.framework</groupId>
+      <artifactId>framework-ai</artifactId>
+      <version>${vargontoc-framework.version}</version>
+    </dependency>
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-data-jpa</artifactId>
@@ -111,6 +125,12 @@
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-webmvc-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
       <scope>test</scope>
     </dependency>
 

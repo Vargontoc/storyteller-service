@@ -25,11 +25,12 @@ public class OllamaAdapter implements OllamaPort {
         OllamaApi api,
         @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String topicModel,
         @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String directorModel,
-        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL) String scriptwriterModel) {
+        @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL) String scriptwriterModel,
+        @Qualifier(Constants.BeanNames.AGENT_CHARACTER_MODEL) String characterModel) {
         restClient =  RestClient.builder().baseUrl(url).build();
         this.api = api;
 
-        models = List.of(topicModel, directorModel, scriptwriterModel);
+        models = List.of(topicModel, directorModel, scriptwriterModel, characterModel);
     }
 
     public boolean isAvailableService(){

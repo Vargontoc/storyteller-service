@@ -27,6 +27,9 @@ public class AgentsConfig {
     @Bean(name = Constants.BeanNames.AGENT_NARRATOR_MODEL)
     public String narratorModel(@Value("${app.agents.narrator}") String value) { return value;}
 
+    @Bean(name = Constants.BeanNames.AGENT_CHARACTER_MODEL)
+    public String characterModel(@Value("${app.agents.character}") String value) { return value;}
+
 
 
     @Bean(name = Constants.BeanNames.AGENT_TOPICS)
@@ -56,6 +59,15 @@ public class AgentsConfig {
     @Bean(name = Constants.BeanNames.AGENT_NARRATOR)
     public ChatClient translatorAgent(OllamaChatModel ollama,
             @Qualifier(Constants.BeanNames.AGENT_NARRATOR_MODEL) String model) {
+        return ChatClient.builder(ollama)
+            .defaultAdvisors(new SimpleLoggerAdvisor())
+            .defaultOptions(ChatOptions.builder().model(model))
+            .build();
+    }
+
+    @Bean(name = Constants.BeanNames.AGENT_CHARACTER)
+    public ChatClient characterAgent(OllamaChatModel ollama,
+            @Qualifier(Constants.BeanNames.AGENT_CHARACTER_MODEL) String model) {
         return ChatClient.builder(ollama)
             .defaultAdvisors(new SimpleLoggerAdvisor())
             .defaultOptions(ChatOptions.builder().model(model))
