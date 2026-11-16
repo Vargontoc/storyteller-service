@@ -30,6 +30,10 @@ public class CharacterJpaEntity extends BaseEntity {
     @ManyToOne(optional = false)
     private StoryJpaEntity story;
 
+    @JoinColumn(name = "catalog_character_id")
+    @ManyToOne
+    private CatalogCharacterJpaEntity catalogCharacter;
+
     @Column(name = "visual_description", nullable = false, length = 1000)
     private String visualDescription;
 
@@ -55,6 +59,8 @@ public class CharacterJpaEntity extends BaseEntity {
     public void setNarrativeDescription(String narrativeDescription) { this.narrativeDescription = narrativeDescription; }
     public StoryJpaEntity getStory() { return story; }
     public void setStory(StoryJpaEntity story) { this.story = story; }
+    public CatalogCharacterJpaEntity getCatalogCharacter() { return catalogCharacter; }
+    public void setCatalogCharacter(CatalogCharacterJpaEntity catalogCharacter) { this.catalogCharacter = catalogCharacter; }
     public Long getReviewId() { return reviewId; }
     public void setReviewId(Long reviewId) { this.reviewId = reviewId; }
     public String getImagePath() { return imagePath; }

@@ -10,7 +10,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
 
 ## Tareas
 
-### [ ] TASK-001 Persistir retrato aprobado, candidatos, trabajos de generación y relación de fork
+### [x] TASK-001 Persistir retrato aprobado, candidatos, trabajos de generación y relación de fork
 
 - **Cubre:** REQ-003, REQ-010, REQ-012, DEC-004, DEC-006
 - **Componente:** character-repository | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/CatalogCharacterRepository.java
@@ -59,10 +59,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Generar los retratos de un personaje y comprobar que las 4 propuestas quedan disponibles para su ficha.
   2. Regenerar y comprobar que las propuestas mostradas son las nuevas y las anteriores ya no están.
 
-### [ ] TASK-004 Construir el adaptador de ComfyUI para lotes de 4 retratos cartoon
+### [x] TASK-004 Construir el adaptador de ComfyUI para lotes de 4 retratos cartoon
 
 - **Cubre:** REQ-001, REQ-002, DEC-002
-- **Componente:** portrait-comfyui-adapter | por definir (analista técnico)
+- **Componente:** portrait-comfyui-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/PortraitComfyUiAdapter.java
 - **Depende de:** -
 - **Alcance:** Crear el adaptador que construye y envía a ComfyUI un workflow de 4 retratos cartoon en una sola orquestación a partir de la descripción visual del personaje, variando seeds y prompts para obtener diversidad manteniendo la identidad, y devuelve los 4 assets.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-001 y REQ-002, el adaptador encola un único workflow que produce 4 imágenes con estilo cartoon coherente derivadas de la descripción visual del personaje y devuelve las 4 imágenes descargadas.
@@ -76,10 +76,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Comparar dos retratos del mismo personaje y comprobar que comparten un estilo cartoon reconocible.
   3. Revisar el contenido de las 4 imágenes y comprobar que no incluye elementos inapropiados para la edad objetivo.
 
-### [ ] TASK-005 Implementar el notificador de eventos de retrato por WebSocket
+### [x] TASK-005 Implementar el notificador de eventos de retrato por WebSocket
 
 - **Cubre:** REQ-005, DEC-005
-- **Componente:** portrait-websocket-notifier | por definir (analista técnico)
+- **Componente:** portrait-websocket-notifier | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitWebsocketNotifier.java
 - **Depende de:** -
 - **Alcance:** Crear el notificador que emite en el canal `/storyteller` los eventos de inicio, progreso, finalización con éxito y error de la generación de retratos, incluyendo siempre el identificador del personaje.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-005, el notificador publica un evento de inicio, uno de finalización con identificador de personaje y estado de éxito, y uno de error con el motivo del fallo.

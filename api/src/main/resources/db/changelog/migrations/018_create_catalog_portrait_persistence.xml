@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="018-add-catalog-reference-to-character" author="storyteller">
+        <addColumn tableName="character">
+            <column name="catalog_character_id" type="BIGINT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="character" baseColumnNames="catalog_character_id" constraintName="fk_character_catalog_character" referencedTableName="catalog_character" referencedColumnNames="id"/>
+    </changeSet>
+
+    <changeSet id="018-create-catalog-portrait" author="storyteller">
+        <createTable tableName="catalog_character_portrait">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="catalog_character_id" type="BIGINT"><constraints nullable="false" unique="true"/></column>
+            <column name="asset_path" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="catalog_character_portrait" baseColumnNames="catalog_character_id" constraintName="fk_catalog_portrait_character" referencedTableName="catalog_character" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="018-create-portrait-generation-job" author="storyteller">
+        <createTable tableName="portrait_generation_job">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="catalog_character_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="error_message" type="VARCHAR(1000)"/>
+            <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="portrait_generation_job" baseColumnNames="catalog_character_id" constraintName="fk_portrait_job_character" referencedTableName="catalog_character" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="018-create-portrait-candidate" author="storyteller">
+        <createTable tableName="portrait_candidate">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="catalog_character_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="generation_job_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="asset_path" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="portrait_candidate" baseColumnNames="catalog_character_id" constraintName="fk_portrait_candidate_character" referencedTableName="catalog_character" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="portrait_candidate" baseColumnNames="generation_job_id" constraintName="fk_portrait_candidate_job" referencedTableName="portrait_generation_job" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="018-create-catalog-character-fork" author="storyteller">
+        <createTable tableName="catalog_character_fork">
+            <column name="id" type="BIGINT" autoIncrement="true"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="original_catalog_character_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="fork_catalog_character_id" type="BIGINT"><constraints nullable="false" unique="true"/></column>
+            <column name="created_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMP"><constraints nullable="false"/></column>
+            <column name="version" type="BIGINT" defaultValueNumeric="0"><constraints nullable="false"/></column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="catalog_character_fork" baseColumnNames="original_catalog_character_id" constraintName="fk_catalog_fork_original" referencedTableName="catalog_character" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addForeignKeyConstraint baseTableName="catalog_character_fork" baseColumnNames="fork_catalog_character_id" constraintName="fk_catalog_fork_child" referencedTableName="catalog_character" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

@@ -15,6 +15,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import es.vargontoc.storyteller.application.ports.in.WebsocketUseCase;
 import es.vargontoc.storyteller.domain.events.WebsocketNotificationEvent;
+import es.vargontoc.storyteller.domain.events.PortraitGenerationEvent;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 @Component
@@ -41,6 +42,15 @@ public class WebsocketAdapter extends TextWebSocketHandler implements WebsocketU
 
     @Override
     public void sendNotification(WebsocketNotificationEvent event) {
+        broadcast(event);
+    }
+
+    @Override
+    public void sendPortraitNotification(PortraitGenerationEvent event) {
+        broadcast(event);
+    }
+
+    private void broadcast(Object event) {
         if(!sessions.isEmpty()) {
             sessions.values().forEach(s -> {
                 try {
