@@ -146,7 +146,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   5. Aceptar la revisiÃ³n y comprobar que se aplica a la ficha y desaparece el badge.
   6. Descartar la revisiÃ³n y comprobar que se conserva la ficha y desaparece el badge.
 
-### [ ] TASK-009 Contrato: openapi - recurso de catÃ¡logo de personajes
+### [x] TASK-009 Contrato: openapi - recurso de catÃ¡logo de personajes
 
 - **Cubre:** REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006
 - **Componente:** app | app/
@@ -161,7 +161,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   1. Recorrer el contrato y comprobar que cada interfaz de esta tarea aparece con su mÃ©todo, entrada, salida y errores relevantes.
   2. Comparar el contrato con la implementaciÃ³n y confirmar que listado, detalle, alta automÃ¡tica, alta manual y renombrado coinciden.
 
-### [ ] TASK-010 Contrato: openapi - adaptaciÃ³n de revisiones de personaje al catÃ¡logo
+### [x] TASK-010 Contrato: openapi - adaptaciÃ³n de revisiones de personaje al catÃ¡logo
 
 - **Cubre:** REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012
 - **Componente:** app | app/
@@ -176,7 +176,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   1. Recorrer el contrato y comprobar que aparecen las cuatro interfaces de revisiÃ³n de personaje y que todas utilizan el identificador de catÃ¡logo.
   2. Comparar cada interfaz y sus errores con la implementaciÃ³n y confirmar que coinciden.
 
-### [ ] TASK-011 Contrato: openapi - referencia al catÃ¡logo y separaciÃ³n del snapshot de cuento
+### [x] TASK-011 Contrato: openapi - referencia al catÃ¡logo y separaciÃ³n del snapshot de cuento
 
 - **Cubre:** REQ-006, DEC-001, DEC-005
 - **Componente:** app | app/

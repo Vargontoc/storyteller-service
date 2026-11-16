@@ -1,0 +1,14 @@
+# Origen: specs/character-inventory (REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: Petición para resolver (confirmar o descartar) una revisión de personaje del catálogo
+additionalProperties: false
+properties:
+  status:
+    type: string
+    enum:
+      - CONFIRMED
+      - DISCARDED
+    description: Estado de resolución deseado (CONFIRMED para aplicar los cambios a la ficha, DISCARDED para descartarlos)
+required:
+  - status

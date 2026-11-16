@@ -1,0 +1,12 @@
+# Origen: specs/character-inventory (REQ-006)
+# Estado del contrato: contrastado con el código
+type: object
+description: Petición para renombrar un personaje del catálogo
+additionalProperties: false
+properties:
+  name:
+    type: string
+    maxLength: 100
+    description: Nuevo nombre para el personaje del catálogo
+required:
+  - name

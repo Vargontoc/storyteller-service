@@ -1,18 +1,30 @@
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
 allOf:
   - $ref: "./actor.yaml"
   - type: object
-    description: Revisión pendiente o confirmada de un personaje
+    description: Revisión pendiente o confirmada de un personaje del catálogo
     properties:
       characterId:
         type: integer
         format: int64
+        description: Identificador del personaje del catálogo
       hint:
         type: string
+        description: Cambio solicitado
       hintAccepted:
         type: boolean
+        description: Indica si el cambio fue aceptado por el agente
       rejectedReason:
         type: string
         nullable: true
+        description: Motivo de rechazo cuando no cumple las reglas del producto (REQ-008)
+      replacementConfirmationRequired:
+        type: boolean
+        description: Indica si ya existía una revisión pendiente y se requiere confirmación para descartarla (REQ-007)
+      visualConsistencyWarning:
+        type: boolean
+        description: Aviso de consistencia visual si existen imágenes previas y el cambio es visual (REQ-009)
       status:
         $ref: "./enums/revision-status.yaml"
       target:

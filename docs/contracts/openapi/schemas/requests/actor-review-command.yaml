@@ -1,19 +1,28 @@
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009)
+# Estado del contrato: contrastado con el código
 type: object
+description: Comando para solicitar una revisión de un personaje del catálogo
 additionalProperties: false
 properties:
-  storyId:
-    type: integer
-    format: int64
   id:
     type: integer
     format: int64
-    description: Id del actor a revisar
+    description: Identificador del personaje del catálogo a revisar
+  storyId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Opcional para retrocompatibilidad con actores de cuento; no se exige para el catálogo
   hint:
     type: string
+    description: Cambio solicitado en lenguaje natural
   target:
     $ref: "../enums/character-review-target.yaml"
+  replacePending:
+    type: boolean
+    description: Indica si se autoriza el descarte de una revisión previa pendiente (ALT-002, REQ-007)
+    default: false
 required:
-  - storyId
   - id
   - hint
   - target

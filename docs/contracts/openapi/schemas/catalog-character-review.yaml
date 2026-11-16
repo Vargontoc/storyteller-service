@@ -1,0 +1,31 @@
+# Origen: specs/character-inventory (REQ-007, REQ-010, REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: Revisión pendiente de un personaje del catálogo
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador único de la revisión
+  target:
+    $ref: "./enums/character-review-target.yaml"
+  hint:
+    type: string
+    description: Pista o cambio solicitado en lenguaje natural
+  name:
+    type: string
+    description: Nombre del personaje en la revisión
+  narrativeDescription:
+    type: string
+    description: Propuesta de descripción narrativa
+  visualDescription:
+    type: string
+    description: Propuesta de descripción visual
+required:
+  - id
+  - target
+  - hint
+  - name
+  - narrativeDescription
+  - visualDescription

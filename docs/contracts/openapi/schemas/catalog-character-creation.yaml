@@ -1,0 +1,37 @@
+# Origen: specs/character-inventory (REQ-003, REQ-004)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de la creación (automática o manual) de un personaje en el catálogo
+additionalProperties: false
+properties:
+  accepted:
+    type: boolean
+    description: Indica si la propuesta o frase fue aceptada por el agente según las reglas de edad y especies
+  rejectionReason:
+    type: string
+    nullable: true
+    description: Motivo del rechazo cuando la entrada no cumple las reglas del producto (ALT-001, REQ-004)
+  name:
+    type: string
+    nullable: true
+    description: Nombre generado o completado para el personaje
+  narrativeDescription:
+    type: string
+    nullable: true
+    description: Descripción narrativa de la ficha
+  visualDescription:
+    type: string
+    nullable: true
+    description: Descripción visual de la ficha
+  visualDescriptionEn:
+    type: string
+    nullable: true
+    description: Descripción visual en inglés para generación de imagen
+  visualAttributes:
+    type: array
+    items:
+      type: string
+    nullable: true
+    description: Atributos visuales atómicos
+required:
+  - accepted

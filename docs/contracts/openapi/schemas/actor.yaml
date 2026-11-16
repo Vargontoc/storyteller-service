@@ -1,19 +1,31 @@
+# Origen: specs/character-inventory (REQ-006, DEC-001, DEC-005)
+# Estado del contrato: contrastado con el código
 type: object
-description: Personaje de una historia
+description: Instantánea de personaje usada en un cuento (StoryActorSnapshot). Conserva el nombre y descripciones con las que nació en el cuento, independientemente de futuros renombrados o revisiones en el catálogo maestro.
 additionalProperties: false
 properties:
   id:
     type: integer
     format: int64
+    description: Identificador de la instantánea del personaje en el cuento
   storyId:
     type: integer
     format: int64
+    description: Identificador del cuento al que pertenece la instantánea
+  catalogCharacterId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador del personaje maestro en el catálogo (CatalogCharacter) del que deriva esta instantánea, si procede (DEC-001)
   name:
     type: string
+    description: Nombre del personaje en el cuento (inmutable ante cambios de nombre en el catálogo maestro)
   narrativeDescription:
     type: string
+    description: Descripción narrativa del personaje en el cuento
   visualDescription:
     type: string
+    description: Descripción visual del personaje en el cuento
 required:
   - id
   - name

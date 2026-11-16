@@ -1,0 +1,12 @@
+# Origen: specs/character-inventory (REQ-001)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        type: array
+        items:
+          $ref: "../catalog-character.yaml"
+    required:
+      - data

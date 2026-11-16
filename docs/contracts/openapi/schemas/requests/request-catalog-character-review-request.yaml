@@ -1,0 +1,19 @@
+# Origen: specs/character-inventory (REQ-007, REQ-008)
+# Estado del contrato: contrastado con el código
+type: object
+description: Petición para solicitar una revisión de un personaje del catálogo
+additionalProperties: false
+properties:
+  target:
+    $ref: "../enums/character-review-target.yaml"
+  hint:
+    type: string
+    description: Petición de cambio en lenguaje natural
+  replacePending:
+    type: boolean
+    description: Confirmación para descartar y sustituir una revisión previa pendiente (ALT-002, REQ-007)
+    default: false
+required:
+  - target
+  - hint
+  - replacePending

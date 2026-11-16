@@ -1,0 +1,40 @@
+# Origen: specs/character-inventory (REQ-001, REQ-003, REQ-004)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getCatalogCharacters
+  summary: Lista los personajes del catálogo
+  description: Obtiene la lista de personajes del catálogo con su nombre, descripciones y estado de borrador y revisión (REQ-001)
+  tags:
+    - CatalogCharacters
+  responses:
+    "200":
+      description: Listado de personajes del catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/catalog-characters-list-response.yaml"
+post:
+  operationId: createCatalogCharacter
+  summary: Crea un personaje en el catálogo (automático o manual)
+  description: Crea un personaje mediante el agente de personaje. En modo automático (sin hint) genera la ficha completa; en modo manual (con hint) valida la frase y completa la ficha o devuelve el motivo de rechazo (REQ-003, REQ-004, ALT-001).
+  tags:
+    - CatalogCharacters
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/create-catalog-character-request.yaml"
+  responses:
+    "200":
+      description: Resultado de la creación del personaje (con accepted=true y ficha o accepted=false y motivo)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/catalog-character-creation-response.yaml"
+    "400":
+      description: Error en la solicitud o servicio no disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

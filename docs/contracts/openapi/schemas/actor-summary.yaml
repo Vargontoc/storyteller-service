@@ -1,19 +1,31 @@
+# Origen: specs/character-inventory (REQ-006, DEC-001, DEC-005)
+# Estado del contrato: contrastado con el código
 type: object
-description: Resumen de un personaje para listados
+description: Resumen de una instantánea de personaje de cuento para listados
 additionalProperties: false
 properties:
   id:
     type: integer
     format: int64
+    description: Identificador de la instantánea del personaje en el cuento
+  catalogCharacterId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador del personaje maestro en el catálogo del cual se derivó la instantánea
   name:
     type: string
+    description: Nombre de la instantánea en el cuento (conservado inmutable)
   role:
     type: string
+    description: Rol narrativo en el cuento
   description:
     type: string
+    description: Descripción narrativa resumida
   image:
     type: string
     nullable: true
+    description: Ruta al retrato generado para el personaje en el cuento
 required:
   - id
   - name

@@ -1,0 +1,48 @@
+# Origen: specs/character-inventory (REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: resolveCatalogCharacterReview
+  summary: Resuelve (acepta o descarta) una revisión de un personaje del catálogo
+  description: Con status=CONFIRMED aplica los cambios textuales de la propuesta a la ficha del catálogo (REQ-011). Con status=DISCARDED conserva la ficha intacta (REQ-012). En ambos casos la revisión deja de estar pendiente y desaparece el badge.
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: characterId
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+    - name: reviewId
+      in: path
+      required: true
+      description: Identificador de la revisión
+      schema:
+        type: integer
+        format: int64
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/resolve-catalog-character-review-request.yaml"
+  responses:
+    "200":
+      description: Revisión resuelta correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/catalog-character-review-response.yaml"
+    "400":
+      description: Estado de resolución inválido
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: Revisión o personaje no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

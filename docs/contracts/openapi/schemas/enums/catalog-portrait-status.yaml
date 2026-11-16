@@ -1,0 +1,8 @@
+# Origen: specs/character-inventory (REQ-005)
+# Estado del contrato: contrastado con el código
+type: string
+description: Estado de disponibilidad o aprobación del retrato del personaje para determinar el estado de borrador
+enum:
+  - UNKNOWN
+  - DRAFT
+  - APPROVED

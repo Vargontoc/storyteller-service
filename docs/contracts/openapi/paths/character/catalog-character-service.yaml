@@ -1,0 +1,29 @@
+# Origen: specs/character-inventory (REQ-002)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getCatalogCharacter
+  summary: Obtiene el detalle de un personaje del catálogo
+  description: Devuelve la ficha textual completa (nombre, descripción narrativa, descripción visual), estado de borrador y situación de revisión del personaje (REQ-002)
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Ficha del personaje encontrada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/catalog-character-response.yaml"
+    "404":
+      description: No existe el personaje en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

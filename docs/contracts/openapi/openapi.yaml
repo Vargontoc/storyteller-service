@@ -21,6 +21,8 @@ tags:
     description: Consulta, listado y borrado de cuentos, personajes y páginas
   - name: Topics
     description: Consulta de temas
+  - name: CatalogCharacters
+    description: Catálogo maestro de protagonistas reutilizables y sus revisiones
 
 paths:
   /services:
@@ -76,3 +78,16 @@ paths:
     $ref: "./paths/storyteller/page-service.yaml"
   /storyteller/asset:
     $ref: "./paths/storyteller/asset-service.yaml"
+
+  /catalog-characters:
+    $ref: "./paths/character/catalog-characters-service.yaml"
+  /catalog-characters/{id}:
+    $ref: "./paths/character/catalog-character-service.yaml"
+  /catalog-characters/{id}/name:
+    $ref: "./paths/character/rename-character-service.yaml"
+  /catalog-characters/{characterId}/reviews:
+    $ref: "./paths/character/character-review-request-service.yaml"
+  /catalog-characters/{characterId}/reviews/pending:
+    $ref: "./paths/character/character-review-pending-service.yaml"
+  /catalog-characters/{characterId}/reviews/{reviewId}/resolution:
+    $ref: "./paths/character/character-review-resolution-service.yaml"

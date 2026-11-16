@@ -1,0 +1,19 @@
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de la solicitud de revisión de un personaje del catálogo
+additionalProperties: false
+properties:
+  replacementConfirmationRequired:
+    type: boolean
+    description: Indica si ya existe una revisión pendiente que requiere confirmación para ser descartada (ALT-002, REQ-007)
+  visualConsistencyWarning:
+    type: boolean
+    description: Aviso de posible pérdida de consistencia visual si existen imágenes generadas y el cambio es visual (ALT-003, REQ-009)
+  proposal:
+    $ref: "./catalog-character-review-proposal.yaml"
+    nullable: true
+    description: Propuesta generada por el agente de personaje
+required:
+  - replacementConfirmationRequired
+  - visualConsistencyWarning

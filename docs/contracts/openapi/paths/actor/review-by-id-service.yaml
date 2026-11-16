@@ -1,13 +1,16 @@
+# Origen: specs/character-inventory (REQ-010)
+# Estado del contrato: contrastado con el código
 get:
   operationId: getActorReview
-  summary: Obtiene la revisión pendiente de un personaje
-  description: Devuelve la revisión activa (PENDING) asociada a un personaje
+  summary: Obtiene la revisión pendiente de un personaje del catálogo
+  description: Devuelve la revisión activa (PENDING) asociada a un personaje del catálogo
   tags:
     - Reviews
   parameters:
     - name: actorId
       in: path
       required: true
+      description: Identificador del personaje del catálogo a consultar
       schema:
         type: integer
         format: int64

@@ -1,0 +1,9 @@
+# Origen: specs/character-inventory (REQ-003, REQ-004)
+# Estado del contrato: contrastado con el código
+type: object
+description: Petición para crear un personaje en el catálogo (automático si se omite hint, manual si se incluye frase)
+additionalProperties: false
+properties:
+  hint:
+    type: string
+    description: Frase en lenguaje natural que describe el personaje en modo manual. Opcional en modo automático.

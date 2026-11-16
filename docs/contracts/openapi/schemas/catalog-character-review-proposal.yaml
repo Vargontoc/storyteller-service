@@ -1,0 +1,27 @@
+# Origen: specs/character-inventory (REQ-008)
+# Estado del contrato: contrastado con el código
+type: object
+description: Propuesta generada por el agente de personaje para una revisión
+additionalProperties: false
+properties:
+  accepted:
+    type: boolean
+    description: Indica si el cambio solicitado fue aceptado según las reglas de edad y especies
+  rejectionReason:
+    type: string
+    nullable: true
+    description: Motivo de rechazo cuando el cambio propuesto no cumple las reglas del producto (REQ-008)
+  name:
+    type: string
+    nullable: true
+    description: Nombre propuesto
+  narrativeDescription:
+    type: string
+    nullable: true
+    description: Descripción narrativa propuesta
+  visualDescription:
+    type: string
+    nullable: true
+    description: Descripción visual propuesta
+required:
+  - accepted

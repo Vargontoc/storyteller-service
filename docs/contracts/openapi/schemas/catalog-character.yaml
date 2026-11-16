@@ -1,0 +1,34 @@
+# Origen: specs/character-inventory (REQ-001, REQ-002, REQ-005, REQ-006)
+# Estado del contrato: contrastado con el código
+type: object
+description: Personaje maestro del catálogo (CatalogCharacter)
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador único del personaje en el catálogo
+  name:
+    type: string
+    description: Nombre del personaje en el catálogo (modificable con renombrado)
+  narrativeDescription:
+    type: string
+    description: Descripción narrativa del personaje
+  visualDescription:
+    type: string
+    description: Descripción visual del personaje
+  draft:
+    type: boolean
+    nullable: true
+    description: Indicador derivado de estado borrador (true mientras no tenga retrato aprobado)
+  portraitStatus:
+    $ref: "./enums/catalog-portrait-status.yaml"
+  pendingReview:
+    type: boolean
+    description: Indica si el personaje tiene una revisión pendiente
+required:
+  - id
+  - name
+  - narrativeDescription
+  - visualDescription
+  - pendingReview
