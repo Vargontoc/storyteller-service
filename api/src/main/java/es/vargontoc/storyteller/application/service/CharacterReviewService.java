@@ -18,5 +18,13 @@ import es.vargontoc.storyteller.application.ports.in.character.CharacterReviewUs
  @Transactional(readOnly=true) public CatalogCharacterReviewView getPending(Long id){var r=reviews.findByCatalogCharacterIdAndStatus(id,RevisionStatus.PENDING).orElseThrow(()->new AppException("No existe revisión pendiente",HttpStatus.NOT_FOUND));return new CatalogCharacterReviewView(r.getId(),r.getTarget(),r.getHint(),r.getCandidateName(),r.getCandidateNarrative(),r.getCandidateVisual());}
  private void validate(CatalogCharacterReviewCommand c){if(c==null||c.catalogCharacterId()==null||c.target()==null||c.hint()==null||c.hint().isBlank())throw new AppException("La solicitud de revisión es inválida",HttpStatus.BAD_REQUEST);}
  private void requireComplete(CatalogCharacterReviewAgentResult r){if(blank(r.name())||blank(r.narrativeDescription())||blank(r.visualDescription()))throw new AppException("El agente devolvió una propuesta de revisión incompleta",HttpStatus.BAD_REQUEST);}
+ @Transactional public CatalogCharacterReviewView resolve(es.vargontoc.storyteller.domain.command.CatalogCharacterReviewResolutionCommand command){
+  if(command==null||command.catalogCharacterId()==null||command.reviewId()==null||(command.status()!=RevisionStatus.CONFIRMED&&command.status()!=RevisionStatus.DISCARDED))throw new AppException("Resolución inválida",HttpStatus.BAD_REQUEST);
+  var character=characters.findByIdForUpdate(command.catalogCharacterId()).orElseThrow(()->new AppException("Catálogo no encontrado",HttpStatus.NOT_FOUND));
+  var review=reviews.findByIdAndStatus(command.reviewId(),RevisionStatus.PENDING).orElseThrow(()->new AppException("No existe revisión pendiente",HttpStatus.NOT_FOUND));
+  if(!command.catalogCharacterId().equals(review.getCatalogCharacter().getId()))throw new AppException("La revisión no pertenece al catálogo",HttpStatus.NOT_FOUND);
+  if(command.status()==RevisionStatus.CONFIRMED){switch(review.getTarget()){case NARRATIVE->character.setNarrativeDescription(review.getCandidateNarrative());case VISUAL->{character.setVisualDescription(review.getCandidateVisual());character.setMetadata(review.getMetadata());}case BOTH->{character.setNarrativeDescription(review.getCandidateNarrative());character.setVisualDescription(review.getCandidateVisual());character.setMetadata(review.getMetadata());}}characters.save(character);}
+  review.setStatus(command.status());reviews.save(review);return new CatalogCharacterReviewView(review.getId(),review.getTarget(),review.getHint(),review.getCandidateName(),review.getCandidateNarrative(),review.getCandidateVisual());
+ }
  private boolean blank(String v){return v==null||v.isBlank();}
 }

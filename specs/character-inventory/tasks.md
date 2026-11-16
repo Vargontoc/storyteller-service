@@ -96,10 +96,10 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   3. Enviar un cambio no apto y comprobar que se muestra el motivo sin crear revisiÃ³n.
   4. Revisar un cambio visual de un personaje con imÃ¡genes y comprobar que la propuesta aparece acompaÃ±ada del aviso de consistencia visual.
 
-### [ ] TASK-006 Implementar la aceptaciÃ³n y el descarte de revisiones del catÃ¡logo
+### [x] TASK-006 Implementar la aceptaciÃ³n y el descarte de revisiones del catÃ¡logo
 
 - **Cubre:** REQ-011, REQ-012
-- **Componente:** character-review-service | no consta en el mapa
+- **Componente:** character-review-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterReviewService.java
 - **Depende de:** TASK-004, TASK-005
 - **Alcance:** Implementar la aplicaciÃ³n de una propuesta aceptada al texto del personaje y el descarte de una revisiÃ³n conservando intacta la ficha vigente.
 - **Hecho cuando:** se cumplen los criterios de aceptaciÃ³n de REQ-011 y REQ-012, la revisiÃ³n deja de estar pendiente en ambos casos y solo la aceptaciÃ³n modifica el texto del catÃ¡logo.

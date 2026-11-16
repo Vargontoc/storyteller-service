@@ -97,3 +97,15 @@ if (result.visualConsistencyWarning()) {
 ```
 
 **Notas:** Una solicitud narrativa no consulta imágenes. El aviso solo aparece si una propuesta visual cambia realmente la descripción y existen imágenes generadas.
+
+## Resolución de revisión de catálogo
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterReviewUseCase.java`
+**Para qué sirve:** Confirma o descarta una revisión pendiente del personaje indicado.
+
+```java
+reviews.resolve(new CatalogCharacterReviewResolutionCommand(
+        characterId, reviewId, RevisionStatus.CONFIRMED));
+```
+
+**Notas:** Confirmar aplica solo los campos del target; descartar conserva íntegra la ficha. Una revisión ya resuelta o de otro personaje se rechaza.
