@@ -23,6 +23,12 @@ export interface CatalogCharacterCreation {
   visualAttributes: string[] | null
 }
 
+export type CharacterReviewTarget = 'NARRATIVE' | 'VISUAL' | 'BOTH'
+export type CharacterReviewResolution = 'CONFIRMED' | 'DISCARDED'
+export interface CatalogCharacterReview { id: number; target: CharacterReviewTarget; hint: string; name: string; narrativeDescription: string; visualDescription: string }
+export interface CatalogCharacterReviewProposal { accepted: boolean; rejectionReason: string | null; name: string | null; narrativeDescription: string | null; visualDescription: string | null }
+export interface CatalogCharacterReviewRequestResult { replacementConfirmationRequired: boolean; visualConsistencyWarning: boolean; proposal: CatalogCharacterReviewProposal | null }
+
 export function getCatalogCharacters() {
   return httpClient.get<ApiEnvelope<CatalogCharacter[]>>('/api/v1/catalog-characters').then((result) => result.data)
 }
@@ -38,3 +44,7 @@ export function createCatalogCharacter(hint?: string) {
 export function renameCatalogCharacter(id: number, name: string) {
   return httpClient.patch<ApiEnvelope<CatalogCharacter>>(`/api/v1/catalog-characters/${id}/name`, { name }).then((result) => result.data)
 }
+
+export function getPendingCatalogCharacterReview(characterId: number) { return httpClient.get<ApiEnvelope<CatalogCharacterReview>>(`/api/v1/catalog-characters/${characterId}/reviews/pending`).then((result) => result.data) }
+export function requestCatalogCharacterReview(characterId: number, target: CharacterReviewTarget, hint: string, replacePending: boolean) { return httpClient.post<ApiEnvelope<CatalogCharacterReviewRequestResult>>(`/api/v1/catalog-characters/${characterId}/reviews`, { target, hint, replacePending }).then((result) => result.data) }
+export function resolveCatalogCharacterReview(characterId: number, reviewId: number, status: CharacterReviewResolution) { return httpClient.post<ApiEnvelope<CatalogCharacterReview>>(`/api/v1/catalog-characters/${characterId}/reviews/${reviewId}/resolution`, { status }).then((result) => result.data) }

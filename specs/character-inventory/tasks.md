@@ -129,7 +129,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   6. Enviar una frase no vÃ¡lida y comprobar que se muestra el motivo del rechazo y no se crea el personaje.
   7. Comprobar que una ficha con revisiÃ³n pendiente muestra el badge tanto en el catÃ¡logo como junto a la secciÃ³n de revisiÃ³n.
 
-### [ ] TASK-008 Integrar el panel de revisiÃ³n en el catÃ¡logo
+### [x] TASK-008 Integrar el panel de revisiÃ³n en el catÃ¡logo
 
 - **Cubre:** REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, ALT-002, ALT-003
 - **Componente:** character-review-panel | app/

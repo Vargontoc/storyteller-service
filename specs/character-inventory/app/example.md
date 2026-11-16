@@ -60,3 +60,20 @@ const open = ref(true)
   <CharacterFormModal :open="open" @close="open = false" @created="open = false" />
 </template>
 ```
+
+## CharacterReviewPanel
+
+**Ruta:** `app/src/components/CharacterReviewPanel.vue`
+**Para qué sirve:** Solicita una revisión textual, muestra la propuesta pendiente y permite aceptarla o descartarla.
+
+```vue
+<script setup lang="ts">
+import CharacterReviewPanel from './components/CharacterReviewPanel.vue'
+</script>
+
+<template>
+  <CharacterReviewPanel :character-id="1" @changed="console.log('revisión actualizada')" />
+</template>
+```
+
+**Notas:** Solicita confirmación antes de sustituir una revisión pendiente y muestra solo los avisos visuales devueltos por el servidor.

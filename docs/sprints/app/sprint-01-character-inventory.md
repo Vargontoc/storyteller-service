@@ -79,7 +79,8 @@ TASK-009 a TASK-011 son tareas de contrato y las ejecutará `documentador-app`, 
 ## Validación
 
 - Compilación TASK-007 inicial: correcta (`npm run build`, desarrollador-app; anterior a la corrección de `portraitStatus`)
-- Compilación corrección `portraitStatus`/`UNKNOWN`: pendiente (el sandbox devolvió `spawn EPERM`; el reintento quedó sin resultado al interrumpirlo el router)
+- Compilación corrección `portraitStatus`/`UNKNOWN`: correcta (confirmada por el usuario con `npm run build`)
+- Compilación TASK-008: correcta (`npm run build`, desarrollador-app)
 - Suite del módulo: pendiente
 - Integración: pendiente
 - Validación manual: pendiente

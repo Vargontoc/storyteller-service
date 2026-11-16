@@ -3,6 +3,7 @@
     <div class="heading"><h2>{{ character.name }}</h2><div class="badges"><span v-if="isPortraitUnknown(character)" class="badge unknown">Estado del retrato no disponible</span><span v-else-if="isDraft(character)" class="badge">Borrador</span><span v-if="'pendingReview' in character && character.pendingReview" class="badge pending">Revisión pendiente</span></div></div>
     <dl><div><dt>Descripción narrativa</dt><dd>{{ character.narrativeDescription }}</dd></div><div><dt>Descripción visual</dt><dd>{{ character.visualDescription }}</dd></div></dl>
     <form v-if="'id' in character" class="rename" @submit.prevent="rename"><label for="character-name">Cambiar nombre</label><div class="rename-row"><input id="character-name" v-model.trim="newName" :disabled="renaming" maxlength="100" required /><button type="submit" class="btn" :disabled="renaming || !newName || newName === character.name">{{ renaming ? 'Guardando...' : 'Guardar' }}</button></div><p v-if="renameError" class="error">{{ renameError }}</p></form>
+    <character-review-panel v-if="'id' in character" :character-id="character.id" @changed="emit('reviewed')" />
     <p v-else class="notice">La ficha se creó correctamente. Se actualizará al recuperar el catálogo.</p>
   </section>
   <section v-else class="placeholder">Selecciona un personaje para ver su ficha.</section>
@@ -12,9 +13,10 @@
 import { ref, watch } from 'vue'
 import { renameCatalogCharacter, type CatalogCharacter } from '../api/characters'
 import { ApiError } from '../api/httpClient'
+import CharacterReviewPanel from './CharacterReviewPanel.vue'
 interface CreatedCharacter { name: string; narrativeDescription: string; visualDescription: string }
 const props = defineProps<{ character: CatalogCharacter | CreatedCharacter | null }>()
-const emit = defineEmits<{ renamed: [character: CatalogCharacter] }>()
+const emit = defineEmits<{ renamed: [character: CatalogCharacter]; reviewed: [] }>()
 const newName = ref(''); const renaming = ref(false); const renameError = ref<string | null>(null)
 function isPortraitUnknown(character: CatalogCharacter | CreatedCharacter) { return 'id' in character && (character.portraitStatus === 'UNKNOWN' || (character.portraitStatus === undefined && character.draft == null)) }
 function isDraft(character: CatalogCharacter | CreatedCharacter) { return 'id' in character && (character.portraitStatus === 'DRAFT' || (character.portraitStatus === undefined && character.draft === true)) }

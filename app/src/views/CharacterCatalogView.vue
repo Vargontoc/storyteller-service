@@ -3,7 +3,7 @@
     <header class="toolbar"><h1>Catálogo de personajes</h1><button type="button" class="primary" @click="formOpen = true">Crear personaje</button></header>
     <p v-if="loading">Cargando personajes...</p>
     <div v-else-if="error" class="load-error"><p>{{ error }}</p><button type="button" class="btn" @click="loadCatalog">Reintentar</button></div>
-    <div v-else class="catalog-body"><aside aria-label="Personajes del catálogo"><p v-if="characters.length === 0" class="empty">No hay personajes todavía.</p><button v-for="character in characters" :key="character.id" type="button" class="character-row" :class="{ selected: selectedId === character.id }" @click="select(character.id)"><span>{{ character.name }}</span><span v-if="isPortraitUnknown(character)" class="badge unknown">Retrato no disponible</span><span v-else-if="isDraft(character)" class="badge">Borrador</span><span v-if="character.pendingReview" class="badge pending">Revisión pendiente</span></button></aside><div><p v-if="detailError" class="load-error">{{ detailError }} <button type="button" class="link" @click="retryDetail">Reintentar</button></p><character-catalog-detail :character="selected" @renamed="onRenamed" /></div></div>
+    <div v-else class="catalog-body"><aside aria-label="Personajes del catálogo"><p v-if="characters.length === 0" class="empty">No hay personajes todavía.</p><button v-for="character in characters" :key="character.id" type="button" class="character-row" :class="{ selected: selectedId === character.id }" @click="select(character.id)"><span>{{ character.name }}</span><span v-if="isPortraitUnknown(character)" class="badge unknown">Retrato no disponible</span><span v-else-if="isDraft(character)" class="badge">Borrador</span><span v-if="character.pendingReview" class="badge pending">Revisión pendiente</span></button></aside><div><p v-if="detailError" class="load-error">{{ detailError }} <button type="button" class="link" @click="retryDetail">Reintentar</button></p><character-catalog-detail :character="selected" @renamed="onRenamed" @reviewed="refreshAfterReview" /></div></div>
     <character-form-modal :open="formOpen" @close="formOpen = false" @created="onCreated" />
   </section>
 </template>
@@ -32,6 +32,7 @@ async function onCreated(creation: CatalogCharacterCreation) {
   if (newCharacters.length === 1 && newCharacters[0].name === creation.name) await select(newCharacters[0].id)
 }
 async function onRenamed(character: CatalogCharacter) { selected.value = character; selectedId.value = character.id; const index = characters.value.findIndex((item) => item.id === character.id); if (index !== -1) characters.value.splice(index, 1, character); toastStore.show('Nombre actualizado') }
+async function refreshAfterReview() { if (selectedId.value !== null) await select(selectedId.value); await loadCatalog() }
 onMounted(loadCatalog)
 </script>
 
