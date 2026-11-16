@@ -76,3 +76,24 @@ CatalogCharacterView renamed = catalog.rename(catalogCharacterId, "Luna la zorra
 ```
 
 **Notas:** La consulta requiere el proveedor de retrato; si assets no lo configura, devuelve un error de integración en vez de inventar el estado de borrador.
+
+## CharacterReviewUseCase
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterReviewUseCase.java`
+**Para qué sirve:** Solicita una propuesta de revisión y comunica si hay que confirmar el reemplazo de una propuesta pendiente.
+
+```java
+CatalogCharacterReviewRequestResult result = reviews.request(
+        new CatalogCharacterReviewCommand(characterId, CharacterReviewTarget.VISUAL,
+                "Haz su pelaje más claro", false));
+
+if (result.replacementConfirmationRequired()) {
+    result = reviews.request(new CatalogCharacterReviewCommand(characterId,
+            CharacterReviewTarget.VISUAL, "Haz su pelaje más claro", true));
+}
+if (result.visualConsistencyWarning()) {
+    // Informar de la posible pérdida de consistencia visual.
+}
+```
+
+**Notas:** Una solicitud narrativa no consulta imágenes. El aviso solo aparece si una propuesta visual cambia realmente la descripción y existen imágenes generadas.

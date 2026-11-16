@@ -85,6 +85,6 @@ El puerto de imÃ¡genes solo consulta condiciones; ni el adaptador, ni la gener
 
 ## ValidaciÃ³n
 
-- Suite del módulo: pendiente por cambios de TASK-005 (origen: implementación actual; alcance: revisiones de catálogo)
+- Suite del módulo: pendiente por cambios de TASK-005 (origen: implementación actual; alcance: revisiones de catálogo; evidencia específica: `mvn test -Dtest=CharacterReviewServiceTest,CharacterReviewControllerTest,CatalogCharacterReviewConcurrencyTest` correcta, 7 pruebas)
 - IntegraciÃ³n: pendiente
 - ValidaciÃ³n manual: pendiente

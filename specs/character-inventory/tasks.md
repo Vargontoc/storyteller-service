@@ -75,7 +75,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   3. Seleccionar un personaje y revisar que se muestran nombre, descripciÃ³n narrativa, descripciÃ³n visual y estado.
   4. Cambiar el nombre de un personaje y comprobar que la ficha muestra el nuevo nombre.
 
-### [ ] TASK-005 Adaptar el servicio de revisiones al catÃ¡logo y al agente de personaje
+### [x] TASK-005 Adaptar el servicio de revisiones al catÃ¡logo y al agente de personaje
 
 - **Cubre:** REQ-007, REQ-008, REQ-009, ALT-001, ALT-002, ALT-003, DEC-002, DEC-004
 - **Componente:** character-review-service | no consta en el mapa
