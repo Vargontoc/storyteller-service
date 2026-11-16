@@ -3,7 +3,7 @@ package es.vargontoc.storyteller;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.agents.character-provisioning.enabled=false")
 class StorytellerApplicationTests {
 
     @Test

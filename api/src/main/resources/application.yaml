@@ -102,6 +102,10 @@ app:
         scriptwriter: "${APP_AGENT_WRITER:storyteller-writer}"
         narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"
         character: "${APP_AGENT_CHARACTER:storyteller-character}"
+        character-base-model: "${APP_AGENT_CHARACTER_BASE_MODEL:qwen2.5:14b-instruct}"
+        character-system: "${APP_AGENT_CHARACTER_SYSTEM:Genera fichas infantiles seguras}"
+        character-provisioning:
+            enabled: "${APP_AGENT_CHARACTER_PROVISIONING_ENABLED:true}"
         character-rules:
             audience: "niños y niñas de 3 a 4 años"
             allowed-species: "animales fáciles de dibujar y personajes humanos infantiles"

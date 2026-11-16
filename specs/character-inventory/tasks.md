@@ -111,7 +111,7 @@ El trabajo se divide entre la definiciÃ³n del agente de personaje, los casos d
   1. Abrir una revisiÃ³n pendiente que cambie la descripciÃ³n narrativa y pulsar "Aceptar"; comprobar que la ficha muestra el texto nuevo y desaparece el badge.
   2. Abrir otra revisiÃ³n pendiente y pulsar "Descartar"; comprobar que la ficha conserva su texto y desaparece el badge.
 
-### [ ] TASK-007 Construir la vista del catÃ¡logo y el modal de alta
+### [x] TASK-007 Construir la vista del catÃ¡logo y el modal de alta
 
 - **Cubre:** REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-010, ALT-001
 - **Componente:** character-catalog-view | app/

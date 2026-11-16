@@ -75,7 +75,7 @@ CatalogCharacterView character = catalog.get(catalogCharacterId);
 CatalogCharacterView renamed = catalog.rename(catalogCharacterId, "Luna la zorra");
 ```
 
-**Notas:** La consulta requiere el proveedor de retrato; si assets no lo configura, devuelve un error de integración en vez de inventar el estado de borrador.
+**Notas:** Sin proveedor de retrato, la ficha textual sigue disponible con `draft = null` y `portraitStatus = UNKNOWN`; con proveedor, el estado es `DRAFT` o `APPROVED`.
 
 ## CharacterReviewUseCase
 
@@ -109,3 +109,10 @@ reviews.resolve(new CatalogCharacterReviewResolutionCommand(
 ```
 
 **Notas:** Confirmar aplica solo los campos del target; descartar conserva íntegra la ficha. Una revisión ya resuelta o de otro personaje se rechaza.
+
+## CharacterModelProvisioner
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/infrastructure/config/CharacterModelProvisioner.java`
+**Para qué sirve:** Al arrancar, crea el modelo configurado de personaje solo si Ollama no lo lista.
+
+**Notas:** Usa `app.agents.character-base-model` y `app.agents.character-system`. Si Ollama o el modelo base no están disponibles, el arranque falla explícitamente para no publicar la API sin el agente requerido.

@@ -142,7 +142,7 @@ function callReview(){
     }
     showReviewModal.value = true
 }
-async function callGenerateAudio() {
+async function _callGenerateAudio() {
     if(audioServiceActive.value == false){
         toastStore.show("El servicio de audio está detenido")
         return
@@ -166,6 +166,8 @@ async function callGenerateAudio() {
         emit('generateAsset', false)
     }
 }
+
+void _callGenerateAudio
 
 async function callGenerateImage() {
     if(imageServiceActive.value == false){

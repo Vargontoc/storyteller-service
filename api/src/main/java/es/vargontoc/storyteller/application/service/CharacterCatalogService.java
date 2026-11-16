@@ -13,6 +13,7 @@ import es.vargontoc.storyteller.domain.command.CatalogCharacterCreateCommand;
 import es.vargontoc.storyteller.domain.model.CatalogCharacter;
 import es.vargontoc.storyteller.domain.response.CatalogCharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.CatalogCharacterView;
+import es.vargontoc.storyteller.domain.enums.CatalogPortraitStatus;
 import java.util.List;
 import java.util.Optional;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
@@ -47,5 +48,5 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     public List<CatalogCharacterView> list(){return repository.findAll().stream().map(this::view).toList();}
     public CatalogCharacterView get(Long id){return view(repository.findById(id));}
     @Transactional public CatalogCharacterView rename(Long id,String name){return view(repository.rename(id,name));}
-    private CatalogCharacterView view(CatalogCharacter c){CharacterImageConditionPort imagePort=images.orElseThrow(()->new AppException("La condición de retrato no está disponible",HttpStatus.SERVICE_UNAVAILABLE));return new CatalogCharacterView(c.id(),c.name(),c.narrativeDescription(),c.visualDescription(),!imagePort.hasApprovedPortrait(c.id()),reviews.hasPendingReview(c.id()));}
+    private CatalogCharacterView view(CatalogCharacter c){Boolean draft=images.map(port->!port.hasApprovedPortrait(c.id())).orElse(null);CatalogPortraitStatus status=draft==null?CatalogPortraitStatus.UNKNOWN:(draft?CatalogPortraitStatus.DRAFT:CatalogPortraitStatus.APPROVED);return new CatalogCharacterView(c.id(),c.name(),c.narrativeDescription(),c.visualDescription(),draft,status,reviews.hasPendingReview(c.id()));}
 }

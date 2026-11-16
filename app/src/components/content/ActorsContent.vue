@@ -170,7 +170,7 @@ async function loadReview(id: number){
 
 function getActiveActor() {
     let actor = {} as ActorSummary
-    actors.value.forEach((e, i) => {
+    actors.value.forEach((e) => {
         if(e.id == activeTab.value){
             actor = e;
         }

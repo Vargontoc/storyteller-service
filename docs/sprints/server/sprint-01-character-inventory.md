@@ -85,6 +85,6 @@ El puerto de imÃ¡genes solo consulta condiciones; ni el adaptador, ni la gener
 
 ## ValidaciÃ³n
 
-- Suite del módulo: pendiente por cambios de TASK-006; pruebas específicas correctas (origen: usuario, `mvn test -Dtest=CharacterReviewServiceTest,CharacterReviewControllerTest`; alcance: aceptación y descarte de revisiones de catálogo)
+- Suite del módulo: correcta (origen: usuario, `mvn clean test` en `api/`; alcance: TASK-001 a TASK-006 y correcciones de aprovisionamiento del modelo y `portraitStatus=UNKNOWN`)
 - IntegraciÃ³n: pendiente
 - ValidaciÃ³n manual: pendiente
