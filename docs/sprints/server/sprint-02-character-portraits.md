@@ -149,6 +149,6 @@ La implementación usa las APIs del framework realmente declarado, `es.vargontoc
 
 ## Validación
 
-- Suite del módulo: pendiente (`api/mvn clean test` posterior a TASK-008; evidencia anterior correcta tras TASK-007 por confirmación del usuario)
+- Suite del módulo: correcta (`api/mvn clean test` posterior al endpoint `GET /api/v1/catalog-characters/{id}/portraits/approved/asset`, confirmación del usuario)
 - Integración: pendiente
 - Validación manual: pendiente

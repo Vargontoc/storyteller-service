@@ -15,6 +15,12 @@ import es.vargontoc.storyteller.domain.response.CatalogCharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.CatalogCharacterView;
 import es.vargontoc.storyteller.domain.enums.CatalogPortraitStatus;
 import java.util.List;
+import es.vargontoc.storyteller.domain.model.PortraitCandidate;
+import es.vargontoc.storyteller.application.ports.in.character.PortraitGenerationUseCase;
+import es.vargontoc.storyteller.application.ports.in.character.PortraitSelectionUseCase;
+import es.vargontoc.storyteller.application.ports.out.persistence.PortraitCandidateStore;
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
+import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Optional;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import es.vargontoc.storyteller.infrastructure.validations.CatalogCharacterAgentResultValidator;
@@ -30,6 +36,14 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock) {
         this.agent = agent; this.repository = repository; this.validator=validator; this.reviews=reviews; this.images=images; this.lock=lock;
     }
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage) {
+        this(agent, repository, validator, reviews, images, lock, generation, selection, candidates, storage, Optional.empty());
+    }
+    @Autowired
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage, Optional<es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository> portraits) {
+        this(agent, repository, validator, reviews, images, lock); this.generation=generation; this.selection=selection; this.candidates=candidates; this.storage=storage; this.portraits=portraits;
+    }
+    private PortraitGenerationUseCase generation; private PortraitSelectionUseCase selection; private PortraitCandidateStore candidates; private ResourceStorage storage; private Optional<es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository> portraits=Optional.empty();
     @Override @Transactional
     public CatalogCharacterAgentResult create(CatalogCharacterCreateCommand command) {
         CatalogCharacterAgentResult result = command.automatic()
@@ -48,5 +62,11 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     public List<CatalogCharacterView> list(){return repository.findAll().stream().map(this::view).toList();}
     public CatalogCharacterView get(Long id){return view(repository.findById(id));}
     @Transactional public CatalogCharacterView rename(Long id,String name){lock.requireUnlocked(id);return view(repository.rename(id,name));}
+    @Override public void generatePortraits(Long id){repository.findById(id); generation.generate(id);}
+    @Override public List<PortraitCandidate> candidates(Long id){repository.findById(id); return candidates.findByCatalogCharacterId(id);}
+    @Override public void selectPortrait(Long id,Long candidateId){selection.select(id,candidateId);}
+    @Override public boolean generatingPortraits(Long id){repository.findById(id);return lock.isLocked(id);}
+    @Override public byte[] candidateAsset(Long id,Long candidateId){return candidates.findByCatalogCharacterId(id).stream().filter(c->c.id().equals(candidateId)&&c.catalogCharacterId().equals(id)).findFirst().map(c->storage.getResource(c.assetPath())).orElseThrow(()->new AppException("Candidato de retrato no encontrado",HttpStatus.NOT_FOUND));}
+    @Override public byte[] approvedPortraitAsset(Long id){repository.findById(id);return portraits.orElseThrow(()->new AppException("El retrato aprobado no está disponible",HttpStatus.SERVICE_UNAVAILABLE)).findByCatalogCharacterId(id).map(p->storage.getResource(p.getAssetPath())).orElseThrow(()->new AppException("No existe retrato aprobado",HttpStatus.NOT_FOUND));}
     private CatalogCharacterView view(CatalogCharacter c){Boolean draft=images.map(port->!port.hasApprovedPortrait(c.id())).orElse(null);CatalogPortraitStatus status=draft==null?CatalogPortraitStatus.UNKNOWN:(draft?CatalogPortraitStatus.DRAFT:CatalogPortraitStatus.APPROVED);return new CatalogCharacterView(c.id(),c.name(),c.narrativeDescription(),c.visualDescription(),draft,status,reviews.hasPendingReview(c.id()));}
 }

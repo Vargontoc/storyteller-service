@@ -49,10 +49,22 @@
               </div>
             </div>
 
+            <div class="field">
+              <label for="catalog-character-select">Protagonista del catálogo</label>
+              <select id="catalog-character-select" v-model.number="selectedCatalogCharacterId" :disabled="loadingCharacters">
+                <option :value="null">Sin protagonista del catálogo</option>
+                <option v-for="character in catalogCharacters" :key="character.id" :value="character.id" :disabled="isCharacterRunning(character.id)">
+                  {{ character.name }}{{ isCharacterRunning(character.id) ? ' — generando retratos' : '' }}
+                </option>
+              </select>
+              <p v-if="loadingCharacters" class="help">Comprobando personajes disponibles...</p>
+              <p v-else-if="selectedCatalogCharacterId !== null && isCharacterRunning(selectedCatalogCharacterId)" class="error">El personaje seleccionado está generando retratos. Elige otro para continuar.</p>
+            </div>
+
             <button
               type="button"
               class="btn btn-primary"
-              :disabled="!selectedTopicId || !selectedSize || !directorAgentActive || creatingStory"
+              :disabled="!selectedTopicId || !selectedSize || !directorAgentActive || creatingStory || (selectedCatalogCharacterId !== null && isCharacterRunning(selectedCatalogCharacterId))"
               :title="directorAgentActive ? '' : 'El agente director no está disponible'"
               @click="onCreateStory"
             >
@@ -70,7 +82,9 @@ import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
 import { generateStory, generateTopic, type StorySize } from '../api/generations'
 import { getTopics, type Topic } from '../api/topics'
+import { getCatalogCharacters, isPortraitGenerationRunning, type CatalogCharacter } from '../api/characters'
 import { useServerStatusStore } from '../stores/serverStatus'
+import { useWebsocketStore } from '../stores/websocket'
 
 interface Props {
   open: boolean
@@ -80,6 +94,7 @@ const props = defineProps<Props>()
 const emit = defineEmits<{ close: []; created: [storyId: number] }>()
 
 const serverStatus = useServerStatusStore()
+const websocketStore = useWebsocketStore()
 const topicAgentActive = computed(() => serverStatus.data?.ollama.topic ?? false)
 const directorAgentActive = computed(() => serverStatus.data?.ollama.director ?? false)
 
@@ -90,9 +105,13 @@ const sizeOptions: { value: StorySize; label: string }[] = [
 ]
 
 const topics = ref<Topic[]>([])
+const catalogCharacters = ref<CatalogCharacter[]>([])
+const portraitRunningByCharacter = ref(new Set<number>())
+const selectedCatalogCharacterId = ref<number | null>(null)
 const selectedTopicId = ref<number | null>(null)
 const selectedSize = ref<StorySize | null>(null)
 const loadingTopics = ref(false)
+const loadingCharacters = ref(false)
 const generatingTopic = ref(false)
 const creatingStory = ref(false)
 const error = ref<string | null>(null)
@@ -107,6 +126,22 @@ async function loadTopics() {
     error.value = err instanceof ApiError ? err.message : 'Unexpected error'
   } finally {
     loadingTopics.value = false
+  }
+}
+
+function isCharacterRunning(id: number) { return portraitRunningByCharacter.value.has(id) }
+
+async function loadCatalogCharacters() {
+  loadingCharacters.value = true
+  try {
+    const characters = await getCatalogCharacters()
+    const running = await Promise.all(characters.map(async (character) => (await isPortraitGenerationRunning(character.id)) ? character.id : null))
+    catalogCharacters.value = characters
+    portraitRunningByCharacter.value = new Set(running.filter((id): id is number => id !== null))
+  } catch (err) {
+    error.value = err instanceof ApiError ? err.message : 'No se pudo comprobar el catálogo de personajes'
+  } finally {
+    loadingCharacters.value = false
   }
 }
 
@@ -132,7 +167,7 @@ async function onCreateStory() {
   error.value = null
 
   try {
-    const story = await generateStory(selectedTopicId.value, selectedSize.value)
+    const story = await generateStory(selectedTopicId.value, selectedSize.value, selectedCatalogCharacterId.value ?? undefined)
     emit('created', story.id)
   } catch (err) {
     error.value = err instanceof ApiError ? err.message : 'Unexpected error'
@@ -144,6 +179,7 @@ async function onCreateStory() {
 function resetState() {
   selectedTopicId.value = null
   selectedSize.value = null
+  selectedCatalogCharacterId.value = null
   error.value = null
 }
 
@@ -153,9 +189,18 @@ watch(
     if (isOpen) {
       resetState()
       loadTopics()
+      loadCatalogCharacters()
     }
   },
 )
+
+watch(() => websocketStore.lastPortraitEvent?.id, () => {
+  if (props.open) loadCatalogCharacters()
+})
+
+watch(() => websocketStore.connectionId, (connectionId) => {
+  if (props.open && connectionId > 0) loadCatalogCharacters()
+})
 
 function onClose() {
   emit('close')

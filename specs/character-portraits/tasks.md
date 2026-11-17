@@ -202,7 +202,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Iniciar una generación, detener el servidor antes de que termine y arrancarlo de nuevo.
   2. Comprobar que el personaje vuelve a estar editable y que se recibe la notificación de error.
 
-### [ ] TASK-012 Modificar el servicio de catálogo para la generación, consulta de candidatos y fork
+### [x] TASK-012 Modificar el servicio de catálogo para la generación, consulta de candidatos y fork
 
 - **Cubre:** REQ-003, REQ-004, REQ-006, REQ-008, REQ-012, REQ-013, ALT-003, ALT-006, DEC-001, DEC-006
 - **Componente:** character-catalog-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java
@@ -224,7 +224,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   3. Con la generación en curso, intentar elegir el personaje como protagonista de un cuento nuevo y comprobar que no se permite.
   4. Renombrar un fork y comprobar que el catálogo muestra el nuevo nombre y el original no cambia.
 
-### [ ] TASK-013 Modificar el servicio de revisiones para la invalidación y el aviso de fork
+### [x] TASK-013 Modificar el servicio de revisiones para la invalidación y el aviso de fork
 
 - **Cubre:** REQ-006, REQ-008, REQ-009, REQ-010, REQ-011, ALT-006, ALT-007, DEC-001, DEC-006, DEC-007
 - **Componente:** character-review-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterReviewService.java
@@ -248,10 +248,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   4. Aceptar un cambio visual de un personaje usado en cuentos y comprobar que aparece el aviso de fork.
   5. Cancelar el aviso de fork y comprobar que el original queda intacto y que no se ofrece editarlo.
 
-### [ ] TASK-014 Modificar la vista del catálogo con la generación, la galería y el progreso
+### [x] TASK-014 Modificar la vista del catálogo con la generación, la galería y el progreso
 
 - **Cubre:** REQ-003, REQ-005, REQ-006, REQ-008, ALT-001, ALT-003, DEC-005
-- **Componente:** character-catalog-view | app/
+- **Componente:** character-catalog-view | app/src/views/CharacterCatalogView.vue
 - **Depende de:** TASK-012
 - **Alcance:** Modificar la vista del catálogo para ofrecer la solicitud y regeneración de retratos, mostrar el indicador de progreso y estado de generación, mostrar la galería de 4 candidatos y permitir seleccionar uno, e invalidar la galería cuando llega un evento de regeneración.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-003, REQ-005, REQ-006 y REQ-008 en el flujo de usuario, la ficha ofrece generar y regenerar retratos, muestra el progreso de la generación y la galería de 4 propuestas, y la selección de una propuesta actualiza el retrato mostrado.
@@ -265,10 +265,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   5. Con la generación en curso, comprobar que los controles de edición y de uso del personaje están deshabilitados y que la ficha sigue siendo consultable.
   6. Con la galería abierta, regenerar desde otra sesión y comprobar que la galería abierta se invalida.
 
-### [ ] TASK-015 Modificar el panel de revisión con el aviso de fork y su confirmación
+### [x] TASK-015 Modificar el panel de revisión con el aviso de fork y su confirmación
 
 - **Cubre:** REQ-009, REQ-011, ALT-007, DEC-001
-- **Componente:** character-review-panel | app/
+- **Componente:** character-review-panel | app/src/components/CharacterReviewPanel.vue
 - **Depende de:** TASK-013
 - **Alcance:** Modificar el panel de revisión para mostrar el aviso de consistencia visual junto a la propuesta cuando procede, mostrar el aviso de fork antes de crear el personaje derivado, y permitir confirmar o cancelar la creación del fork sin ofrecer la edición del original.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-009 y REQ-011 en el flujo de usuario, el aviso de consistencia visual aparece solo en sus condiciones, el aviso de fork ofrece confirmar o cancelar, y cancelar no deja ninguna vía de edición del personaje en uso.
@@ -281,10 +281,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   4. Confirmar el aviso de fork y comprobar que se crea el personaje nuevo y que el original queda intacto.
   5. Cancelar el aviso de fork y comprobar que no se crea ningún personaje y que no se ofrece la edición del original.
 
-### [ ] TASK-016 Integrar el flujo completo de generación de retratos
+### [x] TASK-016 Integrar el flujo completo de generación de retratos
 
 - **Cubre:** REQ-001, REQ-004, REQ-005, REQ-006, REQ-007, ALT-001, ALT-002, DEC-005
-- **Componente:** character-catalog-view | app/
+- **Componente:** character-catalog-view | app/src/views/CharacterCatalogView.vue
 - **Depende de:** TASK-005, TASK-007, TASK-012, TASK-014
 - **Alcance:** Verificar de extremo a extremo la comunicación entre la vista de catálogo, el servicio de catálogo, el servicio de generación, el notificador de WebSocket y el difusor existente, desde la pulsación de "Generar retratos" hasta la galería de candidatos y la liberación del bloqueo.
 - **Hecho cuando:** una solicitud de generación desde la ficha produce 4 candidatos visibles en la galería, notifica el inicio y la finalización por `/storyteller`, bloquea el personaje mientras dura y lo libera al terminar, sin que ninguna parte del flujo introduzca un timeout de generación.

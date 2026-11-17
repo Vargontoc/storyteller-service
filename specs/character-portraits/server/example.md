@@ -202,3 +202,57 @@ portraitSelectionService.select(catalogCharacterId, candidateId);
 ```
 
 **Notas:** La selección se serializa bloqueando el personaje. Rechaza candidatos inexistentes, de otro personaje, obsoletos o mientras exista un job `RUNNING`. Conserva el fichero del candidato elegido como retrato aprobado y elimina únicamente los otros tres ficheros y filas de la galería.
+
+## CharacterCatalogUseCase (retratos)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterCatalogUseCase.java`
+**Para qué sirve:** Expone desde el catálogo la generación, la galería y la selección de retratos.
+
+```java
+catalog.generatePortraits(catalogCharacterId);
+boolean generating = catalog.generatingPortraits(catalogCharacterId);
+var candidates = catalog.candidates(catalogCharacterId);
+catalog.selectPortrait(catalogCharacterId, candidates.getFirst().id());
+byte[] image = catalog.candidateAsset(catalogCharacterId, candidates.getFirst().id());
+```
+
+**Notas:** El asset solo se obtiene tras validar que el candidato pertenece al personaje indicado; no recibe una ruta de fichero del cliente. Las rutas REST equivalentes quedan bajo `/api/v1/catalog-characters/{id}/portraits`.
+
+## Retrato aprobado del catálogo
+
+**Ruta:** `GET /api/v1/catalog-characters/{id}/portraits/approved/asset`
+**Para qué sirve:** Devuelve los bytes del retrato aprobado del personaje indicado.
+
+```http
+GET /api/v1/catalog-characters/7/portraits/approved/asset
+```
+
+**Notas:** El servidor resuelve el asset desde el identificador de catálogo; no acepta rutas de archivo del cliente. Responde 404 si el personaje no existe o no tiene retrato aprobado.
+
+## StoryGenerateCommand (personaje de catálogo opcional)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/domain/command/StoryGenerateCommand.java`
+**Para qué sirve:** Permite asociar explícitamente un personaje maestro al nuevo cuento sin romper solicitudes existentes.
+
+```java
+var legacy = new StoryGenerateCommand(topicId, StorySize.S);
+var withCatalogCharacter = new StoryGenerateCommand(topicId, StorySize.S, catalogCharacterId);
+```
+
+**Notas:** Con `catalogCharacterId`, se rechaza el personaje bloqueado antes de llamar al agente y el protagonista del cuento guarda la FK explícita al catálogo. La ficha y el retrato se copian a un asset propio del cuento, por lo que cambios posteriores del catálogo no alteran el snapshot.
+
+## CharacterReviewUseCase (confirmación de fork)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/ports/in/character/CharacterReviewUseCase.java`
+**Para qué sirve:** Resuelve una revisión visual; si el personaje ya tiene instantáneas de cuento, primero devuelve una confirmación de fork.
+
+```java
+var warning = reviews.resolve(new CatalogCharacterReviewResolutionCommand(
+    catalogCharacterId, reviewId, RevisionStatus.CONFIRMED));
+if (warning.forkConfirmationRequired()) {
+    reviews.resolve(new CatalogCharacterReviewResolutionCommand(
+        catalogCharacterId, reviewId, RevisionStatus.CONFIRMED, true));
+}
+```
+
+**Notas:** Un personaje bloqueado rechaza la solicitud y la resolución. Una revisión visual sin cuentos invalida retrato y candidatos; con cuentos, el original no se modifica hasta confirmar el fork.

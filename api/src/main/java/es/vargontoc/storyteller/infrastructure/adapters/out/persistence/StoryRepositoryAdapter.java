@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.enums.StorySize;
+import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.ActorMetadata;
 import es.vargontoc.storyteller.domain.model.Story;
@@ -22,6 +23,9 @@ import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepositor
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository;
+import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaEntity;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
@@ -39,6 +43,8 @@ public class StoryRepositoryAdapter implements StoryRepository {
     private final StoryJpaRepository repository;
     private final AbstractMapper<StoryJpaEntity, Story> storyMapper;
     private final ResourceStorage storage;
+    private final CatalogCharacterJpaRepository catalogCharacters;
+    private final CatalogCharacterPortraitJpaRepository catalogPortraits;
 
     public StoryRepositoryAdapter(AbstractValidator<StoryAgentResult> storyValidator,
         TopicJpaRepository topicRepository,
@@ -49,7 +55,9 @@ public class StoryRepositoryAdapter implements StoryRepository {
         StoryReviewJpaRepository storyReviewsRepository,
         ResourceStorage storage,
         CharacterJpaRepository characterRepository,
-        CharacterReviewJpaRepository characterReviewsRepository){
+        CharacterReviewJpaRepository characterReviewsRepository,
+        CatalogCharacterJpaRepository catalogCharacters,
+        CatalogCharacterPortraitJpaRepository catalogPortraits){
         this.storyValidator = storyValidator;
         this.topicRepository = topicRepository;
         this.repository = repository;
@@ -60,10 +68,17 @@ public class StoryRepositoryAdapter implements StoryRepository {
         this.pageReviewsRepository = pageReviewsRepository;
         this.storyReviewsRepository = storyReviewsRepository;
         this.storage = storage;
+        this.catalogCharacters = catalogCharacters;
+        this.catalogPortraits = catalogPortraits;
     }
 
     @Override
     public Story create(StoryAgentResult result, StorySize size, Long topic) {
+        return create(result, size, topic, null);
+    }
+
+    @Override
+    public Story create(StoryAgentResult result, StorySize size, Long topic, Long catalogCharacterId) {
         // 1. Validamos resultado
         storyValidator.validate(result);
 
@@ -74,7 +89,8 @@ public class StoryRepositoryAdapter implements StoryRepository {
         StoryJpaEntity stored = repository.save(entity);
         
         // 3. Creamos los personajes
-        result.characters().forEach(c -> stored.getCharacters().add(createCharacter(stored, c)));
+        var selectedCatalogCharacter = catalogCharacterId == null ? null : catalogCharacters.findById(catalogCharacterId).orElseThrow();
+        result.characters().forEach(c -> stored.getCharacters().add(createCharacter(stored, c, selectedCatalogCharacter)));
         
 
         // 4. Devolvemos el resultado mapeado
@@ -120,6 +136,24 @@ public class StoryRepositoryAdapter implements StoryRepository {
     }
 
     private CharacterJpaEntity createCharacter(StoryJpaEntity stored, CharacterAgentResult c) {
+        return createCharacter(stored, c, null);
+    }
+
+    private CharacterJpaEntity createCharacter(StoryJpaEntity stored, CharacterAgentResult c, CatalogCharacterJpaEntity selected) {
+        if (selected != null && c.mainCharacter()) {
+            CharacterJpaEntity snapshot = CharacterJpaEntity.draft(true, selected.getName(), selected.getVisualDescription(),
+                    selected.getNarrativeDescription(), selected.getMetadata());
+            snapshot.setCatalogCharacter(selected);
+            snapshot.setStory(stored);
+            snapshot.setCreatedAt(LocalDateTime.now());
+            snapshot = characterJpaRepository.save(snapshot);
+            CharacterJpaEntity persistedSnapshot = snapshot;
+            catalogPortraits.findByCatalogCharacterId(selected.getId()).ifPresent(p -> {
+                persistedSnapshot.setImagePath(storage.saveImage(stored.getId(), KindImage.ACTOR,
+                        persistedSnapshot.getId(), storage.getResource(p.getAssetPath())));
+            });
+            return persistedSnapshot;
+        }
         CharacterJpaEntity entity = CharacterJpaEntity.draft(c.mainCharacter(), c.name(), c.visualDescription(), c.narrativeDescription(),
             new ActorMetadata(c.visualDescriptionEn(), c.visualAttributes()));
         entity.setId(null);

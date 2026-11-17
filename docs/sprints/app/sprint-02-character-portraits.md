@@ -60,6 +60,6 @@ La integración mínima de crear cuento se hará en `TopicSelectionModal.vue`: c
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: pendiente (código de TASK-016 posterior a la compilación correcta de TASK-015)
 - Integración: pendiente
 - Validación manual: pendiente

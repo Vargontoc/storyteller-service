@@ -56,9 +56,9 @@ export function generateTopic() {
   return httpClient.post<ApiEnvelope<Topic>>('/api/v1/generations/topic').then((envelope) => envelope.data)
 }
 
-export function generateStory(topicId: number, size: StorySize) {
+export function generateStory(topicId: number, size: StorySize, catalogCharacterId?: number) {
   return httpClient
-    .post<ApiEnvelope<Story>>('/api/v1/generations/story', { topicId, size })
+    .post<ApiEnvelope<Story>>('/api/v1/generations/story', { topicId, size, catalogCharacterId })
     .then((envelope) => envelope.data)
 }
 

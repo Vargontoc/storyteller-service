@@ -34,6 +34,7 @@ import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmRevie
 import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
+import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -56,13 +57,16 @@ public class StoryService implements StoryGeneration   {
     private final StoryRepository repository;
     private final StoryReviewRepository reviewRepository;
     private final TopicRepository topicRepository;
+    private final CatalogCharacterJpaRepository catalogCharacters;
+    private final PortraitLockService portraitLock;
 
     public StoryService(StoryRepository repository,
             TopicRepository topicRepository,
             StoryReviewRepository reviewRepository,
             OllamaPort ollama,
             @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model,
-            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR) ChatClient client){
+            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR) ChatClient client,
+            CatalogCharacterJpaRepository catalogCharacters, PortraitLockService portraitLock){
 
         this.repository = repository;
         this.topicRepository = topicRepository;
@@ -70,11 +74,18 @@ public class StoryService implements StoryGeneration   {
         this.ollama = ollama;
         this.model = model;
         this.client  = client;
+        this.catalogCharacters = catalogCharacters;
+        this.portraitLock = portraitLock;
     }
 
 
     @Override
     public Story generate(StoryGenerateCommand cmd) {
+        if (cmd.catalogCharacterId() != null) {
+            catalogCharacters.findById(cmd.catalogCharacterId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Personaje de catálogo no encontrado"));
+            portraitLock.assertCanUseAsStoryProtagonist(cmd.catalogCharacterId());
+        }
         
         if(!ollama.isAvailable(model))
             throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
@@ -89,7 +100,7 @@ public class StoryService implements StoryGeneration   {
             .param("pages", cmd.size().getPages()))
         .call().entity(StoryAgentResult.class));
 
-        return repository.create(result, cmd.size(), cmd.topicId());
+        return repository.create(result, cmd.size(), cmd.topicId(), cmd.catalogCharacterId());
     }
 
     @Override

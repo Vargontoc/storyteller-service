@@ -9,6 +9,16 @@ export interface WebsocketNotification {
   text: string
 }
 
+export type PortraitGenerationEventType = 'STARTED' | 'PROGRESS' | 'SUCCESS' | 'ERROR'
+export type PortraitGenerationStatus = 'RUNNING' | 'COMPLETED' | 'FAILED'
+export interface PortraitGenerationEvent {
+  catalogCharacterId: number
+  type: PortraitGenerationEventType
+  status: PortraitGenerationStatus
+  reason: string
+  id: number
+}
+
 interface NotificationEvent extends WebsocketNotification {
   id: number
 }
@@ -24,8 +34,10 @@ function toWsUrl(path: string): string {
 }
 
 export const useWebsocketStore = defineStore('websocket', {
-  state: (): { lastEvent: NotificationEvent | null } => ({
+  state: (): { lastEvent: NotificationEvent | null; lastPortraitEvent: PortraitGenerationEvent | null; connectionId: number } => ({
     lastEvent: null,
+    lastPortraitEvent: null,
+    connectionId: 0,
   }),
   actions: {
     connect() {
@@ -33,17 +45,30 @@ export const useWebsocketStore = defineStore('websocket', {
 
       socket = new WebSocket(toWsUrl('/storyteller'))
 
+      socket.addEventListener('open', () => {
+        this.connectionId += 1
+      })
+
       socket.addEventListener('message', (event) => {
-        let data: WebsocketNotification
+        let data: unknown
         try {
           data = JSON.parse(event.data)
         } catch {
           return
         }
-        if (!data || typeof data.text !== 'string' || typeof data.type !== 'string') return
+        if (!data || typeof data !== 'object') return
+        const portrait = data as Partial<PortraitGenerationEvent>
+        if (typeof portrait.catalogCharacterId === 'number' && typeof portrait.type === 'string' && typeof portrait.status === 'string' && typeof portrait.reason === 'string') {
+          this.lastPortraitEvent = { catalogCharacterId: portrait.catalogCharacterId, type: portrait.type as PortraitGenerationEventType, status: portrait.status as PortraitGenerationStatus, reason: portrait.reason, id: nextEventId++ }
+          const notificationType: NotificationType = portrait.type === 'ERROR' ? 'ERROR' : portrait.type === 'SUCCESS' ? 'SUCCESS' : 'INFO'
+          useToastStore().show(portrait.reason, notificationType.toLowerCase() as Lowercase<NotificationType>)
+          return
+        }
+        const notification = data as Partial<WebsocketNotification>
+        if (typeof notification.text !== 'string' || typeof notification.type !== 'string') return
 
-        this.lastEvent = { ...data, id: nextEventId++ }
-        useToastStore().show(data.text, data.type.toLowerCase() as Lowercase<NotificationType>)
+        this.lastEvent = { type: notification.type as NotificationType, text: notification.text, id: nextEventId++ }
+        useToastStore().show(notification.text, notification.type.toLowerCase() as Lowercase<NotificationType>)
       })
 
       socket.addEventListener('close', () => {
