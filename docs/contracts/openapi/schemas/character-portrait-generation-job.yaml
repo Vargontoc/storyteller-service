@@ -1,0 +1,24 @@
+# Origen: specs/character-portraits (REQ-005, REQ-006, REQ-007, DEC-008)
+# Estado del contrato: contrastado con el código
+type: object
+description: Trabajo persistido de generación de retratos (PortraitGenerationJob). Es la fuente de verdad del bloqueo del personaje: el bloqueo se deriva exclusivamente de la existencia de un trabajo con status=RUNNING y se libera al pasar a COMPLETED o FAILED.
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador único del trabajo de generación
+  catalogCharacterId:
+    type: integer
+    format: int64
+    description: Identificador del personaje del catálogo asociado
+  status:
+    $ref: "./enums/portrait-generation-status.yaml"
+  errorMessage:
+    type: string
+    nullable: true
+    description: Motivo público del fallo cuando status es FAILED
+required:
+  - id
+  - catalogCharacterId
+  - status

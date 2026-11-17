@@ -1,0 +1,10 @@
+# Origen: specs/character-portraits (REQ-006, DEC-008)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../character-portrait-lock-status.yaml"
+    required:
+      - data

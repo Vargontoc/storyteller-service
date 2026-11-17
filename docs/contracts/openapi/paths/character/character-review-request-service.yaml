@@ -1,9 +1,9 @@
-# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009)
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009), specs/character-portraits (REQ-006, REQ-009)
 # Estado del contrato: contrastado con el código
 post:
   operationId: requestCatalogCharacterReview
   summary: Solicita una revisión de un personaje del catálogo
-  description: Solicita una revisión textual. Si ya existe una pendiente y replacePending=false, devuelve replacementConfirmationRequired=true (REQ-007). Si la propuesta modifica la descripción visual y hay imágenes generadas, incluye visualConsistencyWarning=true (REQ-009). Si no cumple las reglas, devuelve accepted=false con rejectionReason (REQ-008).
+  description: Solicita una revisión textual. Rechaza la operación con 409 si el personaje está bloqueado por una generación de retratos en curso (REQ-006). Si ya existe una revisión pendiente y replacePending=false, devuelve replacementConfirmationRequired=true (REQ-007). Si la propuesta modifica la descripción visual y existen imágenes generadas (retrato aprobado o candidatos), incluye visualConsistencyWarning=true (REQ-009). Si no cumple las reglas, devuelve accepted=false con rejectionReason (REQ-008).
   tags:
     - CatalogCharacters
   parameters:
@@ -28,13 +28,25 @@ post:
           schema:
             $ref: "../../schemas/responses/catalog-character-review-request-result-response.yaml"
     "400":
-      description: Solicitud inválida o agente no disponible
+      description: Solicitud inválida, propuesta incompleta o agente no disponible
       content:
         application/json:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "404":
       description: Personaje no encontrado en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El personaje tiene una generación de retratos en curso (REQ-006)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "503":
+      description: El servicio de condición de imágenes no está disponible
       content:
         application/json:
           schema:

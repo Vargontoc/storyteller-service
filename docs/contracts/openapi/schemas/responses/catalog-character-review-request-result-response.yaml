@@ -1,4 +1,4 @@
-# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009)
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009), specs/character-portraits (REQ-006, REQ-009)
 # Estado del contrato: contrastado con el código
 allOf:
   - $ref: "../api-response.yaml"

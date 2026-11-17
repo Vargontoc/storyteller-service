@@ -1,0 +1,21 @@
+# Origen: specs/character-portraits (REQ-003, REQ-008, REQ-010, DEC-001)
+# Estado del contrato: contrastado con el código
+type: object
+description: Retrato aprobado único de un personaje del catálogo (CatalogCharacterPortrait). Su existencia determina que portraitStatus sea APPROVED y draft sea false; su asset binario se sirve en GET /catalog-characters/{id}/portraits/approved/asset.
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador único del retrato aprobado
+  catalogCharacterId:
+    type: integer
+    format: int64
+    description: Identificador único del personaje del catálogo propietario del retrato aprobado
+  assetPath:
+    type: string
+    description: Ruta relativa interna del asset aprobado
+required:
+  - id
+  - catalogCharacterId
+  - assetPath

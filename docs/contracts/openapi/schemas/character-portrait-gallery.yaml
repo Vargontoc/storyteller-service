@@ -1,0 +1,6 @@
+# Origen: specs/character-portraits (REQ-001, REQ-003, REQ-004, DEC-004)
+# Estado del contrato: contrastado con el código
+type: array
+description: Galería temporal de propuestas de retrato pendientes de selección (4 candidatos tras una generación completada, o vacía si no existen propuestas vigentes)
+items:
+  $ref: "./character-portrait-candidate.yaml"

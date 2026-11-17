@@ -1,4 +1,4 @@
-# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009)
+# Origen: specs/character-inventory (REQ-007, REQ-008, REQ-009), specs/character-portraits (REQ-009)
 # Estado del contrato: contrastado con el código
 type: object
 description: Resultado de la solicitud de revisión de un personaje del catálogo

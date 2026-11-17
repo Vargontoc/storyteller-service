@@ -1,9 +1,9 @@
-# Origen: specs/character-inventory (REQ-006)
+# Origen: specs/character-inventory (REQ-006), specs/character-portraits (REQ-006, REQ-013)
 # Estado del contrato: contrastado con el código
 patch:
   operationId: renameCatalogCharacter
   summary: Renombra un personaje en el catálogo
-  description: Actualiza el nombre del personaje maestro en el catálogo. No altera el nombre de las instantáneas de cuentos ya existentes (REQ-006, DEC-005).
+  description: Actualiza el nombre del personaje maestro (o de un fork) en el catálogo. No altera el nombre de las instantáneas de cuentos ya existentes ni el personaje original en caso de fork (REQ-006, REQ-013, DEC-005). Rechaza la operación si existe una generación de retratos en curso.
   tags:
     - CatalogCharacters
   parameters:
@@ -35,6 +35,12 @@ patch:
             $ref: "../../schemas/api-response.yaml"
     "404":
       description: Personaje no encontrado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El personaje tiene una generación de retratos en curso (REQ-006)
       content:
         application/json:
           schema:

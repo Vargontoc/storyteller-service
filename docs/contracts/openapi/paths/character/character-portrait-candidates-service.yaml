@@ -1,0 +1,29 @@
+# Origen: specs/character-portraits (REQ-001, REQ-003, REQ-004)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getCatalogCharacterPortraitCandidates
+  summary: Lista los candidatos de retrato vigentes del personaje
+  description: Devuelve la galería de candidatos de retrato pendientes de selección asociados al personaje del catálogo (4 propuestas tras una generación completada, o lista vacía si no existen candidatos vigentes).
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Galería de candidatos de retrato del personaje
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/character-portrait-candidates-response.yaml"
+    "404":
+      description: Personaje no encontrado en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

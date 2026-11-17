@@ -11,3 +11,5 @@ stories/**
 .agents
 
 app/node_modules/**
+
+characters/*

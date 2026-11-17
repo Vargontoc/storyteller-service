@@ -85,6 +85,18 @@ paths:
     $ref: "./paths/character/catalog-character-service.yaml"
   /catalog-characters/{id}/name:
     $ref: "./paths/character/rename-character-service.yaml"
+  /catalog-characters/{id}/portraits/generate:
+    $ref: "./paths/character/character-portrait-generate-service.yaml"
+  /catalog-characters/{id}/portraits/candidates:
+    $ref: "./paths/character/character-portrait-candidates-service.yaml"
+  /catalog-characters/{id}/portraits/candidates/{candidateId}/select:
+    $ref: "./paths/character/character-portrait-select-service.yaml"
+  /catalog-characters/{id}/portraits/candidates/{candidateId}/asset:
+    $ref: "./paths/character/character-portrait-candidate-asset-service.yaml"
+  /catalog-characters/{id}/portraits/approved/asset:
+    $ref: "./paths/character/character-portrait-approved-asset-service.yaml"
+  /catalog-characters/{id}/portraits/generating:
+    $ref: "./paths/character/character-portrait-generating-service.yaml"
   /catalog-characters/{characterId}/reviews:
     $ref: "./paths/character/character-review-request-service.yaml"
   /catalog-characters/{characterId}/reviews/pending:

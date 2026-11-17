@@ -1,0 +1,37 @@
+# Origen: specs/character-portraits (REQ-001, REQ-003)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getCatalogCharacterPortraitCandidateAsset
+  summary: Obtiene la imagen binaria de un candidato de retrato
+  description: Devuelve los bytes de la imagen de un candidato perteneciente al personaje indicado tras validar su pertenencia en el catálogo.
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+    - name: candidateId
+      in: path
+      required: true
+      description: Identificador del candidato de retrato
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Imagen binaria del candidato de retrato
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: Candidato de retrato no encontrado para el personaje indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

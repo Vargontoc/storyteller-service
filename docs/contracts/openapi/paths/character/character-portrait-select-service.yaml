@@ -1,0 +1,42 @@
+# Origen: specs/character-portraits (REQ-003, REQ-006, REQ-008)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: selectCatalogCharacterPortrait
+  summary: Aprueba un candidato de retrato y descarta los restantes
+  description: Registra el candidato indicado como único retrato aprobado del personaje y elimina las tres propuestas restantes. Rechaza la operación si existe una generación en curso, si ya existe retrato aprobado o si el candidato ya no está vigente (ALT-005, REQ-003).
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+    - name: candidateId
+      in: path
+      required: true
+      description: Identificador del candidato de retrato a aprobar
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Candidato aprobado como retrato del personaje y propuestas restantes eliminadas
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/api-void-response.yaml"
+    "404":
+      description: Personaje no encontrado o el candidato de retrato ya no está vigente (inexistente, de otro personaje, regenerado o invalidado)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El personaje tiene una generación de retratos en curso o ya dispone de un retrato aprobado (REQ-006)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

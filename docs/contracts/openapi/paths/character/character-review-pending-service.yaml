@@ -1,9 +1,9 @@
-# Origen: specs/character-inventory (REQ-010)
+# Origen: specs/character-inventory (REQ-010), specs/character-portraits (REQ-006)
 # Estado del contrato: contrastado con el código
 get:
   operationId: getPendingCatalogCharacterReview
   summary: Obtiene la revisión pendiente de un personaje del catálogo
-  description: Devuelve los datos de la propuesta de revisión activa (PENDING) asociada al personaje del catálogo (REQ-010)
+  description: Devuelve los datos de la propuesta de revisión activa (PENDING) asociada al personaje del catálogo (REQ-010). La consulta permanece disponible aunque exista una generación de retratos en curso (REQ-006).
   tags:
     - CatalogCharacters
   parameters:

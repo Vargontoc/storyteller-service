@@ -1,0 +1,35 @@
+# Origen: specs/character-portraits (REQ-001, REQ-004, REQ-005, REQ-006)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: generateCatalogCharacterPortraits
+  summary: Inicia la generación o regeneración asíncrona de 4 retratos cartoon
+  description: Crea un trabajo de generación en estado RUNNING y encola la generación de 4 propuestas cartoon en ComfyUI. Sirve tanto para la primera generación como para regenerar sin límite de repeticiones reemplazando los candidatos previos al completarse. El progreso y resultado (STARTED, PROGRESS, SUCCESS, ERROR) se notifican por WebSocket en /storyteller (REQ-001, REQ-004, REQ-005).
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Generación de retratos iniciada en segundo plano
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/api-void-response.yaml"
+    "404":
+      description: Personaje no encontrado en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El personaje ya está bloqueado por una generación de retratos en curso (REQ-006)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

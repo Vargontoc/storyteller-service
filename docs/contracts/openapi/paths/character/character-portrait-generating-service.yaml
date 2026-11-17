@@ -1,0 +1,29 @@
+# Origen: specs/character-portraits (REQ-006, REQ-007, DEC-008)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: isGeneratingCatalogCharacterPortraits
+  summary: Consulta si el personaje está bloqueado por generación de retratos
+  description: Devuelve true si existe un trabajo de generación de retratos en estado RUNNING para el personaje indicado, y false en caso contrario. El bloqueo se deriva del estado del trabajo y no es un recurso independiente (DEC-008).
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Estado de bloqueo derivado de la generación de retratos
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/character-portrait-generating-response.yaml"
+    "404":
+      description: Personaje no encontrado en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

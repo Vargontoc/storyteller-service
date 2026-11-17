@@ -296,7 +296,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   3. Confirmar que la generación en curso no se abandona por espera y que al terminar el personaje vuelve a estar editable.
   4. Repetir el flujo con ComfyUI no disponible y comprobar que llega la notificación de error y que el personaje queda libre.
 
-### [ ] TASK-017 Contrato: openapi - endpoints de generación y selección de retratos
+### [x] TASK-017 Contrato: openapi - endpoints de generación y selección de retratos
 
 - **Cubre:** REQ-001, REQ-003, REQ-004, REQ-005, REQ-006
 - **Componente:** character-catalog-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java
@@ -312,7 +312,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Recorrer el contrato y comprobar que cada interfaz de esta tarea aparece con su método, entrada, salida y errores relevantes.
   2. Comparar el contrato con la implementación y confirmar que generación, regeneración, consulta de candidatos y selección coinciden.
 
-### [ ] TASK-018 Contrato: openapi - esquemas de retrato, candidato y estado de generación
+### [x] TASK-018 Contrato: openapi - esquemas de retrato, candidato y estado de generación
 
 - **Cubre:** REQ-003, REQ-005, REQ-006, REQ-008, DEC-001, DEC-008
 - **Componente:** character-catalog-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java
@@ -328,7 +328,7 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Revisar los esquemas y comprobar que el retrato aprobado, el candidato, la galería y el estado del trabajo están representados.
   2. Comparar los esquemas con la implementación y confirmar que la derivación del bloqueo y los estados coinciden.
 
-### [ ] TASK-019 Contrato: openapi - revisiones de personaje con aviso de fork
+### [x] TASK-019 Contrato: openapi - revisiones de personaje con aviso de fork
 
 - **Cubre:** REQ-006, REQ-009, REQ-011, REQ-012
 - **Componente:** character-review-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterReviewService.java

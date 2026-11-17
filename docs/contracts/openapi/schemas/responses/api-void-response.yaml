@@ -1,0 +1,10 @@
+# Origen: specs/character-portraits (REQ-001, REQ-003, REQ-004)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        type: object
+        nullable: true
+        description: Sin contenido adicional cuando la operación finaliza correctamente

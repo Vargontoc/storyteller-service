@@ -1,9 +1,9 @@
-# Origen: specs/character-inventory (REQ-011, REQ-012)
+# Origen: specs/character-inventory (REQ-011, REQ-012), specs/character-portraits (REQ-006, REQ-010, REQ-011, REQ-012)
 # Estado del contrato: contrastado con el código
 post:
   operationId: resolveCatalogCharacterReview
   summary: Resuelve (acepta o descarta) una revisión de un personaje del catálogo
-  description: Con status=CONFIRMED aplica los cambios textuales de la propuesta a la ficha del catálogo (REQ-011). Con status=DISCARDED conserva la ficha intacta (REQ-012). En ambos casos la revisión deja de estar pendiente y desaparece el badge.
+  description: Rechaza la operación con 409 si el personaje tiene una generación de retratos en curso (REQ-006). Con status=CONFIRMED sobre un cambio narrativo o sobre un personaje sin uso en cuentos, aplica los cambios a la ficha del catálogo; si afecta a la descripción visual (VISUAL o BOTH), además invalida el retrato aprobado y los candidatos existentes (REQ-010). Si el cambio confirmado afecta a la descripción visual de un personaje ya usado en cuentos y confirmFork=false, conserva la revisión pendiente y la ficha intacta devolviendo forkConfirmationRequired=true (REQ-011). Si confirmFork=true, crea un personaje fork sin retrato aprobado aplicando el cambio visual, conserva intacto el original, resuelve la revisión y devuelve forkCatalogCharacterId (REQ-011, REQ-012). Con status=DISCARDED conserva la ficha intacta sin crear fork (REQ-012).
   tags:
     - CatalogCharacters
   parameters:
@@ -29,19 +29,31 @@ post:
           $ref: "../../schemas/requests/resolve-catalog-character-review-request.yaml"
   responses:
     "200":
-      description: Revisión resuelta correctamente
+      description: Revisión resuelta o confirmación de fork requerida
       content:
         application/json:
           schema:
             $ref: "../../schemas/responses/catalog-character-review-response.yaml"
     "400":
-      description: Estado de resolución inválido
+      description: Estado de resolución o datos de revisión inválidos
       content:
         application/json:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "404":
-      description: Revisión o personaje no encontrado
+      description: Revisión pendiente o personaje no encontrado en el catálogo
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El personaje tiene una generación de retratos en curso (REQ-006)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "503":
+      description: El servicio de creación de fork o invalidación de retrato no está disponible
       content:
         application/json:
           schema:

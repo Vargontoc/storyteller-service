@@ -1,7 +1,7 @@
-# Origen: specs/character-inventory (REQ-007, REQ-010, REQ-011, REQ-012)
+# Origen: specs/character-inventory (REQ-007, REQ-010, REQ-011, REQ-012), specs/character-portraits (REQ-011, REQ-012)
 # Estado del contrato: contrastado con el código
 type: object
-description: Revisión pendiente de un personaje del catálogo
+description: Vista de una revisión pendiente o resuelta de un personaje del catálogo
 additionalProperties: false
 properties:
   id:
@@ -22,6 +22,14 @@ properties:
   visualDescription:
     type: string
     description: Propuesta de descripción visual
+  forkConfirmationRequired:
+    type: boolean
+    description: Indica si se requiere confirmación del usuario para crear un fork al afectar una revisión visual a un personaje usado en cuentos (REQ-011)
+  forkCatalogCharacterId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador del personaje fork creado en el catálogo tras confirmar el aviso de fork (REQ-012)
 required:
   - id
   - target
@@ -29,3 +37,4 @@ required:
   - name
   - narrativeDescription
   - visualDescription
+  - forkConfirmationRequired

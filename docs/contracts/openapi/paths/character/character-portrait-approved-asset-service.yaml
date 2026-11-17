@@ -1,0 +1,36 @@
+# Origen: specs/character-portraits (REQ-003, REQ-008)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getCatalogCharacterApprovedPortraitAsset
+  summary: Obtiene la imagen binaria del retrato aprobado del personaje
+  description: Devuelve los bytes del retrato aprobado asociado al personaje del catálogo indicado (REQ-003).
+  tags:
+    - CatalogCharacters
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del personaje del catálogo
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Imagen binaria del retrato aprobado
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: Personaje no encontrado o sin retrato aprobado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "503":
+      description: El repositorio de retratos aprobados no está disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

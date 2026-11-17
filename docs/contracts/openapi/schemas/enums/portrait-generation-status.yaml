@@ -1,0 +1,8 @@
+# Origen: specs/character-portraits (REQ-005, REQ-006, DEC-008)
+# Estado del contrato: contrastado con el código
+type: string
+description: Estado del trabajo de generación de retratos de un personaje del catálogo
+enum:
+  - RUNNING
+  - COMPLETED
+  - FAILED

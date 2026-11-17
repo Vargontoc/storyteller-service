@@ -1,4 +1,4 @@
-# Origen: specs/character-inventory (REQ-011, REQ-012)
+# Origen: specs/character-inventory (REQ-011, REQ-012), specs/character-portraits (REQ-011, REQ-012)
 # Estado del contrato: contrastado con el código
 type: object
 description: Petición para resolver (confirmar o descartar) una revisión de personaje del catálogo
@@ -9,6 +9,10 @@ properties:
     enum:
       - CONFIRMED
       - DISCARDED
-    description: Estado de resolución deseado (CONFIRMED para aplicar los cambios a la ficha, DISCARDED para descartarlos)
+    description: Estado de resolución deseado (CONFIRMED para aplicar los cambios a la ficha o confirmar fork, DISCARDED para descartarlos)
+  confirmFork:
+    type: boolean
+    default: false
+    description: Confirmación explícita para crear un fork cuando la revisión visual confirmada afecta a un personaje usado en cuentos (REQ-011, REQ-012)
 required:
   - status

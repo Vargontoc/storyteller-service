@@ -1,0 +1,26 @@
+# Origen: specs/character-portraits (REQ-001, REQ-003, REQ-004, DEC-004)
+# Estado del contrato: contrastado con el código
+type: object
+description: Propuesta temporal de retrato pendiente de selección (PortraitCandidate). A diferencia del retrato aprobado, pertenece a un trabajo de generación y se elimina al seleccionar otro candidato, regenerar o invalidar.
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador único del candidato de retrato
+  catalogCharacterId:
+    type: integer
+    format: int64
+    description: Identificador del personaje del catálogo al que pertenece el candidato
+  generationJobId:
+    type: integer
+    format: int64
+    description: Identificador del trabajo de generación que produjo este candidato
+  assetPath:
+    type: string
+    description: Ruta relativa interna del asset generado para el candidato
+required:
+  - id
+  - catalogCharacterId
+  - generationJobId
+  - assetPath

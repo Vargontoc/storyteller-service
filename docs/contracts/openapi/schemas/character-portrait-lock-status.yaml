@@ -1,0 +1,4 @@
+# Origen: specs/character-portraits (REQ-006, REQ-007, DEC-003, DEC-008)
+# Estado del contrato: contrastado con el código
+type: boolean
+description: Estado de bloqueo de generación de retratos de un personaje. No es un recurso almacenable independiente: se deriva directamente de la existencia de un PortraitGenerationJob en estado RUNNING para ese personaje.
