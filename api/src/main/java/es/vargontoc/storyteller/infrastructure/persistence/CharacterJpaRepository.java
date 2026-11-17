@@ -7,6 +7,8 @@ import org.springframework.data.repository.query.Param;
 
 public interface CharacterJpaRepository extends JpaRepository<CharacterJpaEntity, Long> {
 
+    boolean existsByCatalogCharacterId(Long catalogCharacterId);
+
     @Modifying
     @Query("DELETE FROM CharacterJpaEntity c WHERE c.story.id = :storyId")
     void deleteFromStoryId(@Param("storyId") Long storyId);

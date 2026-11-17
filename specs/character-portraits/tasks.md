@@ -27,10 +27,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Consultar la base de datos y verificar que existe el trabajo de generación con su estado y su personaje asociado.
   3. Crear un fork y comprobar que el personaje original conserva nombre, descripciones y retrato.
 
-### [ ] TASK-002 Implementar el almacén de estado de los trabajos de generación
+### [x] TASK-002 Implementar el almacén de estado de los trabajos de generación
 
 - **Cubre:** REQ-006, REQ-007, DEC-008
-- **Componente:** portrait-generation-state-store | por definir (analista técnico)
+- **Componente:** portrait-generation-state-store | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/PortraitGenerationJobStore.java
 - **Depende de:** TASK-001
 - **Alcance:** Crear el almacén que persiste los trabajos de generación de retratos y permite consultar los trabajos en curso y los jobs `RUNNING` huérfanos.
 - **Hecho cuando:** se puede crear un trabajo en estado `RUNNING` para un personaje, actualizar su estado a `COMPLETED` o `FAILED`, consultar el trabajo en curso de un personaje y listar los trabajos `RUNNING` existentes.
@@ -43,10 +43,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Solicitar la generación de retratos de un personaje y comprobar que queda registrado un trabajo en curso.
   2. Dejar terminar la generación y comprobar que el trabajo deja de estar en curso.
 
-### [ ] TASK-003 Implementar el almacén de candidatos de retrato
+### [x] TASK-003 Implementar el almacén de candidatos de retrato
 
 - **Cubre:** REQ-001, REQ-003, REQ-004, DEC-004
-- **Componente:** portrait-candidate-store | por definir (analista técnico)
+- **Componente:** portrait-candidate-store | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/PortraitCandidateStore.java
 - **Depende de:** TASK-001
 - **Alcance:** Crear el almacén que guarda temporalmente las propuestas generadas de un personaje, las asocia al personaje y permite reemplazarlas o eliminararlas.
 - **Hecho cuando:** se pueden guardar 4 candidatos asociados a un personaje, consultarlos, reemplazar el conjunto completo por una nueva generación y eliminar candidatos concretos o todos.
@@ -93,10 +93,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Esperar el final de la generación y comprobar que llega la notificación de finalización con el personaje correcto.
   3. Provocar un fallo de generación y comprobar que llega la notificación de error con el motivo.
 
-### [ ] TASK-006 Implementar el bloqueo del personaje derivado del trabajo de generación
+### [x] TASK-006 Implementar el bloqueo del personaje derivado del trabajo de generación
 
 - **Cubre:** REQ-006, REQ-007, ALT-003, DEC-003, DEC-008
-- **Componente:** portrait-lock-service | por definir (analista técnico)
+- **Componente:** portrait-lock-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitLockService.java
 - **Depende de:** TASK-002
 - **Alcance:** Crear el servicio que expone si un personaje está bloqueado a partir de la existencia de un trabajo de generación en estado `RUNNING` y que libera el bloqueo cuando el trabajo deja de estar en curso, sin introducir ningún timeout de generación.
 - **Hecho cuando:** un personaje con un trabajo `RUNNING` se reporta como bloqueado, el mismo personaje deja de estar bloqueado cuando su trabajo pasa a `COMPLETED` o `FAILED`, y el bloqueo sobrevive a un reinicio porque se deriva del estado persistido y no de memoria ni de expiración.
@@ -112,10 +112,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Esperar a que termine la generación y comprobar que la ficha ya no muestra la generación en curso.
   3. Comprobar que la generación en curso no se cancela sola por esperar demasiado tiempo.
 
-### [ ] TASK-007 Implementar la orquestación de la generación de 4 candidatos
+### [x] TASK-007 Implementar la orquestación de la generación de 4 candidatos
 
 - **Cubre:** REQ-001, REQ-004, REQ-005, REQ-006, REQ-007, ALT-001, ALT-002, ALT-004, DEC-002
-- **Componente:** portrait-generation-service | por definir (analista técnico)
+- **Componente:** portrait-generation-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitGenerationService.java
 - **Depende de:** TASK-002, TASK-003, TASK-004, TASK-005, TASK-006
 - **Alcance:** Crear el servicio que atiende la solicitud de generar o regenerar retratos: crea el trabajo en curso, delega en el adaptador de ComfyUI, guarda los candidatos, actualiza el estado del trabajo, deja el personaje sin propuestas ante fallo y notifica por WebSocket, sin introducir ningún timeout de generación.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-001, REQ-004, REQ-005 y REQ-007, el servicio produce 4 candidatos por solicitud, permite regenerar sin límite de repeticiones reemplazando las propuestas anteriores, y ante un fallo deja el trabajo en `FAILED`, el personaje sin propuestas y el bloqueo liberado.
@@ -131,10 +131,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Regenerar varias veces seguidas y comprobar que en cada ciclo se obtienen 4 propuestas nuevas y distintas.
   3. Con ComfyUI no disponible, solicitar la generación y comprobar que se notifica el error y el personaje queda sin propuestas.
 
-### [ ] TASK-008 Implementar la selección del retrato aprobado
+### [x] TASK-008 Implementar la selección del retrato aprobado
 
 - **Cubre:** REQ-003, REQ-008, ALT-005, DEC-004
-- **Componente:** portrait-selection-service | por definir (analista técnico)
+- **Componente:** portrait-selection-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitSelectionService.java
 - **Depende de:** TASK-001, TASK-003
 - **Alcance:** Crear el servicio que registra el candidato elegido como retrato aprobado del personaje, elimina las tres propuestas restantes y rechaza la selección de candidatos que ya no existen o han sido invalidados.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-003, el candidato seleccionado queda como único retrato aprobado, las otras 3 propuestas se eliminan del almacenamiento y el personaje deja de estar en estado borrador.
@@ -149,10 +149,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   2. Comprobar que en el almacenamiento solo queda la imagen del retrato aprobado.
   3. Con la galería abierta, regenerar desde otra sesión e intentar seleccionar una propuesta antigua y comprobar que se rechaza.
 
-### [ ] TASK-009 Implementar el adaptador de condiciones visuales de personaje
+### [x] TASK-009 Implementar el adaptador de condiciones visuales de personaje
 
 - **Cubre:** REQ-008, REQ-009, REQ-010, DEC-001
-- **Componente:** portrait-condition-adapter | por definir (analista técnico)
+- **Componente:** portrait-condition-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/persistence/PortraitConditionAdapter.java
 - **Depende de:** TASK-001
 - **Alcance:** Crear la implementación real del puerto `character-image-condition-port` que consulta si un personaje tiene retrato aprobado y si tiene imágenes generadas, alimentando el estado de borrador, el aviso de consistencia visual y la invalidación.
 - **Hecho cuando:** el puerto `character-image-condition-port` deja de ser una interfaz vacía y responde, por identificador de personaje, si existe retrato aprobado y si existen imágenes generadas.
@@ -165,10 +165,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   1. Revisar la implementación del puerto y comprobar que cubre las dos consultas definidas en la interfaz.
   2. Comprobar que no expone operaciones de generación, selección ni modificación de imágenes.
 
-### [ ] TASK-010 Implementar la creación del fork de personaje
+### [x] TASK-010 Implementar la creación del fork de personaje
 
 - **Cubre:** REQ-012, REQ-013, ALT-007, DEC-006
-- **Componente:** portrait-fork-service | por definir (analista técnico)
+- **Componente:** portrait-fork-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitForkService.java
 - **Depende de:** TASK-001
 - **Alcance:** Crear el servicio que, ante un cambio visual confirmado en un personaje en uso, crea un nuevo personaje del catálogo con la ficha copiada, el nombre original más un sufijo distintivo, la descripción visual revisada y sin retrato aprobado, dejando el original inalterable.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-012 y REQ-013, el fork aparece en el catálogo como borrador con la descripción visual revisada, el original conserva nombre, descripción y retrato, y el fork puede renombrarse sin afectar al original ni a los cuentos asociados.
@@ -185,10 +185,10 @@ El trabajo se divide entre la persistencia de retratos, candidatos y trabajos de
   3. Abrir el original y comprobar que conserva su retrato y su nombre.
   4. Renombrar el fork y comprobar que el original mantiene su nombre y que los cuentos previos no cambian.
 
-### [ ] TASK-011 Implementar la reconciliación de trabajos huérfanos al arrancar
+### [x] TASK-011 Implementar la reconciliación de trabajos huérfanos al arrancar
 
 - **Cubre:** REQ-005, REQ-006, REQ-007, ALT-004, DEC-008
-- **Componente:** portrait-reconciliation-service | por definir (analista técnico)
+- **Componente:** portrait-reconciliation-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitGenerationReconciliationService.java
 - **Depende de:** TASK-002, TASK-005, TASK-006
 - **Alcance:** Crear el servicio que, al arrancar la aplicación, detecta los trabajos de generación en estado `RUNNING` sin tarea viva asociada, los marca como `FAILED`, libera el bloqueo del personaje y emite el evento de error por WebSocket.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-005, REQ-006 y REQ-007 en el escenario de reinicio, ningún personaje queda bloqueado indefinidamente tras una caída del servidor y el usuario recibe el evento de error correspondiente.

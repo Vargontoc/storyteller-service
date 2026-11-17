@@ -26,9 +26,9 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     private final CharacterAgent agent;
     private final CatalogCharacterRepository repository;
     private final CatalogCharacterAgentResultValidator validator;
-    private final CatalogCharacterPendingReviewReader reviews; private final Optional<CharacterImageConditionPort> images;
-    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images) {
-        this.agent = agent; this.repository = repository; this.validator=validator; this.reviews=reviews; this.images=images;
+    private final CatalogCharacterPendingReviewReader reviews; private final Optional<CharacterImageConditionPort> images; private final PortraitLockService lock;
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock) {
+        this.agent = agent; this.repository = repository; this.validator=validator; this.reviews=reviews; this.images=images; this.lock=lock;
     }
     @Override @Transactional
     public CatalogCharacterAgentResult create(CatalogCharacterCreateCommand command) {
@@ -47,6 +47,6 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     }
     public List<CatalogCharacterView> list(){return repository.findAll().stream().map(this::view).toList();}
     public CatalogCharacterView get(Long id){return view(repository.findById(id));}
-    @Transactional public CatalogCharacterView rename(Long id,String name){return view(repository.rename(id,name));}
+    @Transactional public CatalogCharacterView rename(Long id,String name){lock.requireUnlocked(id);return view(repository.rename(id,name));}
     private CatalogCharacterView view(CatalogCharacter c){Boolean draft=images.map(port->!port.hasApprovedPortrait(c.id())).orElse(null);CatalogPortraitStatus status=draft==null?CatalogPortraitStatus.UNKNOWN:(draft?CatalogPortraitStatus.DRAFT:CatalogPortraitStatus.APPROVED);return new CatalogCharacterView(c.id(),c.name(),c.narrativeDescription(),c.visualDescription(),draft,status,reviews.hasPendingReview(c.id()));}
 }

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+    <changeSet id="019-add-portrait-generation-running-unique-index" author="storyteller">
+        <sql>CREATE UNIQUE INDEX ux_portrait_generation_job_running_character ON portrait_generation_job (catalog_character_id) WHERE status = 'RUNNING'</sql>
+    </changeSet>
+</databaseChangeLog>

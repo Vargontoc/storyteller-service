@@ -149,6 +149,6 @@ La implementación usa las APIs del framework realmente declarado, `es.vargontoc
 
 ## Validación
 
-- Suite del módulo: pendiente (código de TASK-005 pendiente de validar con la suite completa; evidencia anterior: correcta tras la corrección de TASK-004 por confirmación del usuario con `api/mvn clean test`)
+- Suite del módulo: pendiente (`api/mvn clean test` posterior a TASK-008; evidencia anterior correcta tras TASK-007 por confirmación del usuario)
 - Integración: pendiente
 - Validación manual: pendiente

@@ -5,5 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface PortraitCandidateJpaRepository extends JpaRepository<PortraitCandidateJpaEntity, Long> {
     List<PortraitCandidateJpaEntity> findByCatalogCharacterId(Long catalogCharacterId);
+    boolean existsByCatalogCharacterId(Long catalogCharacterId);
+    List<PortraitCandidateJpaEntity> findByGenerationJobId(Long generationJobId);
     void deleteByCatalogCharacterId(Long catalogCharacterId);
 }

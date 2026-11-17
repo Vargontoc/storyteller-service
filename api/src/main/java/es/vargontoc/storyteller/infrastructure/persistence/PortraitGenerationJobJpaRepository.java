@@ -6,4 +6,5 @@ import es.vargontoc.storyteller.domain.enums.PortraitGenerationStatus;
 
 public interface PortraitGenerationJobJpaRepository extends JpaRepository<PortraitGenerationJobJpaEntity, Long> {
     List<PortraitGenerationJobJpaEntity> findByCatalogCharacterIdAndStatus(Long catalogCharacterId, PortraitGenerationStatus status);
+    List<PortraitGenerationJobJpaEntity> findByStatus(PortraitGenerationStatus status);
 }
