@@ -61,6 +61,25 @@ Hay que tener los siguientes modelos:
 - `core\models\loras\StorybookRedmondV2-KidsBook-KidsRedmAF.safetensors`
 - `core\models\loras\CuteCartoonRedmond-CuteCartoon-CuteCartoonAF.safetensors`
 
+Para generar personajes con fondo transparente, el entorno de ComfyUI necesita además:
+
+- El nodo `Image Remove Background (rembg)` con selector de modelo (por ejemplo, `rembg-comfyui-node-better`). El nodo original sin selector también funciona, pero usa siempre `u2net` y no permite elegir `isnet-anime`.
+- Los paquetes `rembg` y `onnxruntime` instalados en el mismo Python que ejecuta ComfyUI.
+- El modelo `isnet-anime` en `~/.u2net` o en la ruta indicada por `U2NET_HOME`; se descarga automáticamente en el primer uso.
+
+Si el contenedor ya está creado, se puede corregir sin reconstruirlo:
+
+```bash
+docker exec -it <contenedor-comfyui> python3 -m pip install rembg onnxruntime
+docker restart <contenedor-comfyui>
+```
+
+Para que la dependencia sobreviva a una reconstrucción, añadir al Dockerfile:
+
+```dockerfile
+RUN pip install --no-cache-dir rembg onnxruntime
+```
+
 Crear el contenedor con el siguiente formato de servicio:
 
 ```yaml
