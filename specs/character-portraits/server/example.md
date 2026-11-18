@@ -59,12 +59,15 @@ forks.save(relation);
 **Para qué sirve:** Solicita un lote de cuatro bytes de retrato a un generador externo desde la capa de aplicación.
 
 ```java
-List<byte[]> portraits = portraitGenerator.generatePortraits(
-    "zorra naranja con cola esponjosa"
+var prompt = new CharacterPortraitPrompt(
+    "zorra naranja con cola esponjosa",
+    "small orange fox with a fluffy white-tipped tail",
+    List.of("small orange fox", "fluffy white-tipped tail")
 );
+List<byte[]> portraits = portraitGenerator.generatePortraits(prompt);
 ```
 
-**Notas:** El puerto devuelve exactamente cuatro imágenes o propaga el fallo del proveedor.
+**Notas:** El puerto devuelve exactamente cuatro imágenes o propaga el fallo del proveedor. El prompt combina la descripción inglesa con los atributos visuales y la plantilla de cuerpo completo.
 
 ## PortraitComfyUiAdapter
 
@@ -72,10 +75,15 @@ List<byte[]> portraits = portraitGenerator.generatePortraits(
 **Para qué sirve:** Implementa el puerto con un único workflow de ComfyUI que genera cuatro variantes cartoon de la misma descripción visual.
 
 ```java
-List<byte[]> portraits = adapter.generatePortraits("zorra naranja con cola esponjosa");
+var prompt = new CharacterPortraitPrompt(
+    "zorra naranja con cola esponjosa",
+    "small orange fox with a fluffy white-tipped tail",
+    List.of("small orange fox", "fluffy white-tipped tail")
+);
+List<byte[]> portraits = adapter.generatePortraits(prompt);
 ```
 
-**Notas:** Espera el historial de ComfyUI sin aplicar un límite temporal de generación y rechaza un lote que no tenga cuatro imágenes.
+**Notas:** Espera el historial de ComfyUI sin aplicar un límite temporal de generación, exige un lote de cuatro imágenes y, si `character-transparent-background` está activo, rechaza cualquier PNG sin canal alfa. Requiere el nodo `Image Remove Background (rembg)` en ComfyUI.
 
 ## PortraitWebsocketNotifier
 

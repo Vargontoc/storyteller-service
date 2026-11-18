@@ -1,6 +1,9 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.external;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
+import java.util.Objects;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -12,6 +15,7 @@ import org.springframework.stereotype.Component;
 import es.vargontoc.framework.ai.agent.AgentRequest;
 import es.vargontoc.storyteller.application.ports.out.external.CharacterAgent;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.enums.CharacterReviewTarget;
 import es.vargontoc.storyteller.domain.request.CatalogCharacterReviewAgentRequest;
 import es.vargontoc.storyteller.domain.response.CatalogCharacterAgentResult;
 import es.vargontoc.storyteller.domain.response.CatalogCharacterReviewAgentResult;
@@ -60,6 +64,9 @@ public class SpringAiCharacterAgent implements CharacterAgent {
 
     @Override
     public CatalogCharacterReviewAgentResult review(CatalogCharacterReviewAgentRequest request) {
+        if (request == null || request.target() == null) {
+            throw invalidResponse();
+        }
         AgentRequest hint = new AgentRequest(request.hint());
         ensureAvailable();
         CatalogCharacterReviewAgentResult result = client.prompt()
@@ -75,7 +82,7 @@ public class SpringAiCharacterAgent implements CharacterAgent {
                         .param("hint", hint.message()))
                 .call()
                 .entity(CatalogCharacterReviewAgentResult.class);
-        return validateReview(result);
+        return validateReview(result, request);
     }
 
     private CatalogCharacterAgentResult generate(AgentRequest request) {
@@ -106,13 +113,22 @@ public class SpringAiCharacterAgent implements CharacterAgent {
             }
             return result;
         }
-        if (isBlank(result.name()) || isBlank(result.narrativeDescription()) || isBlank(result.visualDescription())) {
+        if (isBlank(result.name()) || isBlank(result.narrativeDescription()) || isBlank(result.visualDescription())
+                || isBlank(result.visualDescriptionEn()) || normalizeAttributes(result.visualAttributes()).isEmpty()) {
             throw invalidResponse();
         }
-        return result;
+        return new CatalogCharacterAgentResult(
+                true,
+                null,
+                clean(result.name()),
+                clean(result.narrativeDescription()),
+                clean(result.visualDescription()),
+                clean(result.visualDescriptionEn()),
+                normalizeAttributes(result.visualAttributes()));
     }
 
-    private CatalogCharacterReviewAgentResult validateReview(CatalogCharacterReviewAgentResult result) {
+    private CatalogCharacterReviewAgentResult validateReview(CatalogCharacterReviewAgentResult result,
+            CatalogCharacterReviewAgentRequest request) {
         if (result == null) {
             throw invalidResponse();
         }
@@ -122,10 +138,48 @@ public class SpringAiCharacterAgent implements CharacterAgent {
             }
             return result;
         }
-        if (isBlank(result.name()) || isBlank(result.narrativeDescription()) || isBlank(result.visualDescription())) {
+        boolean visualChange = request.target().affectsVisualDescription();
+        if (isBlank(result.name()) || isBlank(result.narrativeDescription()) || isBlank(result.visualDescription())
+                || (visualChange && (isBlank(result.visualDescriptionEn())
+                || normalizeAttributes(result.visualAttributes()).isEmpty()))) {
             throw invalidResponse();
         }
-        return result;
+        return stabilize(result, request);
+    }
+
+    /**
+     * Garantiza el contrato de la revisión aunque el modelo no lo respete: el nombre no
+     * se cambia en este flujo y los campos que no corresponden al objetivo se conservan
+     * para no alterar la identidad visual del personaje sin que el adulto lo haya pedido.
+     */
+    private CatalogCharacterReviewAgentResult stabilize(CatalogCharacterReviewAgentResult result,
+            CatalogCharacterReviewAgentRequest request) {
+        String narrative = result.narrativeDescription();
+        String visual = result.visualDescription();
+        String visualEn = result.visualDescriptionEn();
+        List<String> attributes = result.visualAttributes();
+
+        if (request.target() == CharacterReviewTarget.NARRATIVE) {
+            if (!isBlank(request.visualDescription())) {
+                visual = request.visualDescription();
+            }
+            if (!isBlank(request.visualDescriptionEn()) && !attributesOf(request.visualAttributes()).isEmpty()) {
+                visualEn = request.visualDescriptionEn();
+                attributes = request.visualAttributes();
+            }
+        }
+        if (request.target() == CharacterReviewTarget.VISUAL) {
+            narrative = request.narrativeDescription();
+        }
+
+        return new CatalogCharacterReviewAgentResult(
+                true,
+                null,
+                request.name(),
+                clean(narrative),
+                clean(visual),
+                clean(visualEn),
+                normalizeAttributes(attributes));
     }
 
     private AppException invalidResponse() {
@@ -134,6 +188,24 @@ public class SpringAiCharacterAgent implements CharacterAgent {
 
     private List<String> attributesOf(List<String> attributes) {
         return attributes == null ? List.of() : attributes;
+    }
+
+    private List<String> normalizeAttributes(List<String> attributes) {
+        if (attributes == null) {
+            return List.of();
+        }
+        var seen = new HashSet<String>();
+        return attributes.stream()
+                .filter(Objects::nonNull)
+                .map(this::clean)
+                .filter(attribute -> !attribute.isBlank())
+                .filter(attribute -> seen.add(attribute.toLowerCase(Locale.ROOT)))
+                .limit(5)
+                .toList();
+    }
+
+    private String clean(String value) {
+        return value == null ? null : value.trim().replaceAll("\\s+", " ");
     }
 
     private boolean isBlank(String value) {

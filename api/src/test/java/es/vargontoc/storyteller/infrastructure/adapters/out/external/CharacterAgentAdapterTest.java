@@ -102,6 +102,57 @@ class CharacterAgentAdapterTest {
     }
 
     @Test
+    void narrativeReviewKeepsTheVisualIdentityFromTheRequest() {
+        CatalogCharacterReviewAgentResult changedVisual = new CatalogCharacterReviewAgentResult(
+                true, null, "Luna renombrada", "Una zorra muy curiosa y valiente",
+                "Zorra azul con sombrero", "Blue fox with a hat", List.of("blue fox"));
+        when(response.entity(CatalogCharacterReviewAgentResult.class)).thenReturn(changedVisual);
+        CatalogCharacterReviewAgentRequest request = new CatalogCharacterReviewAgentRequest(
+                "Luna", "Una zorra curiosa", "Zorra naranja de cola esponjosa",
+                "Orange fox with a fluffy tail", List.of("orange fur", "fluffy tail"),
+                CharacterReviewTarget.NARRATIVE, "Cuenta que ayuda a sus amigos");
+
+        CatalogCharacterReviewAgentResult result = agent.review(request);
+
+        assertEquals("Luna", result.name());
+        assertEquals("Una zorra muy curiosa y valiente", result.narrativeDescription());
+        assertEquals("Zorra naranja de cola esponjosa", result.visualDescription());
+        assertEquals("Orange fox with a fluffy tail", result.visualDescriptionEn());
+        assertEquals(List.of("orange fur", "fluffy tail"), result.visualAttributes());
+    }
+
+    @Test
+    void visualReviewKeepsTheNarrativeFromTheRequest() {
+        CatalogCharacterReviewAgentResult changedNarrative = new CatalogCharacterReviewAgentResult(
+                true, null, "Luna", "Una historia distinta", "Zorra naranja sonriente",
+                "Smiling orange fox", List.of("orange fox", "smile"));
+        when(response.entity(CatalogCharacterReviewAgentResult.class)).thenReturn(changedNarrative);
+        CatalogCharacterReviewAgentRequest request = new CatalogCharacterReviewAgentRequest(
+                "Luna", "Una zorra curiosa", "Zorra naranja de cola esponjosa",
+                "Orange fox with a fluffy tail", List.of("orange fur"),
+                CharacterReviewTarget.VISUAL, "Hazla más sonriente");
+
+        CatalogCharacterReviewAgentResult result = agent.review(request);
+
+        assertEquals("Una zorra curiosa", result.narrativeDescription());
+        assertEquals("Zorra naranja sonriente", result.visualDescription());
+        assertEquals("Smiling orange fox", result.visualDescriptionEn());
+    }
+
+    @Test
+    void visualAttributesAreTrimmedDeduplicatedAndCapped() {
+        CatalogCharacterAgentResult noisy = new CatalogCharacterAgentResult(
+                true, null, "Luna", "Una zorra curiosa", "Zorra naranja",
+                "Orange fox", List.of("  orange fox ", "ORANGE FOX", "fluffy tail", "", "bright eyes", "blue scarf", "extra hat"));
+        when(response.entity(CatalogCharacterAgentResult.class)).thenReturn(noisy);
+
+        CatalogCharacterAgentResult result = agent.generateAutomatically();
+
+        assertEquals(List.of("orange fox", "fluffy tail", "bright eyes", "blue scarf", "extra hat"),
+                result.visualAttributes());
+    }
+
+    @Test
     void providerFailureIsNotConvertedIntoAProfile() {
         when(response.entity(CatalogCharacterAgentResult.class)).thenThrow(new IllegalStateException("provider unavailable"));
 

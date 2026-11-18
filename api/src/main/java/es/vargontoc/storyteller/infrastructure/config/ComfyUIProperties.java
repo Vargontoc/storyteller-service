@@ -19,6 +19,8 @@ public record ComfyUIProperties (
     String stylePrefix,
     String characterFramingPrompt,
     String characterNegativePrompt,
+    boolean characterTransparentBackground,
+    String characterBackgroundModel,
     String pageNegativePrompt,
     String coverFramingPrompt,
     

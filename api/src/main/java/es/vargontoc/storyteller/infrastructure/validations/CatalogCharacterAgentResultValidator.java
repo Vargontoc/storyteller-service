@@ -11,5 +11,7 @@ import es.vargontoc.storyteller.domain.response.CatalogCharacterAgentResult;
   if(value==null) return ValidationResult.forNullInput();
   if(!value.accepted()) return value.rejectionReason()==null||value.rejectionReason().isBlank()?new ValidationResult(List.of(new FieldError("rejectionReason",ValidationErrorCode.REQUIRED,Map.of()))):new ValidationResult();
   if(value.name()==null||value.name().isBlank()||value.narrativeDescription()==null||value.narrativeDescription().isBlank()||value.visualDescription()==null||value.visualDescription().isBlank()) return new ValidationResult(List.of(new FieldError("catalogCharacter",ValidationErrorCode.REQUIRED,Map.of())));
+  if(value.visualDescriptionEn()==null||value.visualDescriptionEn().isBlank()) return new ValidationResult(List.of(new FieldError("visualDescriptionEn",ValidationErrorCode.REQUIRED,Map.of())));
+  if(value.visualAttributes()==null||value.visualAttributes().isEmpty()) return new ValidationResult(List.of(new FieldError("visualAttributes",ValidationErrorCode.REQUIRED,Map.of())));
   return new ValidationResult(); }
 }

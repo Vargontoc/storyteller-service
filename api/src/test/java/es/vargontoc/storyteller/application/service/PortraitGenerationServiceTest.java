@@ -1,7 +1,9 @@
 package es.vargontoc.storyteller.application.service;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.inOrder;
@@ -16,14 +18,19 @@ import es.vargontoc.storyteller.application.ports.out.external.PortraitGenerator
 import es.vargontoc.storyteller.application.ports.out.persistence.PortraitCandidateStore;
 import es.vargontoc.storyteller.application.ports.out.persistence.PortraitGenerationJobStore;
 import es.vargontoc.storyteller.domain.enums.PortraitGenerationStatus;
+import es.vargontoc.storyteller.domain.model.ActorMetadata;
+import es.vargontoc.storyteller.domain.model.CharacterPortraitPrompt;
 import es.vargontoc.storyteller.domain.model.PortraitGenerationJob;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.http.HttpStatus;
 
 class PortraitGenerationServiceTest {
     @Test
@@ -33,8 +40,9 @@ class PortraitGenerationServiceTest {
         var service = fixture.service(executor);
         var character = new CatalogCharacterJpaEntity();
         character.setVisualDescription("zorra naranja exploradora");
+        character.setMetadata(new ActorMetadata("small orange fox explorer", List.of("small orange fox", "fluffy white-tipped tail")));
         when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
-        when(fixture.generator.generatePortraits("zorra naranja exploradora"))
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class)))
                 .thenReturn(List.of(new byte[] {1}, new byte[] {2}, new byte[] {3}, new byte[] {4}));
         when(fixture.assets.saveCandidateAsset(eq(7L), org.mockito.ArgumentMatchers.any(byte[].class)))
                 .thenReturn("one.png", "two.png", "three.png", "four.png");
@@ -47,6 +55,11 @@ class PortraitGenerationServiceTest {
         order.verify(fixture.notifier).started(7L);
         executor.run();
 
+        ArgumentCaptor<CharacterPortraitPrompt> prompt = ArgumentCaptor.forClass(CharacterPortraitPrompt.class);
+        verify(fixture.generator).generatePortraits(prompt.capture());
+        assertEquals("zorra naranja exploradora", prompt.getValue().visualDescription());
+        assertEquals("small orange fox explorer", prompt.getValue().visualDescriptionEn());
+        assertEquals(List.of("small orange fox", "fluffy white-tipped tail"), prompt.getValue().visualAttributes());
         verify(fixture.candidates).replace(7L, 15L, List.of("one.png", "two.png", "three.png", "four.png"));
         verify(fixture.jobs).complete(15L);
         verify(fixture.notifier).progress(7L);
@@ -62,7 +75,7 @@ class PortraitGenerationServiceTest {
         var character = new CatalogCharacterJpaEntity();
         character.setVisualDescription("zorra");
         when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
-        when(fixture.generator.generatePortraits("zorra"))
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class)))
                 .thenReturn(List.of(new byte[] {1}, new byte[] {2}, new byte[] {3}));
 
         service.generate(7L);
@@ -86,7 +99,7 @@ class PortraitGenerationServiceTest {
         verify(fixture.registry).unregister(15L);
         verify(fixture.jobs).fail(eq(15L), anyString());
         verify(fixture.notifier).error(eq(7L), anyString());
-        verify(fixture.generator, never()).generatePortraits(anyString());
+        verify(fixture.generator, never()).generatePortraits(any(CharacterPortraitPrompt.class));
     }
 
     @Test
@@ -97,7 +110,8 @@ class PortraitGenerationServiceTest {
         var character = new CatalogCharacterJpaEntity();
         character.setVisualDescription("zorra");
         when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
-        when(fixture.generator.generatePortraits("zorra")).thenThrow(new IllegalStateException("ComfyUI no disponible"));
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class)))
+                .thenThrow(new IllegalStateException("ComfyUI no disponible"));
 
         service.generate(7L);
         executor.run();
@@ -106,6 +120,24 @@ class PortraitGenerationServiceTest {
         verify(fixture.jobs).fail(eq(15L), anyString());
         verify(fixture.notifier).error(eq(7L), anyString());
         verify(fixture.registry).unregister(15L);
+    }
+
+    @Test
+    void curatedAppFailureReasonIsPropagatedToTheJobAndTheClient() {
+        var fixture = fixture();
+        var executor = new RecordingExecutor();
+        var service = fixture.service(executor);
+        var character = new CatalogCharacterJpaEntity();
+        character.setVisualDescription("zorra");
+        when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class)))
+                .thenThrow(new AppException("ComfyUI devolvió un retrato sin fondo transparente.", HttpStatus.BAD_GATEWAY));
+
+        service.generate(7L);
+        executor.run();
+
+        verify(fixture.jobs).fail(15L, "ComfyUI devolvió un retrato sin fondo transparente.");
+        verify(fixture.notifier).error(7L, "ComfyUI devolvió un retrato sin fondo transparente.");
     }
 
     @Test
@@ -133,7 +165,7 @@ class PortraitGenerationServiceTest {
                 new PortraitGenerationJob(15L, 7L, PortraitGenerationStatus.RUNNING, null),
                 new PortraitGenerationJob(16L, 7L, PortraitGenerationStatus.RUNNING, null));
         when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
-        when(fixture.generator.generatePortraits("zorra")).thenReturn(fourImages());
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class))).thenReturn(fourImages());
         when(fixture.assets.saveCandidateAsset(eq(7L), org.mockito.ArgumentMatchers.any(byte[].class)))
                 .thenReturn("a", "b", "c", "d", "e", "f", "g", "h");
 

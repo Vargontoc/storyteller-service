@@ -6,7 +6,9 @@ import es.vargontoc.storyteller.application.ports.out.PortraitGenerationTaskRegi
 import es.vargontoc.storyteller.application.ports.out.external.PortraitGeneratorPort;
 import es.vargontoc.storyteller.application.ports.out.persistence.PortraitCandidateStore;
 import es.vargontoc.storyteller.application.ports.out.persistence.PortraitGenerationJobStore;
+import es.vargontoc.storyteller.domain.model.CharacterPortraitPrompt;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
 import java.util.List;
 import org.springframework.core.task.TaskExecutor;
 import org.springframework.stereotype.Service;
@@ -56,10 +58,13 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
     private void run(Long jobId, Long catalogCharacterId) {
         try {
             notifyProgress(catalogCharacterId);
-            var visualDescription = characters.findById(catalogCharacterId)
-                    .orElseThrow()
-                    .getVisualDescription();
-            List<byte[]> generated = generator.generatePortraits(visualDescription);
+            var character = characters.findById(catalogCharacterId).orElseThrow();
+            var metadata = character.getMetadata();
+            var prompt = new CharacterPortraitPrompt(
+                    character.getVisualDescription(),
+                    metadata == null ? null : metadata.translate(),
+                    metadata == null ? List.of() : metadata.attributes());
+            List<byte[]> generated = generator.generatePortraits(prompt);
             if (generated == null || generated.size() != 4) {
                 throw new IllegalStateException("El generador no devolvio cuatro retratos");
             }
@@ -71,11 +76,20 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
             notifySuccess(catalogCharacterId);
         } catch (RuntimeException exception) {
             cleanupFailedGeneration(jobId);
-            jobs.fail(jobId, GENERATION_FAILURE);
-            notifyFailure(catalogCharacterId, GENERATION_FAILURE);
+            String reason = failureReason(exception);
+            jobs.fail(jobId, reason);
+            notifyFailure(catalogCharacterId, reason);
         } finally {
             tasks.unregister(jobId);
         }
+    }
+
+    private String failureReason(RuntimeException exception) {
+        if (exception instanceof AppException appException && appException.getMessage() != null
+                && !appException.getMessage().isBlank()) {
+            return appException.getMessage();
+        }
+        return GENERATION_FAILURE;
     }
 
     private void cleanupFailedGeneration(Long jobId) {

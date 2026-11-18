@@ -82,7 +82,7 @@
   "9": {
     "class_type": "SaveImage",
     "inputs": {
-      "filename_prefix": "character_reference",
+      "filename_prefix": "catalog_character_template",
       "images": ["11", 0]
     }
   },
@@ -100,7 +100,7 @@
     "class_type": "Image Remove Background (rembg)",
     "inputs": {
       "image": ["8", 0],
-      "model_name": "u2net"
+      "model_name": "isnet-anime"
     }
   }
 }
