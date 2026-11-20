@@ -1,5 +1,10 @@
+# Origen: specs/agent-director (REQ-013, DEC-006)
+# Estado del contrato: contrastado con el código
 type: object
-description: Página de una historia (page = 0 identifica la portada)
+description: |
+  Página de una historia (page = 0 identifica la portada). El beat aprobado de la escaleta es un contrato
+  interno entre el servidor y el escritor al generar la página: no es un campo de esta representación ni
+  es editable por el cliente (los beats se editan con PUT /generations/story/{id}/beat/{page})
 additionalProperties: false
 properties:
   id:

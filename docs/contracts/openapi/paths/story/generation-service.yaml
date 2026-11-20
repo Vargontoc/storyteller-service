@@ -1,7 +1,15 @@
+# Origen: specs/agent-director (REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-020, ALT-001, ALT-002)
+# Estado del contrato: contrastado con el código
 post:
   operationId: generateStory
-  summary: Genera una nueva historia
-  description: El agente genera un nuevo guión a partir de un tema existente
+  summary: Genera una nueva historia con escaleta
+  description: |
+    Crea un cuento a partir de un tema y un protagonista del catálogo con retrato aprobado: el indicado en
+    catalogCharacterId o, si se omite, uno elegido al azar entre los disponibles. El director recibe la ficha
+    del protagonista y devuelve título, sinopsis, reparto episódico ligero y una escaleta con un beat por página
+    interior. Una escaleta incompleta se reintenta hasta 3 veces sin persistir nada. El cuento se crea con
+    scriptVersion 1 y estado SCRIPT_PENDING (la escaleta se consulta con GET /generations/story/{id}/script).
+    Los secundarios del reparto no se guardan en el catálogo de personajes.
   tags:
     - Generators
   requestBody:
@@ -18,13 +26,19 @@ post:
           schema:
             $ref: "../../schemas/responses/story-response.yaml"
     "400":
-      description: El agente encargado de esta operación no está disponible
+      description: No existe ningún personaje del catálogo con retrato aprobado, el protagonista indicado no tiene retrato aprobado, o el director no está disponible o no devolvió una escaleta válida tras 3 intentos. El cuento no se crea
       content:
         application/json:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "404":
-      description: El tema indicado no existe
+      description: El tema o el personaje del catálogo indicado no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El protagonista indicado tiene una generación de retratos en curso
       content:
         application/json:
           schema:

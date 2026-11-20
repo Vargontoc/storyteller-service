@@ -1,0 +1,8 @@
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../beat-edit-result.yaml"
+    required:
+      - data

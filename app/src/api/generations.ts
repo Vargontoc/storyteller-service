@@ -56,7 +56,8 @@ export function generateTopic() {
   return httpClient.post<ApiEnvelope<Topic>>('/api/v1/generations/topic').then((envelope) => envelope.data)
 }
 
-export function generateStory(topicId: number, size: StorySize, catalogCharacterId?: number) {
+// catalogCharacterId: id del protagonista elegido, o null para que el servidor elija al azar entre los aptos.
+export function generateStory(topicId: number, size: StorySize, catalogCharacterId: number | null) {
   return httpClient
     .post<ApiEnvelope<Story>>('/api/v1/generations/story', { topicId, size, catalogCharacterId })
     .then((envelope) => envelope.data)

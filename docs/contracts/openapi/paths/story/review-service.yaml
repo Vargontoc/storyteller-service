@@ -1,7 +1,13 @@
+# Origen: specs/agent-director (REQ-008, REQ-009, REQ-018, ALT-003, DEC-001)
+# Estado del contrato: contrastado con el código
 post:
   operationId: reviewStory
-  summary: Solicita una revisión de una historia
-  description: El agente genera una revisión de un guión existente según el hint del usuario
+  summary: Solicita una revisión global del guion
+  description: |
+    El director revisa la escaleta completa según el hint del usuario. Descarta antes la revisión pendiente anterior.
+    Si acepta el hint, la revisión queda PENDING con la escaleta candidata completa y changedBeats. Si lo rechaza
+    (reglas de edad o coherencia), responde 200 con hintAccepted=false y rejectedReason, la revisión queda DISCARDED
+    y la escaleta vigente no cambia. No admite cuentos anteriores a la escaleta.
   tags:
     - Reviews
   requestBody:
@@ -12,13 +18,25 @@ post:
           $ref: "../../schemas/requests/story-review-command.yaml"
   responses:
     "200":
-      description: Revisión generada correctamente
+      description: Revisión generada (aceptada o rechazada)
       content:
         application/json:
           schema:
             $ref: "../../schemas/responses/story-review-response.yaml"
     "400":
-      description: El agente encargado de esta operación no está disponible
+      description: El director no está disponible o no devolvió una respuesta válida tras 3 intentos
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: El cuento o su escaleta no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El cuento es anterior a la escaleta y no admite revisión del guion
       content:
         application/json:
           schema:

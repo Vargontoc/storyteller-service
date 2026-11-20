@@ -1,5 +1,10 @@
+# Origen: specs/agent-director (REQ-003, REQ-004, REQ-005, REQ-006, REQ-016, DEC-005, DEC-006)
+# Estado del contrato: contrastado con el código
 type: object
-description: Historia infantil generada
+description: |
+  Historia infantil generada. El guion con escaleta y reparto episódico no viaja en este esquema:
+  se consulta con GET /generations/story/{id}/script (story-script.yaml). El marcador scriptVersion
+  distingue un cuento nuevo (1, con escaleta) de un cuento antiguo (nulo, sin escaleta)
 additionalProperties: false
 properties:
   id:
@@ -7,12 +12,27 @@ properties:
     format: int64
   title:
     type: string
-  summary:
+  synopsis:
     type: string
+    description: Sinopsis de la historia
+  agentSummary:
+    type: string
+    nullable: true
+    description: Resumen acumulado que usa el escritor
   size:
     $ref: "./enums/story-size.yaml"
+  status:
+    allOf:
+      - $ref: "./enums/story-status.yaml"
+    nullable: true
+    description: Estado del guion; nulo en cuentos antiguos
+  scriptVersion:
+    type: integer
+    nullable: true
+    description: Marcador de versión de guion. 1 = escaleta contractual; nulo = cuento antiguo sin escaleta ni migración
   characters:
     type: array
+    description: Instantáneas de personajes del cuento (en un cuento nuevo, la del protagonista). Los secundarios del reparto ligero no aparecen aquí
     items:
       $ref: "./actor.yaml"
   pages:
@@ -22,5 +42,5 @@ properties:
 required:
   - id
   - title
-  - summary
+  - synopsis
   - size

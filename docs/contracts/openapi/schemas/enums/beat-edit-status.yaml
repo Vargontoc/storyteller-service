@@ -1,0 +1,14 @@
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Resultado de un intento de edición directa de un beat.
+  - APPLIED: edición aplicada, beat actualizado y guion en SCRIPT_PENDING.
+  - REJECTED: el director rechaza el texto por las reglas de edad; nada cambia.
+  - CONFIRMATION_REQUIRED: hay páginas generadas; hay que confirmar su invalidación antes de aplicar.
+  - CANCELLED: el usuario canceló el aviso; nada cambia.
+enum:
+  - APPLIED
+  - REJECTED
+  - CONFIRMATION_REQUIRED
+  - CANCELLED

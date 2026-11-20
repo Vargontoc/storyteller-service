@@ -1,0 +1,35 @@
+# Origen: specs/agent-director (REQ-006, REQ-007)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: approveStoryScript
+  summary: Aprueba el guion del cuento
+  description: Pasa el guion de SCRIPT_PENDING a SCRIPT_ACCEPTED. Es idempotente si ya está aprobado. Hasta la aprobación, la generación de portada y páginas se rechaza
+  tags:
+    - Generators
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Cuento con el guion en SCRIPT_ACCEPTED
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El cuento es anterior a la escaleta y no admite aprobación del guion
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

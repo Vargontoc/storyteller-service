@@ -1,7 +1,9 @@
+# Origen: specs/agent-director (REQ-008, REQ-018, DEC-001)
+# Estado del contrato: contrastado con el código
 get:
   operationId: getStoryReview
-  summary: Obtiene la revisión pendiente de una historia
-  description: Devuelve la revisión activa (PENDING) asociada a una historia
+  summary: Obtiene la revisión pendiente de un guion
+  description: Devuelve la revisión activa (PENDING) del cuento con la escaleta candidata y los beats marcados como cambiados (changedBeats). Si no hay revisión pendiente responde 200 con data nulo
   tags:
     - Reviews
   parameters:
@@ -13,13 +15,13 @@ get:
         format: int64
   responses:
     "200":
-      description: Revisión encontrada
+      description: Revisión pendiente, o data nulo si no hay ninguna
       content:
         application/json:
           schema:
             $ref: "../../schemas/responses/story-review-response.yaml"
     "404":
-      description: No existe una revisión pendiente para la historia indicada
+      description: El cuento indicado no existe
       content:
         application/json:
           schema:

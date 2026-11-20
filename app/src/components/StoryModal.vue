@@ -41,9 +41,15 @@
 
             <div class="tab-content">
               <div v-if="activeTab === 'guion'" class="guion-tab">
-                <story-content v-if="storyId"
+                <p v-if="storyId && !script && loadingStory">Cargando guion...</p>
+                <p v-else-if="storyId && !script && storyError" class="error">{{ storyError }}</p>
+                <!-- Cuento con escaleta: se decide solo por scriptVersion -->
+                <story-script-panel v-if="storyId && hasOutline" :story-id="storyId" @changed="onScriptChanged" />
+                <story-content v-if="storyId && script"
                   :key="contentKey"
                   :story-id="storyId"
+                  :outlined="hasOutline"
+                  :generation-blocked="scriptPending"
                   @generate-page="onGeneratePage"
                   @delete="onDelete"
                   @review="showReview" />
@@ -95,6 +101,8 @@ import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
 import {  getPendingStoryReview, type ReviewType, type StoryReview, type RevisionStatus } from '../api/reviews'
 import { getStory, getStoryPages, type PageSummary, type StorySummary } from '../api/storyteller'
+import { getStoryScript, type StoryScript } from '../api/storyScript'
+import StoryScriptPanel from './StoryScriptPanel.vue'
 import { useToastStore } from '../stores/toast'
 import { useWebsocketStore } from '../stores/websocket'
 import ActorsContent from './content/ActorsContent.vue'
@@ -139,15 +147,27 @@ const reviewActionError = ref<string | null>(null)
 const isStateGeneration = ref<boolean>(false)
 const contentKey = ref(0)
 
+const script = ref<StoryScript | null>(null)
+// Solo el marcador de versión decide la representación (nulo = cuento antiguo).
+const hasOutline = computed(() => script.value !== null && script.value.scriptVersion !== null)
+const scriptPending = computed(() => hasOutline.value && script.value?.status === 'SCRIPT_PENDING')
+
 const hasCoverPage = computed(() => pages.value.some((page) => page.page === 0))
 const hasRegularPage = computed(() => pages.value.some((page) => page.page >= 1))
 
 const visibleTabs = computed<{ id: TabId; label: string }[]>(() => {
   const result: { id: TabId; label: string }[] = [{ id: 'guion', label: 'Guión' }]
   result.push({ id: 'personajes', label: 'Personajes' })
-  if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
-  if (hasRegularPage.value) result.push({ id: 'paginas', label: 'Páginas' })
+  // Con el guion pendiente no hay acceso operativo a portada ni páginas (el servidor sigue validando).
+  if (!scriptPending.value) {
+    if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
+    if (hasRegularPage.value) result.push({ id: 'paginas', label: 'Páginas' })
+  }
   return result
+})
+
+watch(scriptPending, (pending) => {
+  if (pending && (activeTab.value === 'portada' || activeTab.value === 'paginas')) activeTab.value = 'guion'
 })
 
 const unlockedTabs = computed<TabId[]>(() => (props.mode === 'create' ? ['guion'] : ['guion', 'personajes']))
@@ -166,12 +186,14 @@ async function loadStory(storyId: number) {
   storyError.value = null
 
   try {
-    const [storyResult, pendingReviewResult, pagesResult] = await Promise.all([
+    const [storyResult, pendingReviewResult, pagesResult, scriptResult] = await Promise.all([
       getStory(storyId),
       getPendingStoryReview(storyId),
       getStoryPages(storyId),
+      getStoryScript(storyId),
     ])
     story.value = storyResult
+    script.value = scriptResult
     pendingReview.value = pendingReviewResult
     pages.value = pagesResult
   } catch (err) {
@@ -184,6 +206,14 @@ async function loadStory(storyId: number) {
 function showReview(id: number){
   currentId.value = id;
   showReviewDetail.value = true
+}
+
+// El panel avisa tras aprobar, confirmar una revisión o aplicar una edición: recarga cuento, pestañas y páginas.
+async function onScriptChanged() {
+  if (!props.storyId) return
+  await loadStory(props.storyId)
+  contentKey.value++
+  emit('updated', props.storyId)
 }
 
 function onDelete(){
@@ -212,6 +242,7 @@ watch(
 
     activeTab.value = 'guion'
     story.value = null
+    script.value = null
     pages.value = []
     pendingReview.value = null
     showReviewModal.value = false

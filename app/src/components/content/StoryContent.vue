@@ -3,7 +3,7 @@
     <p v-else-if="error" class="error">{{ error }}</p>
     <div v-else-if="story">
             <button 
-                v-if="hasReview"
+                v-if="hasReview && !outlined"
                 type="button"
                 class="badge badge-button"
                 @click="$emit('review', storyId)">Revisión pendiente</button>
@@ -22,7 +22,7 @@
             </div>
         </dl>
 
-        <dl class="field">
+        <dl v-if="!outlined" class="field">
             <dt>Sinopsis</dt>
             <dd>{{ story.synopsis }}</dd>
         </dl>
@@ -30,8 +30,14 @@
         
         <div class="actions">
             <div class="actions-left">
-                <button type="button" class="btn" @click="emit('generatePage')">Generar página</button>
                 <button
+                type="button"
+                class="btn"
+                :disabled="generationBlocked"
+                :title="generationBlocked ? 'Aprueba el guion para generar páginas' : ''"
+                @click="emit('generatePage')">Generar página</button>
+                <button
+                v-if="!outlined"
                 type="button"
                 class="btn"
                 :disabled="!directorAgentActive"
@@ -52,6 +58,7 @@
     </div>
 
     <review-modal
+        v-if="!outlined"
         :open="showReviewModal"
         :type-review="'SCRIPT'"
         :story-id="storyId"
@@ -72,6 +79,10 @@ import { generateStoryAudio } from '../../api/generations.ts';
 const toastStore = useToastStore()
 interface Props {
     storyId: number
+    // Cuento con escaleta: la revisión de guion y la sinopsis pasan a StoryScriptPanel.
+    outlined?: boolean
+    // Guion pendiente de aprobación: no se puede generar.
+    generationBlocked?: boolean
 }
 const props = defineProps<Props>()
 const emit = defineEmits<{ review: [id: number], delete: [], generatePage: []}>()

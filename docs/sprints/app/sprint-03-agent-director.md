@@ -68,6 +68,6 @@ Las rutas, payloads y tipos definitivos se ajustarán al hand-off de `server`; h
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: correcta. Origen: confirmación del usuario en la sesión del desarrollador-router. Alcance: `npm run build` (tipos y compilación) desde `app/` tras TASK-011 (incluye TASK-010); el módulo no tiene pruebas automáticas.
 - Integración: pendiente
-- Validación manual: pendiente
+- Validación manual: correcta. Origen: confirmación del usuario. Alcance: TASK-010 (selección de protagonista concreto o aleatorio con varios aptos, y aviso con catálogo sin aptos). Pendiente: la prueba manual de TASK-011; el usuario la hará más tarde, tras montar el panel en TASK-012.

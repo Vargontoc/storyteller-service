@@ -1,0 +1,17 @@
+# Origen: specs/agent-director (REQ-004, REQ-005, REQ-008)
+# Estado del contrato: contrastado con el código
+type: object
+description: Escaleta de un cuento. El beat de la posición i (desde 0) corresponde a la página interior i + 1. Título y sinopsis no forman parte de la escaleta
+additionalProperties: false
+properties:
+  cast:
+    type: array
+    items:
+      $ref: "./episodic-cast-member.yaml"
+  beats:
+    type: array
+    items:
+      $ref: "./story-beat.yaml"
+required:
+  - cast
+  - beats

@@ -1,7 +1,12 @@
+# Origen: specs/agent-director (REQ-008, REQ-009, DEC-001)
+# Estado del contrato: contrastado con el código
 post:
   operationId: confirmStoryReview
-  summary: Confirma o descarta la revisión de una historia
-  description: Aplica (CONFIRMED) o descarta (DISCARDED) la revisión pendiente de una historia
+  summary: Confirma o descarta la revisión global del guion
+  description: |
+    CONFIRMED publica la escaleta candidata como vigente, aplica título y sinopsis y deja el guion en
+    SCRIPT_PENDING hasta una nueva aprobación explícita. DISCARDED descarta la revisión pendiente sin tocar
+    la escaleta vigente.
   tags:
     - Reviews
   requestBody:
@@ -17,8 +22,14 @@ post:
         application/json:
           schema:
             $ref: "../../schemas/responses/story-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
     "409":
-      description: No hay una revisión pendiente para la historia indicada
+      description: No hay una revisión pendiente para la historia indicada, o la revisión pendiente no contiene escaleta candidata
       content:
         application/json:
           schema:

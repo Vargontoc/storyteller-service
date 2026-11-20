@@ -1,14 +1,31 @@
+# Origen: specs/agent-director (REQ-007, REQ-008, REQ-009, REQ-018, DEC-001)
+# Estado del contrato: contrastado con el código
 type: object
-description: Revisión pendiente o confirmada de una historia
+description: |
+  Revisión global del guion con un hint. Si el director acepta el hint, la revisión queda PENDING con la
+  escaleta candidata completa y los beats realmente cambiados. Si lo rechaza, queda DISCARDED con
+  hintAccepted=false y rejectedReason, sin escaleta candidata, y la escaleta vigente no cambia
 additionalProperties: false
 properties:
   id:
     type: integer
     format: int64
   previewStory:
-    description: Historia con los cambios propuestos por el agente
-    allOf:
-      - $ref: "./story.yaml"
+    description: Título y sinopsis propuestos (nulos si el hint se rechaza). No incluye id, tamaño, estado ni escaleta, que va en candidateOutline
+    type: object
+    additionalProperties: false
+    properties:
+      title:
+        type: string
+        nullable: true
+      synopsis:
+        type: string
+        nullable: true
+      characters:
+        type: array
+        description: Borradores de personaje de revisiones anteriores a la escaleta; vacío en las revisiones de escaleta
+        items:
+          type: object
   hint:
     type: string
   hintAccepted:
@@ -16,8 +33,20 @@ properties:
   rejectedReason:
     type: string
     nullable: true
+    description: Motivo del rechazo del hint; solo con hintAccepted=false
   status:
     $ref: "./enums/revision-status.yaml"
+  candidateOutline:
+    description: Escaleta candidata completa; nulo si el hint fue rechazado
+    nullable: true
+    allOf:
+      - $ref: "./story-outline.yaml"
+  changedBeats:
+    type: array
+    description: Números de página (desde 1) cuyo beat es realmente distinto del de la escaleta vigente. Vacío si la candidata es idéntica a la vigente o si el hint fue rechazado
+    items:
+      type: integer
+      minimum: 1
 required:
   - id
   - previewStory

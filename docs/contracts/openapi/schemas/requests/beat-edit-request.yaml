@@ -1,0 +1,29 @@
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005)
+# Estado del contrato: contrastado con el código
+type: object
+description: Beat editado (los cinco campos obligatorios, no vacíos) y, opcionalmente, la respuesta al aviso de invalidación de páginas
+additionalProperties: false
+properties:
+  event:
+    type: string
+  narrativeFunction:
+    type: string
+  participants:
+    type: array
+    minItems: 1
+    items:
+      type: string
+  tone:
+    type: string
+  visualNote:
+    type: string
+  confirmInvalidation:
+    type: boolean
+    nullable: true
+    description: Ausente en la primera petición. true confirma el aviso de invalidación (elimina las páginas y aplica la edición); false lo cancela sin efectos
+required:
+  - event
+  - narrativeFunction
+  - participants
+  - tone
+  - visualNote

@@ -1,0 +1,29 @@
+# Origen: specs/agent-director (REQ-007, REQ-016, REQ-017)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getStoryScript
+  summary: Obtiene el guion vigente del cuento
+  description: Devuelve título, sinopsis, estado, versión de guion, reparto episódico y escaleta con el número de página explícito (desde 1). Es de solo lectura y no incluye páginas. En un cuento antiguo (sin escaleta) scriptVersion es nulo y cast y beats van vacíos, sin error
+  tags:
+    - Generators
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Guion vigente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/story-script-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

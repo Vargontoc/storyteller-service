@@ -1,0 +1,23 @@
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de la edición directa de un beat
+additionalProperties: false
+properties:
+  status:
+    $ref: "./enums/beat-edit-status.yaml"
+  reason:
+    type: string
+    nullable: true
+    description: Motivo del rechazo por reglas de edad; solo con REJECTED
+  invalidatedPages:
+    type: integer
+    description: Con CONFIRMATION_REQUIRED, páginas que se eliminarían; con APPLIED, páginas eliminadas; en el resto, 0
+  story:
+    nullable: true
+    description: Cuento resultante (guion en SCRIPT_PENDING); solo con APPLIED
+    allOf:
+      - $ref: "./story.yaml"
+required:
+  - status
+  - invalidatedPages

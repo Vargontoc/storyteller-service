@@ -1,0 +1,15 @@
+# Origen: specs/agent-director (REQ-005, DEC-003)
+# Estado del contrato: contrastado con el código
+type: object
+description: Personaje secundario episódico del reparto ligero de un cuento. No tiene identificador ni pertenece al catálogo de personajes
+additionalProperties: false
+properties:
+  name:
+    type: string
+    description: Nombre del secundario
+  role:
+    type: string
+    description: Función narrativa del secundario
+required:
+  - name
+  - role

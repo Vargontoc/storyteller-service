@@ -177,7 +177,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Generar una página cuya escena mencione un personaje secundario y comprobar que no aparece en la pestaña de personajes del cuento.
   2. Revisar el catálogo de personajes y comprobar que no se ha creado ninguna ficha nueva.
 
-### [ ] TASK-010 Modificar la pantalla de creación de cuento para el protagonista obligatorio
+### [x] TASK-010 Modificar la pantalla de creación de cuento para el protagonista obligatorio
 
 - **Cubre:** REQ-001, REQ-020, ALT-001, DEC-005
 - **Componente:** topic-selection-modal | app/src/components/TopicSelectionModal.vue
@@ -192,10 +192,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   3. Elegir la opción al azar y crear el cuento, y comprobar que el cuento tiene un protagonista con retrato aprobado.
   4. Con el catálogo sin retratos aprobados, iniciar la creación de un cuento y comprobar que aparece el aviso y no se puede crear.
 
-### [ ] TASK-011 Construir la vista de guion con escaleta, aprobación y edición de beats
+### [x] TASK-011 Construir la vista de guion con escaleta, aprobación y edición de beats
 
 - **Cubre:** REQ-007, REQ-008, REQ-010, REQ-011, REQ-012, REQ-017, REQ-018, REQ-019, ALT-003, ALT-005
-- **Componente:** story-script-panel | por definir (analista técnico)
+- **Componente:** story-script-panel | app/src/components/StoryScriptPanel.vue
 - **Depende de:** TASK-005, TASK-006, TASK-007
 - **Alcance:** Construir la vista del guion que muestra título, sinopsis, reparto episódico y la escaleta completa página a página, con las acciones de aprobar y de enviar un hint global, la presentación de la escaleta candidata con los beats cambiados resaltados y el modo de edición directa de un beat con su aviso de invalidación de páginas.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-007, REQ-008, REQ-010, REQ-011, REQ-012, REQ-017, REQ-018 y REQ-019, la vista permite aprobar el guion, enviar un hint global, ver la escaleta completa con los beats cambiados distinguidos del resto y editar directamente el texto de un beat, y una propuesta sin cambios respecto a la versión anterior se indica como tal.
@@ -211,7 +211,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   7. Con un guion aprobado y páginas generadas, editar un beat y comprobar que aparece el aviso de invalidación de las páginas antes de aplicar el cambio.
   8. Cancelar el aviso y comprobar que no se aplica la edición y que las páginas permanecen.
 
-### [ ] TASK-012 Orquestar las pestañas del cuento según el estado del guion
+### [x] TASK-012 Orquestar las pestañas del cuento según el estado del guion
 
 - **Cubre:** REQ-006, REQ-016, REQ-017, DEC-005
 - **Componente:** story-modal | app/src/components/StoryModal.vue
@@ -241,7 +241,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   4. Enviar un hint global, ver la propuesta con los beats cambiados, aceptarla y comprobar que la escaleta vigente se actualiza y sigue pendiente de aprobación.
   5. Editar un beat y comprobar que el guion vuelve a pendiente y que la generación de páginas queda bloqueada hasta una nueva aprobación.
 
-### [ ] TASK-014 Contrato: openapi - esquemas de escaleta, reparto ligero y guion del cuento
+### [x] TASK-014 Contrato: openapi - esquemas de escaleta, reparto ligero y guion del cuento
 
 - **Cubre:** REQ-003, REQ-004, REQ-005, REQ-016, DEC-005, DEC-006
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -259,7 +259,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Recorrer los esquemas y comprobar que la escaleta, el reparto ligero y el estado del guion están representados.
   2. Comparar los esquemas con la implementación y confirmar que los campos, el estado del guion y el marcador de versión coinciden.
 
-### [ ] TASK-015 Contrato: openapi - comando de generación de cuento con protagonista obligatorio
+### [x] TASK-015 Contrato: openapi - comando de generación de cuento con protagonista obligatorio
 
 - **Cubre:** REQ-001, REQ-002, REQ-020, ALT-001
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -274,7 +274,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Recorrer el contrato y comprobar que aparecen el protagonista del catálogo y la selección aleatoria con su entrada y salida.
   2. Comparar el contrato con la implementación y confirmar que la creación con y sin protagonista explícito coinciden.
 
-### [ ] TASK-016 Contrato: openapi - revisión de guion con escaleta candidata
+### [x] TASK-016 Contrato: openapi - revisión de guion con escaleta candidata
 
 - **Cubre:** REQ-007, REQ-008, REQ-009, REQ-018, DEC-001
 - **Componente:** story-review-repository | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/StoryReviewRepository.java
@@ -290,7 +290,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Recorrer el esquema y comprobar que aparecen la escaleta candidata, los beats cambiados y el resultado del hint.
   2. Comparar el esquema con la implementación y confirmar que el ciclo de estados y los campos del hint coinciden.
 
-### [ ] TASK-017 Contrato: openapi - paths de guion, aprobación y edición de beat
+### [x] TASK-017 Contrato: openapi - paths de guion, aprobación y edición de beat
 
 - **Cubre:** REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-017, REQ-018, REQ-019, ALT-005, ALT-006
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -310,7 +310,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Recorrer los paths de guion y comprobar que cada interfaz de esta tarea aparece con su método, entrada, salida y errores relevantes.
   2. Comparar los paths con la implementación y confirmar que generación, revisión, confirmación, aprobación y edición de beat coinciden.
 
-### [ ] TASK-018 Contrato: openapi - esquema de página y entrega del beat al escritor
+### [x] TASK-018 Contrato: openapi - esquema de página y entrega del beat al escritor
 
 - **Cubre:** REQ-013, DEC-006
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java

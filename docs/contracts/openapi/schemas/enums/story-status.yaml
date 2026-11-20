@@ -1,0 +1,7 @@
+# Origen: specs/agent-director (REQ-006, REQ-007)
+# Estado del contrato: contrastado con el código
+type: string
+description: Estado del guion de un cuento. SCRIPT_PENDING hasta que el adulto lo aprueba; la generación de portada y páginas exige SCRIPT_ACCEPTED
+enum:
+  - SCRIPT_PENDING
+  - SCRIPT_ACCEPTED

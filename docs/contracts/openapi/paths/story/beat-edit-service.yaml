@@ -1,0 +1,60 @@
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004)
+# Estado del contrato: contrastado con el código
+put:
+  operationId: editStoryBeat
+  summary: Edita directamente el beat de una página interior
+  description: |
+    Sustituye el beat de la página indicada (página 1 = primer beat). El director solo valida las reglas de edad:
+    si rechaza el texto responde 200 con status REJECTED y reason, y el beat no cambia. Si el texto es válido y
+    el cuento tiene páginas generadas, responde 200 con CONFIRMATION_REQUIRED e invalidatedPages sin aplicar nada;
+    repetir la petición con confirmInvalidation=true elimina las páginas (portada incluida) y aplica la edición, y
+    con confirmInvalidation=false responde CANCELLED sin efectos ni consulta al director. Sin páginas generadas
+    aplica directamente. Al aplicarse, el guion vuelve a SCRIPT_PENDING y el reparto ligero se conserva.
+  tags:
+    - Generators
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: page
+      in: path
+      required: true
+      description: Página interior (desde 1) cuyo beat se edita
+      schema:
+        type: integer
+        minimum: 1
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/beat-edit-request.yaml"
+  responses:
+    "200":
+      description: Resultado de la edición (APPLIED, REJECTED, CONFIRMATION_REQUIRED o CANCELLED)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/beat-edit-response.yaml"
+    "400":
+      description: La página no tiene beat en la escaleta, el beat no tiene los cinco campos obligatorios, o el director no está disponible o devolvió una respuesta incompleta
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: El cuento o su escaleta no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: El cuento es anterior a la escaleta y no admite edición de beats
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

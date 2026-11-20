@@ -35,6 +35,11 @@ export function getCatalogCharacters() {
   return httpClient.get<ApiEnvelope<CatalogCharacter[]>>('/api/v1/catalog-characters').then((result) => result.data)
 }
 
+// Protagonistas aptos para un cuento: catálogo con retrato aprobado (el servidor valida de nuevo al crear).
+export function getEligibleProtagonists() {
+  return getCatalogCharacters().then((characters) => characters.filter((character) => character.portraitStatus === 'APPROVED'))
+}
+
 export function getCatalogCharacter(id: number) {
   return httpClient.get<ApiEnvelope<CatalogCharacter>>(`/api/v1/catalog-characters/${id}`).then((result) => result.data)
 }

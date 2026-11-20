@@ -114,6 +114,22 @@ switch (first.status()) {
 }
 ```
 
+## StoryScriptService (consulta del guion vigente)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryScriptService.java`
+**Para qué sirve:** Detrás del puerto `StoryScriptReading`. Devuelve el guion vigente de un cuento (`StoryScript`: `id`, `title`, `synopsis`, `status`, `scriptVersion`, `cast` con `{name, role}` y `beats` con `{page, event, narrativeFunction, participants, tone, visualNote}`), para que la SPA muestre el guion pendiente o aprobado al reabrir un cuento. Es de solo lectura. Los beats van ordenados y con `page` explícito desde 1 (la misma numeración de `changedBeats` y de `PUT .../beat/{page}`). No incluye páginas. En un cuento antiguo (sin escaleta) `scriptVersion` es nulo y `cast` y `beats` van vacíos, sin error; un cuento inexistente lanza `ResourceNotFoundException` (404). Endpoint: `GET /api/v1/generations/story/{id}/script` (`ApiResponse<StoryScript>`).
+
+```java
+StoryScript script = scripts.getScript(storyId);
+script.status();                       // SCRIPT_PENDING | SCRIPT_ACCEPTED
+if (script.scriptVersion() == null) {
+    // cuento antiguo: cast y beats vacíos, usar el panel anterior
+} else {
+    script.beats().forEach(b -> System.out.println(b.page() + ": " + b.event() + " (" + b.tone() + ")"));
+    script.cast().forEach(c -> System.out.println(c.name() + " - " + c.role()));
+}
+```
+
 ## StoryService (guion con protagonista obligatorio y escaleta)
 
 **Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java`

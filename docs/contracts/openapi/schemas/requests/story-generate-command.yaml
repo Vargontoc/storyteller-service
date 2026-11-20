@@ -1,3 +1,5 @@
+# Origen: specs/agent-director (REQ-001, REQ-002, REQ-020, ALT-001)
+# Estado del contrato: contrastado con el código
 type: object
 additionalProperties: false
 properties:
@@ -6,6 +8,14 @@ properties:
     format: int64
   size:
     $ref: "../enums/story-size.yaml"
+  catalogCharacterId:
+    type: integer
+    format: int64
+    nullable: true
+    description: |
+      Protagonista del catálogo; debe tener retrato aprobado y no tener una generación de retratos en curso.
+      Si se omite o es nulo, el servidor elige al azar uno de los disponibles (con retrato aprobado y sin
+      generación en curso). No existe un campo aparte de selección aleatoria
 required:
   - topicId
   - size

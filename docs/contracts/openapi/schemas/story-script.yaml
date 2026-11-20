@@ -1,0 +1,62 @@
+# Origen: specs/agent-director (REQ-006, REQ-007, REQ-016, REQ-017, DEC-005)
+# Estado del contrato: contrastado con el código
+type: object
+description: Guion vigente de un cuento. En un cuento anterior a la escaleta, scriptVersion es nulo y cast y beats van vacíos
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador del cuento
+  title:
+    type: string
+  synopsis:
+    type: string
+  status:
+    allOf:
+      - $ref: "./enums/story-status.yaml"
+    nullable: true
+  scriptVersion:
+    type: integer
+    nullable: true
+    description: Marcador de versión de guion. 1 = escaleta contractual; nulo = cuento antiguo sin escaleta
+  cast:
+    type: array
+    items:
+      $ref: "./episodic-cast-member.yaml"
+  beats:
+    type: array
+    description: Escaleta ordenada por página. Mismos cinco campos que story-beat.yaml más el número de página explícito
+    items:
+      type: object
+      additionalProperties: false
+      properties:
+        page:
+          type: integer
+          minimum: 1
+          description: Página interior (desde 1); misma numeración que changedBeats y que el path de edición de beat
+        event:
+          type: string
+        narrativeFunction:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+        tone:
+          type: string
+        visualNote:
+          type: string
+      required:
+        - page
+        - event
+        - narrativeFunction
+        - participants
+        - tone
+        - visualNote
+required:
+  - id
+  - title
+  - synopsis
+  - cast
+  - beats

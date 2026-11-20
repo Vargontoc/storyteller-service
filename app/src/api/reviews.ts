@@ -1,6 +1,7 @@
 import { ApiError, httpClient } from './httpClient'
 import type { ApiEnvelope } from './envelope'
 import type { Actor, Page, Story } from './generations'
+import type { StoryBeatFields, CastMember } from './storyScript'
 
 
 export type RevisionStatus = 'PENDING' | 'CONFIRMED' | 'DISCARDED'
@@ -8,9 +9,18 @@ export type ReviewType = 'SCRIPT' | 'ACTOR' | 'COVER' | 'PAGE'
 export type ReviewActorTarget = 'VISUAL' | 'NARRATIVE' | 'BOTH'
 export type ReviewPageTarget = 'TEXT' | 'SCENE' | 'BOTH'
 
+// Escaleta candidata completa de una revisión global; el beat i es la página i + 1.
+export interface CandidateOutline {
+  cast: CastMember[]
+  beats: StoryBeatFields[]
+}
+
 export interface StoryReview {
   id: number
   previewStory: Story
+  candidateOutline?: CandidateOutline | null
+  // Páginas (desde 1) cuyo beat difiere del vigente; vacío = propuesta sin cambios.
+  changedBeats: number[]
   hint?: string
   hintAccepted?: boolean
   rejectedReason?: string | null

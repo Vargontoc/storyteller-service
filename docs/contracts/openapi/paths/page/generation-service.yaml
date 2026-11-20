@@ -1,7 +1,7 @@
 post:
   operationId: generateStoryPage
   summary: Genera una nueva página
-  description: El agente genera la siguiente página (o la portada) de una historia existente
+  description: El agente genera la siguiente página (o la portada) de una historia existente. En un cuento con escaleta exige el guion aprobado; la portada no consume beat y la página interior N se escribe a partir del beat N aprobado, que se entrega internamente al escritor y no forma parte de la página devuelta. Los cuentos antiguos sin escaleta conservan su flujo anterior. Una portada ya existente responde 400
   tags:
     - Generators
   requestBody:
@@ -24,7 +24,7 @@ post:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: Ya se alcanzó el máximo de páginas, o ya existe portada para la historia
+      description: El guion no está aprobado (SCRIPT_ACCEPTED) en un cuento con escaleta, ya se alcanzó el máximo de páginas, o la escaleta no tiene beat para la página
       content:
         application/json:
           schema:

@@ -16,6 +16,8 @@ import es.vargontoc.storyteller.domain.response.BeatEditResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.BeatEditRequestDto;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
+import es.vargontoc.storyteller.application.ports.in.generator.StoryScriptReading;
+import es.vargontoc.storyteller.domain.response.StoryScript;
 import es.vargontoc.storyteller.application.ports.in.generator.TopicGenerator;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
@@ -40,11 +42,13 @@ public class GenerationsController
     private final StoryPageGeneration pageGeneration;
     private final AudioStoryGeneration audioStoryGeneration;
     private final BeatEditing beatEditing;
+    private final StoryScriptReading scriptReading;
 
     public GenerationsController(TopicGenerator topicGenerator,
         StoryGeneration storyGenerator,
         StoryPageGeneration pageGeneration, AudioStoryGeneration audioStoryGeneration,
-        BeatEditing beatEditing) {
+        BeatEditing beatEditing, StoryScriptReading scriptReading) {
+        this.scriptReading = scriptReading;
         this.topicGenerator = topicGenerator;
         this.storyGenerator = storyGenerator;
         this.pageGeneration = pageGeneration;
@@ -68,6 +72,12 @@ public class GenerationsController
     @Operation(description = "El adulto aprueba el guión (escaleta) del cuento antes de generar páginas")
     public ResponseEntity<ApiResponse<Story>> approveStory(@PathVariable("id") Long id) {
         return ResponseEntity.ok(ApiResponse.ok(storyGenerator.approve(id)));
+    }
+
+    @GetMapping("/story/{id}/script")
+    @Operation(description = "Devuelve el guión vigente del cuento (estado, versión, reparto y escaleta con page desde 1). En un cuento antiguo, scriptVersion nulo y reparto y beats vacíos")
+    public ResponseEntity<ApiResponse<StoryScript>> getScript(@PathVariable("id") Long id) {
+        return ResponseEntity.ok(ApiResponse.ok(scriptReading.getScript(id)));
     }
 
     @PutMapping("/story/{id}/beat/{page}")

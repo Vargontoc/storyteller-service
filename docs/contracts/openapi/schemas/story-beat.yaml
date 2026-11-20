@@ -1,0 +1,30 @@
+# Origen: specs/agent-director (REQ-003, REQ-004, DEC-006)
+# Estado del contrato: contrastado con el código
+type: object
+description: Beat de la escaleta, lo que ocurre en una página interior. Los cinco campos son obligatorios y ninguno puede estar vacío (participants debe tener al menos un nombre)
+additionalProperties: false
+properties:
+  event:
+    type: string
+    description: Qué ocurre
+  narrativeFunction:
+    type: string
+    description: Función narrativa del beat
+  participants:
+    type: array
+    description: Quiénes aparecen
+    minItems: 1
+    items:
+      type: string
+  tone:
+    type: string
+    description: Emoción o tono
+  visualNote:
+    type: string
+    description: Nota visual
+required:
+  - event
+  - narrativeFunction
+  - participants
+  - tone
+  - visualNote

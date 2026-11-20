@@ -51,20 +51,21 @@
 
             <div class="field">
               <label for="catalog-character-select">Protagonista del catálogo</label>
-              <select id="catalog-character-select" v-model.number="selectedCatalogCharacterId" :disabled="loadingCharacters">
-                <option :value="null">Sin protagonista del catálogo</option>
+              <select id="catalog-character-select" v-model="selectedProtagonist" :disabled="loadingCharacters || !hasEligible">
+                <option :value="null" disabled>Selecciona un protagonista</option>
+                <option :value="RANDOM_PROTAGONIST" :disabled="!hasAvailableForRandom">Elección aleatoria</option>
                 <option v-for="character in catalogCharacters" :key="character.id" :value="character.id" :disabled="isCharacterRunning(character.id)">
                   {{ character.name }}{{ isCharacterRunning(character.id) ? ' — generando retratos' : '' }}
                 </option>
               </select>
               <p v-if="loadingCharacters" class="help">Comprobando personajes disponibles...</p>
-              <p v-else-if="selectedCatalogCharacterId !== null && isCharacterRunning(selectedCatalogCharacterId)" class="error">El personaje seleccionado está generando retratos. Elige otro para continuar.</p>
+              <p v-else-if="!hasEligible" class="error">No hay protagonistas disponibles. Crea y aprueba el retrato de un protagonista en el catálogo para poder crear un cuento.</p>
             </div>
 
             <button
               type="button"
               class="btn btn-primary"
-              :disabled="!selectedTopicId || !selectedSize || !directorAgentActive || creatingStory || (selectedCatalogCharacterId !== null && isCharacterRunning(selectedCatalogCharacterId))"
+              :disabled="!canCreate"
               :title="directorAgentActive ? '' : 'El agente director no está disponible'"
               @click="onCreateStory"
             >
@@ -82,7 +83,7 @@ import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
 import { generateStory, generateTopic, type StorySize } from '../api/generations'
 import { getTopics, type Topic } from '../api/topics'
-import { getCatalogCharacters, isPortraitGenerationRunning, type CatalogCharacter } from '../api/characters'
+import { getEligibleProtagonists, isPortraitGenerationRunning, type CatalogCharacter } from '../api/characters'
 import { useServerStatusStore } from '../stores/serverStatus'
 import { useWebsocketStore } from '../stores/websocket'
 
@@ -107,7 +108,9 @@ const sizeOptions: { value: StorySize; label: string }[] = [
 const topics = ref<Topic[]>([])
 const catalogCharacters = ref<CatalogCharacter[]>([])
 const portraitRunningByCharacter = ref(new Set<number>())
-const selectedCatalogCharacterId = ref<number | null>(null)
+// Opción de elección aleatoria: valor propio, distinto de cualquier id de catálogo.
+const RANDOM_PROTAGONIST = 'random'
+const selectedProtagonist = ref<number | typeof RANDOM_PROTAGONIST | null>(null)
 const selectedTopicId = ref<number | null>(null)
 const selectedSize = ref<StorySize | null>(null)
 const loadingTopics = ref(false)
@@ -131,13 +134,25 @@ async function loadTopics() {
 
 function isCharacterRunning(id: number) { return portraitRunningByCharacter.value.has(id) }
 
+const hasEligible = computed(() => catalogCharacters.value.length > 0)
+const hasAvailableForRandom = computed(() => catalogCharacters.value.some((character) => !isCharacterRunning(character.id)))
+const protagonistValid = computed(() => {
+  if (selectedProtagonist.value === RANDOM_PROTAGONIST) return hasAvailableForRandom.value
+  return selectedProtagonist.value !== null && !isCharacterRunning(selectedProtagonist.value)
+})
+const canCreate = computed(() => !!selectedTopicId.value && !!selectedSize.value && directorAgentActive.value && !creatingStory.value && !loadingCharacters.value && hasEligible.value && protagonistValid.value)
+
 async function loadCatalogCharacters() {
   loadingCharacters.value = true
   try {
-    const characters = await getCatalogCharacters()
+    const characters = await getEligibleProtagonists()
     const running = await Promise.all(characters.map(async (character) => (await isPortraitGenerationRunning(character.id)) ? character.id : null))
     catalogCharacters.value = characters
     portraitRunningByCharacter.value = new Set(running.filter((id): id is number => id !== null))
+    // El protagonista elegido deja de ser válido si ya no es apto
+    if (typeof selectedProtagonist.value === 'number' && !characters.some((character) => character.id === selectedProtagonist.value)) {
+      selectedProtagonist.value = null
+    }
   } catch (err) {
     error.value = err instanceof ApiError ? err.message : 'No se pudo comprobar el catálogo de personajes'
   } finally {
@@ -161,13 +176,14 @@ async function onGenerateTopic() {
 }
 
 async function onCreateStory() {
-  if (!selectedTopicId.value || !selectedSize.value) return
+  if (!canCreate.value || !selectedTopicId.value || !selectedSize.value || selectedProtagonist.value === null) return
 
   creatingStory.value = true
   error.value = null
 
   try {
-    const story = await generateStory(selectedTopicId.value, selectedSize.value, selectedCatalogCharacterId.value ?? undefined)
+    const catalogCharacterId = selectedProtagonist.value === RANDOM_PROTAGONIST ? null : selectedProtagonist.value
+    const story = await generateStory(selectedTopicId.value, selectedSize.value, catalogCharacterId)
     emit('created', story.id)
   } catch (err) {
     error.value = err instanceof ApiError ? err.message : 'Unexpected error'
@@ -179,7 +195,8 @@ async function onCreateStory() {
 function resetState() {
   selectedTopicId.value = null
   selectedSize.value = null
-  selectedCatalogCharacterId.value = null
+  selectedProtagonist.value = null
+  catalogCharacters.value = []
   error.value = null
 }
 

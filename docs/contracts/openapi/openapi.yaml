@@ -37,6 +37,12 @@ paths:
     $ref: "./paths/topic/generation-service.yaml"
   /generations/story:
     $ref: "./paths/story/generation-service.yaml"
+  /generations/story/{id}/approve:
+    $ref: "./paths/story/approve-service.yaml"
+  /generations/story/{id}/script:
+    $ref: "./paths/story/script-service.yaml"
+  /generations/story/{id}/beat/{page}:
+    $ref: "./paths/story/beat-edit-service.yaml"
   /generations/page:
     $ref: "./paths/page/generation-service.yaml"
 
