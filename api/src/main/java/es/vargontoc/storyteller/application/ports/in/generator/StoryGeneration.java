@@ -5,4 +5,8 @@ import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 
-public interface StoryGeneration extends Generable<Story, StoryGenerateCommand>, Reviewable<Story, StoryReview, StoryReviewCommand> { }
+public interface StoryGeneration extends Generable<Story, StoryGenerateCommand>, Reviewable<Story, StoryReview, StoryReviewCommand> {
+
+    /** Aprobacion explicita del guion: SCRIPT_PENDING pasa a SCRIPT_ACCEPTED. */
+    Story approve(Long storyId);
+}

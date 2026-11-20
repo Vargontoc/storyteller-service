@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Marcador de version de guion. NULL = cuento antiguo (sin escaleta, sin backfill). -->
+    <changeSet id="020-add-script-version-to-story" author="storyteller">
+        <addColumn tableName="story">
+            <column name="script_version" type="INT"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="020-create-story-outline" author="storyteller">
+        <createTable tableName="story_outline">
+            <column name="id" type="BIGINT"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="story_id" type="BIGINT"><constraints nullable="false" unique="true"/></column>
+            <column name="created_at" type="TIMESTAMPTZ"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="story_outline" baseColumnNames="story_id" constraintName="fk_story_outline_story" referencedTableName="story" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="020-create-story-beat" author="storyteller">
+        <createTable tableName="story_beat">
+            <column name="id" type="BIGINT"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="outline_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="page_number" type="INT"><constraints nullable="false"/></column>
+            <column name="event" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+            <column name="narrative_function" type="VARCHAR(500)"><constraints nullable="false"/></column>
+            <column name="participants" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+            <column name="tone" type="VARCHAR(300)"><constraints nullable="false"/></column>
+            <column name="visual_note" type="VARCHAR(1000)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMPTZ"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="story_beat" baseColumnNames="outline_id" constraintName="fk_story_beat_outline" referencedTableName="story_outline" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addUniqueConstraint tableName="story_beat" columnNames="outline_id, page_number" constraintName="uq_story_beat_page"/>
+    </changeSet>
+
+    <!-- Reparto episodico ligero: nombre y funcion. Sin relacion con catalog_character ni character. -->
+    <changeSet id="020-create-episodic-cast-member" author="storyteller">
+        <createTable tableName="episodic_cast_member">
+            <column name="id" type="BIGINT"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="outline_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="position" type="INT"><constraints nullable="false"/></column>
+            <column name="name" type="VARCHAR(200)"><constraints nullable="false"/></column>
+            <column name="role" type="VARCHAR(500)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMPTZ"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="episodic_cast_member" baseColumnNames="outline_id" constraintName="fk_episodic_cast_outline" referencedTableName="story_outline" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>

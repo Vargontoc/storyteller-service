@@ -3,6 +3,7 @@ package es.vargontoc.storyteller.domain.model;
 import java.util.List;
 
 import es.vargontoc.storyteller.domain.enums.StorySize;
+import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.shared.BaseModel;
 
 public class Story  extends BaseModel {
@@ -14,6 +15,8 @@ public class Story  extends BaseModel {
     private String synopsis;
     private String agentSummary;
     private StorySize size;
+    private StoryStatus status;
+    private Integer scriptVersion;
 
     public Long getId() {
         return id;
@@ -50,6 +53,22 @@ public class Story  extends BaseModel {
     }
     public void setPages(List<StoryPage> pages) {
         this.pages = pages;
+    }
+    /** Version de guion; null en cuentos antiguos. No reinterpreta las listas antiguas de actores. */
+    public Integer getScriptVersion() {
+        return scriptVersion;
+    }
+    public void setScriptVersion(Integer scriptVersion) {
+        this.scriptVersion = scriptVersion;
+    }
+    public boolean hasOutline() {
+        return StoryScriptVersion.hasOutline(scriptVersion);
+    }
+    public StoryStatus getStatus() {
+        return status;
+    }
+    public void setStatus(StoryStatus status) {
+        this.status = status;
     }
     public String getAgentSummary() {
         return agentSummary;

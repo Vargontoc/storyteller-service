@@ -19,6 +19,9 @@ public interface StoryPageRepository {
 
     void setAudioPath(Long id, String path);
 
+    /** Elimina todas las páginas del cuento (con sus revisiones y assets) y devuelve cuántas se retiraron. */
+    int deleteByStory(Long storyId);
+
     List<Actor> getSceneActors(Long storyId, List<String> actorNames, boolean isCover);
     
 }

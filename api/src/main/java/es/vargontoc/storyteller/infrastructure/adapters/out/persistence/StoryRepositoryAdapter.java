@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.enums.StorySize;
+import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.domain.enums.KindImage;
 import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.ActorMetadata;
@@ -129,6 +130,26 @@ public class StoryRepositoryAdapter implements StoryRepository {
         story.getCharacters().forEach(c -> createCharacter(stored, c));
 
         return story;
+    }
+
+    @Override
+    public void updateStatus(Long storyId, StoryStatus status) {
+        StoryJpaEntity stored = repository.findById(storyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + storyId));
+        stored.setStatus(status);
+        stored.setUpdatedAt(LocalDateTime.now());
+        repository.save(stored);
+    }
+
+    @Override
+    public void updateScript(Long storyId, String title, String synopsis) {
+        StoryJpaEntity stored = repository.findById(storyId)
+            .orElseThrow(() -> new ResourceNotFoundException("Story not found with id: " + storyId));
+        stored.setTitle(title);
+        stored.setSynopsis(synopsis);
+        stored.setStatus(StoryStatus.SCRIPT_PENDING);
+        stored.setUpdatedAt(LocalDateTime.now());
+        repository.save(stored);
     }
 
     private CharacterAgentResult toMap(Actor actor){

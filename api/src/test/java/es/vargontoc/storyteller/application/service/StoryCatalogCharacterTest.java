@@ -2,21 +2,27 @@ package es.vargontoc.storyteller.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
+
+import es.vargontoc.storyteller.application.ports.out.external.CharacterImageConditionPort;
+import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
+import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharacterRepository;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.enums.StorySize;
-import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaEntity;
-import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
-import java.util.Optional;
-import org.junit.jupiter.api.Test;
-import org.springframework.ai.chat.client.ChatClient;
+import es.vargontoc.storyteller.domain.model.CatalogCharacter;
+import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 class StoryCatalogCharacterTest {
     @Test
@@ -26,22 +32,20 @@ class StoryCatalogCharacterTest {
     }
 
     @Test
-    void runningCatalogCharacterIsRejectedBeforeCallingTheAgentOrCreatingAStory() {
+    void runningCatalogCharacterIsRejectedBeforeCallingTheDirectorOrCreatingAStory() {
         var stories = mock(StoryRepository.class);
         var topics = mock(TopicRepository.class);
-        var reviews = mock(StoryReviewRepository.class);
-        var ollama = mock(OllamaPort.class);
-        var catalog = mock(CatalogCharacterJpaRepository.class);
+        var director = mock(DirectorAgent.class);
+        var catalog = mock(CatalogCharacterRepository.class);
+        var images = mock(CharacterImageConditionPort.class);
         var lock = mock(PortraitLockService.class);
-        var character = new CatalogCharacterJpaEntity();
-        when(catalog.findById(7L)).thenReturn(Optional.of(character));
-        org.mockito.Mockito.doThrow(new es.vargontoc.storyteller.shared.exceptions.AppException("bloqueado", org.springframework.http.HttpStatus.CONFLICT))
-                .when(lock).assertCanUseAsStoryProtagonist(7L);
-        var service = new es.vargontoc.storyteller.application.service.StoryService(stories, topics, reviews, ollama,
-                "director", mock(ChatClient.class), catalog, lock);
+        when(catalog.findById(7L)).thenReturn(new CatalogCharacter(7L, "Luna", "n", "v", "e", List.of()));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        doThrow(new AppException("bloqueado", HttpStatus.CONFLICT)).when(lock).assertCanUseAsStoryProtagonist(7L);
+        var service = new StoryService(stories, topics, mock(StoryReviewRepository.class),
+                mock(StoryOutlineRepository.class), director, catalog, images, lock);
 
-        assertThrows(es.vargontoc.storyteller.shared.exceptions.AppException.class,
-                () -> service.generate(new StoryGenerateCommand(1L, StorySize.S, 7L)));
-        verifyNoInteractions(ollama, stories, topics);
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand(1L, StorySize.S, 7L)));
+        verifyNoInteractions(director, stories, topics);
     }
 }

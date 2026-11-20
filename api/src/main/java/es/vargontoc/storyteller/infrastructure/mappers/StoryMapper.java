@@ -29,6 +29,8 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         target.setCharacters(characterMapper.toEntity(model.getCharacters()));
         target.setPages(pageMapper.toEntity(model.getPages()));
         target.setSummary(model.getAgentSummary());
+        target.setScriptVersion(model.getScriptVersion());
+        target.setStatus(model.getStatus());
         return target;
     }
 
@@ -43,6 +45,8 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         target.setCharacters(characterMapper.toModel(entity.getCharacters()));
         target.setPages(pageMapper.toModel(entity.getPages()));
         target.setAgentSummary(entity.getSummary());
+        target.setScriptVersion(entity.getScriptVersion());
+        target.setStatus(entity.getStatus());
         return target;
     }
     

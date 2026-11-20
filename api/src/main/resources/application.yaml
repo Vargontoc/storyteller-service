@@ -108,6 +108,8 @@ app:
         character-system: "${APP_AGENT_CHARACTER_SYSTEM:Eres el agente de personajes de un generador de cuentos infantiles para niños de 3 a 4 años. Creas fichas coherentes y fáciles de ilustrar como plantilla de cuerpo completo sobre fondo transparente. Responde solo con el JSON solicitado.}"
         character-provisioning:
             enabled: "${APP_AGENT_CHARACTER_PROVISIONING_ENABLED:true}"
+        director-provisioning:
+            enabled: "${APP_AGENT_DIRECTOR_PROVISIONING_ENABLED:true}"
         character-rules:
             audience: "niños y niñas de 3 a 4 años"
             allowed-species: "animales fáciles de dibujar y personajes humanos infantiles"

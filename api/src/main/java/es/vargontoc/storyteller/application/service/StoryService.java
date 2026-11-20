@@ -1,106 +1,119 @@
 package es.vargontoc.storyteller.application.service;
 
-import java.util.Map;
+import java.util.List;
+import java.util.Random;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
-import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.application.ports.out.external.CharacterImageConditionPort;
+import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
+import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharacterRepository;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
-import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.enums.StoryStatus;
+import es.vargontoc.storyteller.domain.model.CatalogCharacter;
+import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryBeat;
+import es.vargontoc.storyteller.domain.model.StoryOutline;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.domain.model.Topic;
+import es.vargontoc.storyteller.domain.request.DirectorReviewRequest;
+import es.vargontoc.storyteller.domain.request.DirectorScriptRequest;
+import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
+import es.vargontoc.storyteller.domain.response.DirectorBeat;
+import es.vargontoc.storyteller.domain.response.DirectorCastMember;
+import es.vargontoc.storyteller.domain.response.DirectorReviewResult;
+import es.vargontoc.storyteller.domain.response.DirectorScriptResult;
 import es.vargontoc.storyteller.domain.response.StoryAgentResult;
-import es.vargontoc.storyteller.domain.response.StoryReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
-import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
-import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
 import jakarta.transaction.Transactional;
 
+/**
+ * Caso de uso del guion: crea el cuento con protagonista de catálogo y escaleta, aprueba el guion
+ * y gestiona la revisión global (hint) de la escaleta a través del director.
+ */
 @Service
 @Transactional
-public class StoryService implements StoryGeneration   {
+public class StoryService implements StoryGeneration {
 
-    private static final Logger LOG = LoggerFactory.getLogger(StoryService.class);
     private static final int MAX_ATTEMPTS = 3;
-
-    @Value("classpath:/prompts/new_script.st")
-    private Resource scriptResource;
-    @Value("classpath:/prompts/review_script.st")
-    private Resource reviewScriptResource;
-
-    private final OllamaPort ollama;
-    private final String model;
-    private final ChatClient client;
-
 
     private final StoryRepository repository;
     private final StoryReviewRepository reviewRepository;
+    private final StoryOutlineRepository outlineRepository;
     private final TopicRepository topicRepository;
-    private final CatalogCharacterJpaRepository catalogCharacters;
+    private final CatalogCharacterRepository catalog;
+    private final CharacterImageConditionPort portraits;
     private final PortraitLockService portraitLock;
+    private final DirectorAgent director;
+    private final Random random = new Random();
 
     public StoryService(StoryRepository repository,
             TopicRepository topicRepository,
             StoryReviewRepository reviewRepository,
-            OllamaPort ollama,
-            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model,
-            @Qualifier(Constants.BeanNames.AGENT_DIRECTOR) ChatClient client,
-            CatalogCharacterJpaRepository catalogCharacters, PortraitLockService portraitLock){
-
+            StoryOutlineRepository outlineRepository,
+            DirectorAgent director,
+            CatalogCharacterRepository catalog,
+            CharacterImageConditionPort portraits,
+            PortraitLockService portraitLock) {
         this.repository = repository;
         this.topicRepository = topicRepository;
         this.reviewRepository = reviewRepository;
-        this.ollama = ollama;
-        this.model = model;
-        this.client  = client;
-        this.catalogCharacters = catalogCharacters;
+        this.outlineRepository = outlineRepository;
+        this.director = director;
+        this.catalog = catalog;
+        this.portraits = portraits;
         this.portraitLock = portraitLock;
     }
 
-
     @Override
     public Story generate(StoryGenerateCommand cmd) {
-        if (cmd.catalogCharacterId() != null) {
-            catalogCharacters.findById(cmd.catalogCharacterId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Personaje de catálogo no encontrado"));
-            portraitLock.assertCanUseAsStoryProtagonist(cmd.catalogCharacterId());
-        }
-        
-        if(!ollama.isAvailable(model))
-            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
-        
-        Topic topic = topicRepository.getTopics().stream().filter(x -> x.getId().equals(cmd.topicId())).findFirst().orElseThrow(() -> {
-            throw new ResourceNotFoundException("Topic requerido no encontrado");
+        // 1. Protagonista de catálogo con retrato aprobado: el indicado o uno al azar entre los disponibles
+        CatalogCharacter protagonist = resolveProtagonist(cmd.catalogCharacterId());
+
+        Topic topic = topicRepository.getTopics().stream()
+            .filter(x -> x.getId().equals(cmd.topicId())).findFirst()
+            .orElseThrow(() -> new ResourceNotFoundException("Topic requerido no encontrado"));
+
+        // 2. El director recibe la ficha del protagonista; una escaleta incompleta se reintenta sin persistir nada
+        DirectorScriptRequest request = new DirectorScriptRequest(topic.getType(), topic.getDescription(),
+            cmd.size().getPages(), protagonist.name(), protagonist.narrativeDescription(),
+            protagonist.visualDescription(), protagonist.id());
+        DirectorScriptResult script = callDirector(() -> {
+            DirectorScriptResult result = director.generateScript(request);
+            if (result == null || !toOutline(result.cast(), result.beats()).isComplete()) {
+                throw new AppException("Escaleta incompleta", HttpStatus.BAD_REQUEST);
+            }
+            return result;
         });
 
-        StoryAgentResult result = callAgent(() -> client.prompt().user(u -> u.text(scriptResource)
-            .param("topic", topic.getType())
-            .param("description", topic.getDescription())
-            .param("pages", cmd.size().getPages()))
-        .call().entity(StoryAgentResult.class));
+        // 3. Persistimos el cuento con la instantánea del protagonista y la escaleta completa
+        Story story = repository.create(
+            new StoryAgentResult(script.title(), script.synopsis(), List.of(toCharacter(protagonist))),
+            cmd.size(), cmd.topicId(), protagonist.id());
+        outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats()));
+        return repository.getStory(story.getId());
+    }
 
-        return repository.create(result, cmd.size(), cmd.topicId(), cmd.catalogCharacterId());
+    @Override
+    public Story approve(Long storyId) {
+        Story story = repository.getStory(storyId);
+        requireOutline(story);
+        if (story.getStatus() != StoryStatus.SCRIPT_ACCEPTED) {
+            repository.updateStatus(storyId, StoryStatus.SCRIPT_ACCEPTED);
+        }
+        return repository.getStory(storyId);
     }
 
     @Override
@@ -111,60 +124,83 @@ public class StoryService implements StoryGeneration   {
 
     @Override
     public StoryReview review(StoryReviewCommand review) {
-        // 1. Comprobar que el agente esta en el servidor Ollama
-        if(!ollama.isAvailable(model))
-            throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
-
-        // 2. Obtenemos la story existente
         Story current = repository.getStory(review.storyId());
-        
-        // 3. Obtenemos el tema de la story
-        Topic t = topicRepository.getTopicByStoryId(review.storyId());
+        requireOutline(current);
+        StoryOutline outline = outlineRepository.find(review.storyId())
+            .orElseThrow(() -> new ResourceNotFoundException("Escaleta no encontrada"));
 
-        // 4. Descartamos review prendiente
+        // Descartamos la revisión pendiente anterior
         reviewRepository.changeStatus(review.storyId(), RevisionStatus.DISCARDED);
 
-        // 3. Llamamos al agente
-        StoryReviewAgentResult result = callAgent(() -> client.prompt().user(u -> u.text(reviewScriptResource)
-            .param("topic", readTopic(t))
-            .param("title", current.getTitle())
-            .param("synopsis", current.getSynopsis())
-            .param("pages", current.getSize().getPages())
-            .param("hint", review.hint())
-            .param("characters", describeCharacters(current)))
-        .call().entity(StoryReviewAgentResult.class));
+        DirectorReviewRequest request = new DirectorReviewRequest(current.getTitle(), current.getSynopsis(),
+            outline.cast().stream().map(c -> new DirectorCastMember(c.name(), c.role())).toList(),
+            outline.beats().stream().map(b -> new DirectorBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList(),
+            review.hint());
+        DirectorReviewResult result = callDirector(() -> {
+            DirectorReviewResult r = director.reviewScript(request);
+            if (r == null || (!r.hintAccepted() && (r.rejectionReason() == null || r.rejectionReason().isBlank()))
+                    || (r.hintAccepted() && !toOutline(r.cast(), r.beats()).isComplete())) {
+                throw new AppException("Respuesta de revisión incompleta", HttpStatus.BAD_REQUEST);
+            }
+            return r;
+        });
 
-
-        // 4. Devolvemos el resultado mapeado
-        return reviewRepository.createStoryReview(result, review.storyId(), review.hint());
+        // Aceptado: revisión PENDING con la candidata. Rechazado: revisión con el motivo; la escaleta vigente no cambia
+        if (!result.hintAccepted()) {
+            return reviewRepository.createOutlineReview(review.storyId(), review.hint(), false, result.rejectionReason(), null, null, null);
+        }
+        return reviewRepository.createOutlineReview(review.storyId(), review.hint(), true, null,
+            result.title(), result.synopsis(), toOutline(result.cast(), result.beats()));
     }
 
     @Override
     public Story confirmReview(ConfirmReviewRequestDto request) {
-        // 1. Obtenemos la story por id
         Story current = repository.getStory(request.entityId());
-        
-        // 2. Obtenemos la revision pendiente
-        StoryReview review = getReview(request.entityId());
-        if(review == null)
-            throw new AppException("No hay una review pendiente para la story: " + request.entityId(), HttpStatus.CONFLICT);
-        
-        // 3. Si el usuario descarta, descartamos la review
-        if(request.status() == RevisionStatus.DISCARDED)
-            reviewRepository.changeStatus(request.entityId(), RevisionStatus.DISCARDED);
-        else if(request.status()  == RevisionStatus.CONFIRMED)
-        {
-            reviewRepository.changeStatus(request.entityId(), RevisionStatus.CONFIRMED);
-            
-            // 4. Guardar el cambio
-            applyChanges(current, review);
-            return repository.update(current);
-        }
 
+        StoryReview review = getReview(request.entityId());
+        if (review == null)
+            throw new AppException("No hay una review pendiente para la story: " + request.entityId(), HttpStatus.CONFLICT);
+
+        if (request.status() == RevisionStatus.DISCARDED) {
+            reviewRepository.changeStatus(request.entityId(), RevisionStatus.DISCARDED);
+        } else if (request.status() == RevisionStatus.CONFIRMED) {
+            if (review.getCandidateOutline() == null)
+                throw new AppException("La revisión pendiente no contiene una escaleta candidata", HttpStatus.CONFLICT);
+            // Publica la escaleta candidata como vigente y deja el guion pendiente de aprobación
+            reviewRepository.changeStatus(request.entityId(), RevisionStatus.CONFIRMED);
+            repository.updateScript(request.entityId(), review.getPreviewStory().getTitle(), review.getPreviewStory().getSynopsis());
+            return repository.getStory(request.entityId());
+        }
         return current;
     }
 
-    private <T> T callAgent(Supplier<T> call) {
+    /** Protagonista indicado, o uno al azar entre los de catálogo con retrato aprobado y sin generación de retratos en curso. */
+    private CatalogCharacter resolveProtagonist(Long catalogCharacterId) {
+        if (catalogCharacterId != null) {
+            CatalogCharacter chosen = catalog.findById(catalogCharacterId);
+            requireApprovedPortrait(chosen);
+            portraitLock.assertCanUseAsStoryProtagonist(catalogCharacterId);
+            return chosen;
+        }
+        List<CatalogCharacter> available = catalog.findAll().stream()
+            .filter(c -> portraits.hasApprovedPortrait(c.id()) && !portraitLock.isLocked(c.id()))
+            .toList();
+        if (available.isEmpty())
+            throw new AppException("Debe existir un protagonista del catálogo con retrato aprobado para crear el cuento", HttpStatus.BAD_REQUEST);
+        return available.get(random.nextInt(available.size()));
+    }
+
+    private void requireApprovedPortrait(CatalogCharacter character) {
+        if (!portraits.hasApprovedPortrait(character.id()))
+            throw new AppException("El protagonista debe tener un retrato aprobado", HttpStatus.BAD_REQUEST);
+    }
+
+    private void requireOutline(Story story) {
+        if (!story.hasOutline())
+            throw new AppException("El cuento es anterior a la escaleta y no admite aprobación ni revisión del guion", HttpStatus.CONFLICT);
+    }
+
+    private <T> T callDirector(Supplier<T> call) {
         for (int attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
             try {
                 return call.get();
@@ -179,48 +215,15 @@ public class StoryService implements StoryGeneration   {
         throw new AppException("El agente no devolvió una respuesta válida", HttpStatus.BAD_REQUEST);
     }
 
-    private void applyChanges(Story story, StoryReview review) {
-        story.setTitle(review.getPreviewStory().getTitle());
-        story.setSynopsis(review.getPreviewStory().getSynopsis());
-        story.setCharacters(review.getPreviewStory().getCharacters());
+    private StoryOutline toOutline(List<DirectorCastMember> cast, List<DirectorBeat> beats) {
+        return new StoryOutline(
+            cast == null ? List.of() : cast.stream().map(c -> new EpisodicCastMember(c.name(), c.role())).toList(),
+            beats == null ? null : beats.stream()
+                .map(b -> new StoryBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList());
     }
 
-    
-    private String readTopic(Topic t) {
-        return t + " / " + t.getDescription();
-    }
-
-    private String describeCharacters(Story story) {
-        return story.getCharacters().stream()
-            .map(this::jsonCharacter)
-            .collect(Collectors.joining(";\n"));
-    }
-
-    private String jsonCharacter(Actor actor) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            Map.of(
-                "name", actor.getName(),
-                "mainCharacter" , actor.isMain(),
-                "narrativeDescription", actor.getNarrativeDescription(),
-                "visualDescription", actor.getVisualDescription(),
-                "visualDescriptionEn", actor.getMetadata().translate(),
-                "visualAttributes", actor.getMetadata().attributes()
-            );
-
-            return "- " + mapper.writeValueAsString(Map.of(
-                "name", actor.getName(),
-                "mainCharacter" , actor.isMain(),
-                "narrativeDescription", actor.getNarrativeDescription(),
-                "visualDescription", actor.getVisualDescription(),
-                "visualDescriptionEn", actor.getMetadata().translate(),
-                "visualAttributes", actor.getMetadata().attributes()
-            ));
-        
-        }catch(JsonProcessingException e){
-            LOG.error(e.getMessage(), e);
-            throw new AppException("Algo fue mal en el parseo de personajes", HttpStatus.BAD_REQUEST);
-        }
-        
+    private CharacterAgentResult toCharacter(CatalogCharacter c) {
+        return new CharacterAgentResult(true, c.name(), c.narrativeDescription(), c.visualDescription(),
+            c.visualDescriptionEn(), c.visualAttributes());
     }
 }

@@ -44,6 +44,10 @@ public class StoryJpaEntity extends BaseEntity {
     @Column(name = "summary", length = 1000)
     private String summary;
 
+    /** Version de guion; null en cuentos antiguos (sin escaleta). */
+    @Column(name = "script_version")
+    private Integer scriptVersion;
+
     @OneToMany(mappedBy = "story", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CharacterJpaEntity> characters = new ArrayList<>();
 
@@ -62,6 +66,8 @@ public class StoryJpaEntity extends BaseEntity {
     public void setStatus(StoryStatus status) { this.status = status; }
     public String getSummary() { return summary; }
     public void setSummary(String summary) { this.summary = summary; }
+    public Integer getScriptVersion() { return scriptVersion; }
+    public void setScriptVersion(Integer scriptVersion) { this.scriptVersion = scriptVersion; }
     public List<CharacterJpaEntity> getCharacters() { return characters;}
     public void setCharacters(List<CharacterJpaEntity> characters) { this.characters = characters; }
     public List<StoryPageJpaEntity> getPages() { return pages; }

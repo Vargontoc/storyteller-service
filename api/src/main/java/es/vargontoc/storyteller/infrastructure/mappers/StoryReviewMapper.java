@@ -1,20 +1,28 @@
 package es.vargontoc.storyteller.infrastructure.mappers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryBeat;
+import es.vargontoc.storyteller.domain.model.StoryOutline;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity.CandidateBeat;
+import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity.CandidateCastMember;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaEntity.CharacterDraft;
 import es.vargontoc.storyteller.shared.mappers.AbstractReviewMapper;
 
 @Component
 public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity, StoryReview> {
+
+    private static final String SEPARATOR = "\n";
 
     @Override
     public StoryReviewJpaEntity toEntity(StoryReview model) {
@@ -27,6 +35,9 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         target.setCandidateTitle(model.getPreviewStory().getTitle());
         target.setCandidateSynopsis(model.getPreviewStory().getSynopsis());
         target.setCandidateCharacters(toDrafts(model.getPreviewStory().getCharacters()));
+        if (model.getCandidateOutline() != null) {
+            fillOutline(target, model.getCandidateOutline(), model.getChangedBeats());
+        }
 
         StoryJpaEntity story = new StoryJpaEntity();
         story.setId(model.getPreviewStory().getId());
@@ -45,7 +56,31 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
         target.setPreviewStory(readStory(entity));
 
         target.setStatus(entity.getStatus());
+        if (!entity.getCandidateBeats().isEmpty()) {
+            target.setCandidateOutline(toOutline(entity));
+            target.setChangedBeats(new ArrayList<>(entity.getChangedBeats()));
+        }
         return target;
+    }
+
+    /** Copia la escaleta candidata y sus beats distintos a la entidad de revision. */
+    public void fillOutline(StoryReviewJpaEntity target, StoryOutline outline, List<Integer> changedBeats) {
+        target.setCandidateBeats(outline.beats().stream()
+            .map(b -> new CandidateBeat(b.event(), b.narrativeFunction(), String.join(SEPARATOR, b.participants()), b.tone(), b.visualNote()))
+            .toList());
+        target.setCandidateCast(outline.cast().stream().map(c -> new CandidateCastMember(c.name(), c.role())).toList());
+        target.setChangedBeats(changedBeats == null ? new ArrayList<>() : new ArrayList<>(changedBeats));
+    }
+
+    /** Escaleta candidata de la revision, lista para publicarla como vigente. */
+    public StoryOutline toOutline(StoryReviewJpaEntity entity) {
+        List<StoryBeat> beats = entity.getCandidateBeats().stream()
+            .map(b -> new StoryBeat(b.getEvent(), b.getNarrativeFunction(), Arrays.asList(b.getParticipants().split(SEPARATOR)), b.getTone(), b.getVisualNote()))
+            .toList();
+        List<EpisodicCastMember> cast = entity.getCandidateCast().stream()
+            .map(c -> new EpisodicCastMember(c.getName(), c.getRole()))
+            .toList();
+        return new StoryOutline(cast, beats);
     }
 
     private Story readStory(StoryReviewJpaEntity entity){

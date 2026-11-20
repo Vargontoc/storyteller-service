@@ -145,6 +145,20 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     }
 
     @Override
+    public int deleteByStory(Long storyId) {
+        List<Long> pageIds = repository.getPagesIdByStory(storyId, -1);
+        if (pageIds.isEmpty())
+            return 0;
+        pageReviewsRepository.deleteByPageIds(pageIds);
+        repository.deletePages(storyId, -1);
+        // Las páginas eran el origen del resumen acumulado del cuento
+        storyRepository.setSummary(storyId, "");
+        // Misma política de assets que la revisión de páginas
+        storage.deletePageAssets(storyId, pageIds.getFirst(), pageIds.subList(1, pageIds.size()));
+        return pageIds.size();
+    }
+
+    @Override
     public List<Actor> getSceneActors(Long storyId, List<String> actorNames, boolean isCover) {
 
         List<CharacterJpaEntity> actors = repository.getCharactersFromPage(storyId, actorNames);

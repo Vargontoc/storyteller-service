@@ -17,6 +17,7 @@ import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.OrderColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
@@ -37,7 +38,30 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
     @CollectionTable(name = "story_review_character_draft", joinColumns = @JoinColumn(name = "review_id"))
     private List<CharacterDraft> candidateCharacters = new ArrayList<>();
 
+    // Escaleta candidata: beats (la pagina es posicion + 1), reparto ligero y paginas distintas de la vigente.
+    @ElementCollection
+    @CollectionTable(name = "story_review_beat", joinColumns = @JoinColumn(name = "review_id"))
+    @OrderColumn(name = "position")
+    private List<CandidateBeat> candidateBeats = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "story_review_cast_member", joinColumns = @JoinColumn(name = "review_id"))
+    @OrderColumn(name = "position")
+    private List<CandidateCastMember> candidateCast = new ArrayList<>();
+
+    @ElementCollection
+    @CollectionTable(name = "story_review_changed_beat", joinColumns = @JoinColumn(name = "review_id"))
+    @Column(name = "page_number")
+    private List<Integer> changedBeats = new ArrayList<>();
+
     public StoryReviewJpaEntity() { super(); }
+
+    public List<CandidateBeat> getCandidateBeats() { return candidateBeats; }
+    public void setCandidateBeats(List<CandidateBeat> candidateBeats) { this.candidateBeats = candidateBeats; }
+    public List<CandidateCastMember> getCandidateCast() { return candidateCast; }
+    public void setCandidateCast(List<CandidateCastMember> candidateCast) { this.candidateCast = candidateCast; }
+    public List<Integer> getChangedBeats() { return changedBeats; }
+    public void setChangedBeats(List<Integer> changedBeats) { this.changedBeats = changedBeats; }
 
     public StoryJpaEntity getStory() { return story; }
     public void setStory(StoryJpaEntity story) { this.story = story; }
@@ -110,5 +134,53 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
         public ActorMetadata getMetadata() { return metadata; }
         public void setMetadata(ActorMetadata metadata) { this.metadata = metadata; }
         
+    }
+
+    @Embeddable
+    public static class CandidateBeat {
+        @Column(name = "event", length = 1000)
+        private String event;
+        @Column(name = "narrative_function", length = 500)
+        private String narrativeFunction;
+        @Column(name = "participants", length = 1000)
+        private String participants;
+        @Column(name = "tone", length = 300)
+        private String tone;
+        @Column(name = "visual_note", length = 1000)
+        private String visualNote;
+
+        protected CandidateBeat() {}
+
+        public CandidateBeat(String event, String narrativeFunction, String participants, String tone, String visualNote) {
+            this.event = event;
+            this.narrativeFunction = narrativeFunction;
+            this.participants = participants;
+            this.tone = tone;
+            this.visualNote = visualNote;
+        }
+
+        public String getEvent() { return event; }
+        public String getNarrativeFunction() { return narrativeFunction; }
+        public String getParticipants() { return participants; }
+        public String getTone() { return tone; }
+        public String getVisualNote() { return visualNote; }
+    }
+
+    @Embeddable
+    public static class CandidateCastMember {
+        @Column(name = "name", length = 200)
+        private String name;
+        @Column(name = "role", length = 500)
+        private String role;
+
+        protected CandidateCastMember() {}
+
+        public CandidateCastMember(String name, String role) {
+            this.name = name;
+            this.role = role;
+        }
+
+        public String getName() { return name; }
+        public String getRole() { return role; }
     }
 }

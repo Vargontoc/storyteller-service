@@ -10,10 +10,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
 
 ## Tareas
 
-### [ ] TASK-001 Redefinir el agente director para generar guion completo con escaleta contractual
+### [x] TASK-001 Redefinir el agente director para generar guion completo con escaleta contractual
 
 - **Cubre:** REQ-003, REQ-004, REQ-005, REQ-008, REQ-009, ALT-002, ALT-003, DEC-003, DEC-006
-- **Componente:** director-agent | agents/director-story-agent/Modelfile
+- **Componente:** director-agent | api/src/main/resources/prompts/director.modelfile, api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiDirectorAgent.java
 - **Depende de:** -
 - **Alcance:** Modificar el prompt y los parámetros del agente director para que, a partir de tema, tamaño y ficha del protagonista, devuelva título, sinopsis, reparto episódico ligero y una escaleta con un beat estructurado por página interior, con los cinco campos obligatorios, y para que procese un hint global devolviendo una escaleta completa con aceptación o rechazo y motivo.
 - **Hecho cuando:** el agente dispone de una definición cargable cuyo contrato de salida incluye título, sinopsis, reparto con nombre y función narrativa, y una escaleta de beats con qué ocurre, función narrativa, quiénes aparecen, emoción o tono y nota visual; además, ante un hint global devuelve la escaleta completa revisada con indicación de aceptación y, en su caso, motivo de rechazo, y ante una validación de edición de beat devuelve el veredicto de edad con su motivo.
@@ -29,10 +29,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   3. Enviar un hint global sobre el final del cuento y comprobar que la respuesta incluye la escaleta completa y el indicador de aceptación.
   4. Enviar un hint que vulnere las reglas de edad y comprobar que la respuesta indica el rechazo con su motivo.
 
-### [ ] TASK-002 Aprovisionar el modelo del director desde los recursos del backend
+### [x] TASK-002 Aprovisionar el modelo del director desde los recursos del backend
 
 - **Cubre:** REQ-015, DEC-002
-- **Componente:** director-model-provisioner | por definir (analista técnico)
+- **Componente:** director-model-provisioner | api/src/main/java/es/vargontoc/storyteller/infrastructure/config/DirectorModelProvisioner.java
 - **Depende de:** -
 - **Alcance:** Crear el aprovisionador que registra en Ollama el modelo del director al arrancar el backend a partir de un Modelfile gestionado como recurso del backend, análogo al aprovisionamiento del agente de personaje, y retirar el director del mantenimiento en `agents/`.
 - **Hecho cuando:** el modelo del director queda registrado en Ollama al arrancar el backend a partir del recurso gestionado por la aplicación, y la carpeta `agents/director-story-agent/` deja de ser la ubicación de mantenimiento del Modelfile del director.
@@ -44,10 +44,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Arrancar el backend con Ollama disponible y sin el modelo del director y comprobar que queda registrado y disponible para el resto de operaciones.
   2. Comprobar que `agents/load_model.ps1` ya no carga el director y que el resto de agentes sigue cargándose con normalidad.
 
-### [ ] TASK-003 Persistir el guion con escaleta, reparto ligero y marcador de versión
+### [x] TASK-003 Persistir el guion con escaleta, reparto ligero y marcador de versión
 
 - **Cubre:** REQ-003, REQ-004, REQ-005, REQ-016, DEC-005, DEC-006
-- **Componente:** story-outline-repository | por definir (analista técnico)
+- **Componente:** story-outline-repository | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/persistence/StoryOutlineRepositoryAdapter.java
 - **Depende de:** -
 - **Alcance:** Crear el repositorio que persiste el guion de un cuento con título, sinopsis, repartoEpisódico ligero y la lista de beats estructurados vinculados a números de página interior, junto con el marcador de versión de guion que distingue los cuentos antiguos de los nuevos.
 - **Hecho cuando:** se puede guardar y recuperar el guion completo de un cuento con sus beats ordenados por número de página, el reparto con nombre y función narrativa sin persistencia en el catálogo de personajes, y el marcador de versión que permite distinguir un cuento antiguo sin escaleta de uno nuevo con escaleta contractual.
@@ -61,10 +61,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Crear un cuento nuevo y comprobar que su guion se guarda con la escaleta completa y el reparto ligero.
   2. Consultar un cuento anterior a la feature y comprobar que conserva su estructura original de guion y personajes.
 
-### [ ] TASK-004 Definir el modelo de escaleta y el reparto ligero en el dominio
+### [x] TASK-004 Definir el modelo de escaleta y el reparto ligero en el dominio
 
 - **Cubre:** REQ-003, REQ-004, REQ-005, REQ-016, DEC-005, DEC-006
-- **Componente:** story-outline-repository | por definir (analista técnico)
+- **Componente:** story-outline-repository | api/src/main/java/es/vargontoc/storyteller/domain/model/StoryOutline.java (con StoryBeat, EpisodicCastMember y StoryScriptVersion)
 - **Depende de:** TASK-003
 - **Alcance:** Definir en el dominio los tipos que representan el guion con escaleta, el beat estructurado con sus cinco campos obligatorios y el personaje secundario del reparto ligero, y añadir al cuento el marcador de versión de guion, sin alterar la estructura de los cuentos ya existentes.
 - **Hecho cuando:** el dominio dispone del guion con escaleta, del beat con los cinco campos obligatorios y del reparto ligero con nombre y función narrativa, y el cuento expone el marcador de versión de guion que permite distinguir cuentos antiguos de nuevos.
@@ -77,7 +77,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Revisar los tipos del dominio y comprobar que el beat refleja los cinco campos obligatorios de la escaleta.
   2. Comprobar que el reparto ligero no puede vincular un personaje del catálogo.
 
-### [ ] TASK-005 Modificar el servicio de guion para el protagonista obligatorio y la escaleta
+### [x] TASK-005 Modificar el servicio de guion para el protagonista obligatorio y la escaleta
 
 - **Cubre:** REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-009, REQ-014, REQ-016, ALT-001, ALT-002, ALT-003, DEC-003, DEC-005
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -102,7 +102,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   4. Aprobar el guion y comprobar que queda en estado aprobado.
   5. Enviar un hint global que no aplique a la edad y comprobar que se muestra el motivo del rechazo y la escaleta no cambia.
 
-### [ ] TASK-006 Modificar el repositorio de revisiones para la escaleta candidata
+### [x] TASK-006 Modificar el repositorio de revisiones para la escaleta candidata
 
 - **Cubre:** REQ-008, REQ-009, REQ-018, DEC-001
 - **Componente:** story-review-repository | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/StoryReviewRepository.java
@@ -119,10 +119,10 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   1. Enviar un hint global y comprobar que la revisión pendiente incluye la escaleta completa.
   2. Comprobar que la revisión señala qué beats han cambiado respecto a la escaleta anterior.
 
-### [ ] TASK-007 Implementar la edición directa de un beat con validación de edad
+### [x] TASK-007 Implementar la edición directa de un beat con validación de edad
 
 - **Cubre:** REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004
-- **Componente:** beat-editor | por definir (analista técnico)
+- **Componente:** beat-editor | api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java
 - **Depende de:** TASK-001, TASK-003, TASK-005, TASK-006
 - **Alcance:** Crear el caso de uso de edición directa de un beat que valida el texto editado contra las reglas de edad mediante el agente director, guarda el beat validado, devuelve el guion al estado pendiente de aprobación, ycoordina el aviso de invalidación de las páginas ya generadas antes de aplicar la edición.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-010, REQ-011 y REQ-012, un texto válido se guarda y actualiza el beat, un texto que incumple las reglas de edad se rechaza con el motivo sin modificar el beat, y una edición sobre un guion aprobado con páginas generadas muestra el aviso de invalidación y solo elimina las páginas y aplica la edición cuando el usuario confirma.
@@ -142,7 +142,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   5. Confirmar el aviso y comprobar que las páginas desaparecen del cuento y que el beat editado está aplicado.
   6. Cancelar el aviso y comprobar que el guion conserva su estado y que las páginas siguen en el cuento.
 
-### [ ] TASK-008 Modificar el servicio de páginas para exigir el guion aprobado y entregar el beat al escritor
+### [x] TASK-008 Modificar el servicio de páginas para exigir el guion aprobado y entregar el beat al escritor
 
 - **Cubre:** REQ-006, REQ-011, REQ-012, REQ-013, ALT-006, DEC-006
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -162,7 +162,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   3. Generar una página interior y comprobar que el texto generado sigue el hecho narrativo y los campos estructurados del beat correspondiente.
   4. Tras una edición directa confirmada, comprobar que las páginas invalidadas ya no aparecen en el cuento.
 
-### [ ] TASK-009 Eliminar el descubrimiento de personajes y el prompt asociado
+### [x] TASK-009 Eliminar el descubrimiento de personajes y el prompt asociado
 
 - **Cubre:** REQ-005, REQ-014, DEC-003
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java

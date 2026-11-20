@@ -141,6 +141,6 @@ El backend concentrará la definición y el ciclo de vida del director: el nuevo
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: correcta (origen: confirmación del usuario en la sesión del desarrollador-router, resultado "success"; alcance: suite completa del módulo `mvn -f api/pom.xml test` tras TASK-008, incluye TASK-001 a TASK-007)
 - Integración: pendiente
-- Validación manual: pendiente
+- Validación manual: correcta (origen: confirmación del usuario; alcance: arranque del backend con Ollama sin el modelo del director, TASK-002, resultado "success"). Pendiente: comprobar que el cargador heredado en `agents` ya no invoca al director. TASK-003: correcta (origen: confirmación del usuario, resultado "success"; alcance: arranque contra PostgreSQL con la migración 020 y convivencia de cuento antiguo y nuevo).

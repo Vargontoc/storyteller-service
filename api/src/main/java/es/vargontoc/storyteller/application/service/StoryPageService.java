@@ -16,7 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
-import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
+import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageReviewRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
@@ -24,7 +24,10 @@ import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.domain.model.Story;
+import es.vargontoc.storyteller.domain.model.StoryBeat;
+import es.vargontoc.storyteller.domain.model.StoryOutline;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryCoverAgentResult;
@@ -63,34 +66,35 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
     private final StoryPageReviewRepository reviewRepositoy;
     private final StoryRepository storyRepository;
 
-    private final DiscoverCharacterService discoverService;
-    
+    private final StoryOutlineRepository outlineRepository;
 
     public StoryPageService(OllamaPort ollama,
-        DiscoverCharacterService discover,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER) ChatClient client,
-        CharacterRepository characterRepository,
         StoryPageRepository repository,
         StoryPageReviewRepository reviewRepository,
-        StoryRepository storyRepository) {
+        StoryRepository storyRepository,
+        StoryOutlineRepository outlineRepository) {
             this.ollama = ollama;
             this.model = model;
             this.client = client;
             this.repository = repository;
             this.storyRepository = storyRepository;
             this.reviewRepositoy = reviewRepository;
-            this.discoverService = discover;
+            this.outlineRepository = outlineRepository;
     }
 
     @Override
     public StoryPage generate(StoryPageGenerateCommand cmd) {
-        // 1. Comprobar que el agente esta en el servidor Ollama
+        // 1. Obtenemos la story y exigimos el guion aprobado (los cuentos antiguos, sin escaleta, conservan su flujo)
+        Story story = storyRepository.getStory(cmd.idStory());
+        if(story.hasOutline() && story.getStatus() != StoryStatus.SCRIPT_ACCEPTED)
+            throw new AppException("Debe aprobarse el guion antes de generar la portada o las páginas", HttpStatus.CONFLICT);
+
+        // 2. Comprobar que el agente esta en el servidor Ollama
         if(!ollama.isAvailable(model))
             throw new AppException("El agente encargado de esta operación no está disponible", HttpStatus.BAD_REQUEST);
 
-        // 2. Obtenemos la story
-        Story story = storyRepository.getStory(cmd.idStory());
         if(story.getPages().isEmpty())
             return generateCover(story);
 
@@ -102,17 +106,20 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
         if(currentPage > maxPages)
             throw new AppException("Has alcanzado el máximo de páginas", HttpStatus.CONFLICT);
         
+        // El beat de la pagina N (contrato del escritor); vacio en cuentos antiguos sin escaleta
+        String beat = story.hasOutline() ? readBeat(story.getId(), currentPage) : "Sin beat: sigue la sinopsis y el resumen acumulado.";
+
         StoryPageAgentResult result = client.prompt()
         .user(u -> u.text(createPageResource)
             .param("synopsis", story.getSynopsis())
             .param("actors", readActors(story.getCharacters()))
+            .param("beat", beat)
             .param("summary", story.getAgentSummary())
             .param("current", currentPage).param("total", maxPages))
         .call().entity(StoryPageAgentResult.class);
 
-        var r = repository.create(result, story.getId(), currentPage);
-        discoverService.discoverCharacters(result.composition().actors(), story, result.composition().scene());
-        return r;
+        // Los secundarios son contexto narrativo del beat: no se crean fichas ni entradas de catalogo
+        return repository.create(result, story.getId(), currentPage);
     }
 
     
@@ -183,6 +190,25 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             , story.getId(), 0);
     }
 
+    /** Retira todas las páginas del cuento (portada incluida) por una edición de beat y devuelve cuántas se retiraron. */
+    public int deleteInvalidatedPages(Long storyId) {
+        return repository.deleteByStory(storyId);
+    }
+
+    /** Beat aprobado de la página interior N (página 1 = primer beat), con sus cinco campos. */
+    private String readBeat(Long storyId, int page) {
+        StoryOutline outline = outlineRepository.find(storyId)
+            .orElseThrow(() -> new AppException("El cuento no tiene escaleta aprobada", HttpStatus.CONFLICT));
+        if(page < 1 || page > outline.beats().size())
+            throw new AppException("La página " + page + " no tiene beat en la escaleta", HttpStatus.CONFLICT);
+        StoryBeat b = outline.beats().get(page - 1);
+        return "- Qué ocurre: " + b.event() + "\n"
+            + "- Función narrativa: " + b.narrativeFunction() + "\n"
+            + "- Quiénes aparecen: " + String.join(", ", b.participants()) + "\n"
+            + "- Emoción o tono: " + b.tone() + "\n"
+            + "- Nota visual: " + b.visualNote();
+    }
+
     private String readActors(List<Actor> characters) {
         return characters.stream()
             .map(c ->"- " + c.getName() + " ( " + c.getNarrativeDescription() + " / " + c.getVisualDescription() + " )")
@@ -226,11 +252,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase {
             reviewRepositoy.changeStatus(request.entityId(), request.status());
         else if(request.status() == RevisionStatus.CONFIRMED){
             reviewRepositoy.changeStatus(request.entityId(), request.status());
-            StoryPage page = repository.update(current.getId(), review);
-            
-            discoverService.discoverCharacters(page.getComposition().actors(), storyRepository.getStory(page.getId()), page.getComposition().scene());
-
-            return page;
+            return repository.update(current.getId(), review);
         }
 
         

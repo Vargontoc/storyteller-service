@@ -9,8 +9,6 @@ import org.springframework.stereotype.Repository;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.CharacterRepository;
 import es.vargontoc.storyteller.domain.model.Actor;
-import es.vargontoc.storyteller.domain.model.ActorMetadata;
-import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
 import es.vargontoc.storyteller.infrastructure.mappers.CharacterMapper;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CharacterJpaRepository;
@@ -102,17 +100,4 @@ public class CharacterRepositoryAdapter implements CharacterRepository {
         repository.save(entity);
     }
 
-
-
-    @Override
-    public Actor createActor(Long idStory, CharacterAgentResult result) {
-        var story =  storyRepository.findById(idStory).get();
-        CharacterJpaEntity entity = CharacterJpaEntity.draft(result.mainCharacter(), result.name(), result.visualDescription(), result.narrativeDescription(),
-            new ActorMetadata(result.visualDescriptionEn(), result.visualAttributes()));
-
-        entity.setStory(story);
-        entity.setCreatedAt(LocalDateTime.now());
-        return mapper.toModel(repository.save(entity));
-    }
-    
 }

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Escaleta candidata de una revision: beats, reparto ligero y numeros de pagina realmente distintos de la vigente. -->
+    <changeSet id="021-create-story-review-beat" author="storyteller">
+        <createTable tableName="story_review_beat">
+            <column name="review_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="position" type="INT"><constraints nullable="false"/></column>
+            <column name="event" type="VARCHAR(1000)"/>
+            <column name="narrative_function" type="VARCHAR(500)"/>
+            <column name="participants" type="VARCHAR(1000)"/>
+            <column name="tone" type="VARCHAR(300)"/>
+            <column name="visual_note" type="VARCHAR(1000)"/>
+        </createTable>
+        <addPrimaryKey tableName="story_review_beat" columnNames="review_id, position" constraintName="pk_story_review_beat"/>
+        <addForeignKeyConstraint baseTableName="story_review_beat" baseColumnNames="review_id" constraintName="fk_story_review_beat" referencedTableName="story_review" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="021-create-story-review-cast-member" author="storyteller">
+        <createTable tableName="story_review_cast_member">
+            <column name="review_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="position" type="INT"><constraints nullable="false"/></column>
+            <column name="name" type="VARCHAR(200)"/>
+            <column name="role" type="VARCHAR(500)"/>
+        </createTable>
+        <addPrimaryKey tableName="story_review_cast_member" columnNames="review_id, position" constraintName="pk_story_review_cast_member"/>
+        <addForeignKeyConstraint baseTableName="story_review_cast_member" baseColumnNames="review_id" constraintName="fk_story_review_cast_member" referencedTableName="story_review" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <changeSet id="021-create-story-review-changed-beat" author="storyteller">
+        <createTable tableName="story_review_changed_beat">
+            <column name="review_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="page_number" type="INT"><constraints nullable="false"/></column>
+        </createTable>
+        <addPrimaryKey tableName="story_review_changed_beat" columnNames="review_id, page_number" constraintName="pk_story_review_changed_beat"/>
+        <addForeignKeyConstraint baseTableName="story_review_changed_beat" baseColumnNames="review_id" constraintName="fk_story_review_changed_beat" referencedTableName="story_review" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+</databaseChangeLog>
