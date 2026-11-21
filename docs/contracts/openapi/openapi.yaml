@@ -19,8 +19,6 @@ tags:
     description: Generación de imágenes y audio
   - name: Storyteller
     description: Consulta, listado y borrado de cuentos, personajes y páginas
-  - name: Topics
-    description: Catálogo interno de temas para cuentos
   - name: CatalogCharacters
     description: Catálogo maestro de protagonistas reutilizables y sus revisiones
 
@@ -64,9 +62,6 @@ paths:
     $ref: "./paths/page/review-by-id-service.yaml"
   /reviews/page/confirm:
     $ref: "./paths/page/confirm-review-service.yaml"
-
-  /topic:
-    $ref: "./paths/topic/topics-service.yaml"
 
   /storyteller:
     $ref: "./paths/storyteller/stories-service.yaml"

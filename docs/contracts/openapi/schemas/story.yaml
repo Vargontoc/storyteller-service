@@ -12,6 +12,12 @@ properties:
     format: int64
   title:
     type: string
+  topic:
+    type: string
+    description: Categoría del tema con el que nació el cuento (instantánea textual)
+  topicDescription:
+    type: string
+    description: Descripción del tema con el que nació el cuento (instantánea textual)
   synopsis:
     type: string
     description: Sinopsis de la historia
@@ -42,5 +48,7 @@ properties:
 required:
   - id
   - title
+  - topic
+  - topicDescription
   - synopsis
   - size

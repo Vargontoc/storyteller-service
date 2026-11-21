@@ -1,11 +1,11 @@
 # Requisitos: agent-writer
 
-Estado: borrador
-Revisión: 2
+Estado: aprobado
+Revisión: 4
 
 ## Contexto
 
-Con el guion aprobado, el agente escritor genera la escena de portada y después las páginas del cuento, una a una y a partir del beat de cada página. El adulto revisa y acepta cada resultado antes de seguir, y pide los cambios con un hint. El texto es para un niño de 3 a 4 años que lo escucha.
+Con el guion aprobado, el agente escritor genera la escena de portada y después las páginas del cuento, una a una y a partir del beat de cada página. El adulto revisa cada resultado, pide cambios con un hint, elige entre las versiones generadas y acepta antes de seguir. El texto es para un niño de 3 a 4 años que lo escucha.
 
 ## Fuera de alcance
 
@@ -16,6 +16,7 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 - Regeneración de una página o de la portada sin hint, salvo el caso de REQ-029.
 - Límite de palabras por frase: solo se limitan el número de frases y el total de palabras del texto narrativo.
 - Regeneración automática de las páginas descartadas por un cambio.
+- Conservar o recuperar las versiones no aceptadas de un histórico después de aceptar o de descartar.
 - Cambios en el comportamiento de los cuentos antiguos sin escaleta.
 - Mecanismo técnico de aprovisionamiento del Modelfile del escritor en el servidor.
 - Política concreta de eliminación física de los assets de las páginas descartadas.
@@ -98,7 +99,7 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 ### REQ-011 Aceptar la portada o una página
 
-- **Requisito:** Cuando el usuario acepta la portada o una página pendiente de aceptación, el sistema deberá marcarla como aceptada sin iniciar la generación de la página siguiente; las páginas con aviso de número de frases no se pueden aceptar (REQ-028).
+- **Requisito:** Cuando el usuario acepta la portada o una página pendiente de aceptación, el sistema deberá marcarla como aceptada con su versión vigente (REQ-037) sin iniciar la generación de la página siguiente; una versión vigente con aviso de número de frases no se puede aceptar (REQ-028).
 - **Criterios de aceptación:**
   - Dada la página 1 pendiente de aceptación, cuando el usuario la acepta, entonces la página 1 queda aceptada y se habilita la acción de generar la página 2.
   - Dada la portada pendiente de aceptación, cuando el usuario la acepta, entonces la portada queda aceptada y se habilita la acción de generar la página 1.
@@ -106,9 +107,10 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 ### REQ-012 Pedir un cambio con hint
 
-- **Requisito:** Cuando el usuario envía un hint sobre la portada o una página pendiente de aceptación, el sistema deberá pedir al escritor una nueva versión completa de esa portada o página, aplicando el hint.
+- **Requisito:** Cuando el usuario envía un hint sobre la portada o una página pendiente de aceptación, el sistema deberá pedir al escritor una nueva versión completa de esa portada o página a partir de su versión vigente, aplicando el hint.
 - **Criterios de aceptación:**
   - Dada la página 3 pendiente de aceptación, cuando el usuario envía el hint "que el conejo esté contento", entonces el sistema muestra una nueva versión de la página 3 con texto narrativo y descripción de escena, pendiente de aceptación.
+  - Dada la página 3 con las versiones 1 y 2 en su histórico y la versión 1 vigente, cuando el usuario envía un hint, entonces el escritor recibe la versión 1 como base del cambio.
   - Dada una nueva versión de la página 3 pendiente de aceptación, cuando el usuario envía otro hint, entonces el sistema genera otra versión completa de la página 3.
 
 ### REQ-013 Hint obligatorio
@@ -121,19 +123,20 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 - **Requisito:** Si el hint pide algo que se sale del beat de la página o incumple las reglas de edad del producto, entonces el sistema deberá rechazarlo, mostrar el motivo que da el escritor y conservar la versión vigente.
 - **Criterios de aceptación:**
-  - Dada la página 3, cuyo beat no incluye al lobo, cuando el usuario envía el hint "que aparezca el lobo", entonces el sistema indica que el hint no se acepta, muestra el motivo y la página 3 conserva su texto y su escena.
+  - Dada la página 3, cuyo beat no incluye al lobo, cuando el usuario envía el hint "que aparezca el lobo", entonces el sistema indica que el hint no se acepta, muestra el motivo y la página 3 conserva su versión vigente.
   - Dada una página, cuando el usuario envía un hint con contenido no apto para 3 a 4 años, entonces el sistema indica que el hint no se acepta y muestra el motivo.
 
 ### REQ-015 Reabrir una página aceptada
 
-- **Requisito:** Cuando el usuario envía un hint sobre una página ya aceptada, el sistema deberá pedir al escritor una nueva versión de esa página y presentarla como propuesta pendiente de aceptación.
+- **Requisito:** Cuando el usuario envía un hint sobre una página ya aceptada, el sistema deberá pedir al escritor una nueva versión de esa página y presentarla como propuesta pendiente de aceptación en el histórico de propuestas de esa reapertura (REQ-038).
 - **Criterios de aceptación:**
   - Dado un cuento con las páginas 1 a 4 aceptadas, cuando el usuario envía un hint sobre la página 2, entonces el sistema muestra una nueva versión de la página 2 pendiente de aceptación.
   - Dada una propuesta pendiente para la página 2 reabierta, cuando el usuario consulta el cuento antes de aceptarla, entonces las páginas 3 y 4 siguen presentes.
+  - Dada una propuesta pendiente para la página 2 reabierta, cuando el usuario envía otro hint, entonces el escritor recibe como base la propuesta vigente.
 
 ### REQ-016 Descarte en cascada al aceptar una página reabierta
 
-- **Requisito:** Cuando el usuario acepta la nueva versión de una página reabierta K, el sistema deberá eliminar del cuento todas las páginas posteriores a K y aplicar a sus assets las reglas de gestión de assets del producto.
+- **Requisito:** Cuando el usuario acepta la propuesta vigente de una página reabierta K, el sistema deberá eliminar del cuento todas las páginas posteriores a K y aplicar a sus assets las reglas de gestión de assets del producto.
 - **Criterios de aceptación:**
   - Dado un cuento con las páginas 1 a 4 aceptadas y una propuesta pendiente para la página 2, cuando el usuario acepta la propuesta, entonces la página 2 queda aceptada con la nueva versión y las páginas 3 y 4 dejan de existir en el cuento.
   - Dado el descarte anterior, cuando el usuario consulta el cuento, entonces la siguiente página que puede generar es la 3.
@@ -163,7 +166,7 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 - **Requisito:** Si la generación de la portada o de una página no produce un resultado por un error, entonces el sistema deberá informar del fallo, conservar el estado anterior del cuento y permitir volver a solicitar la misma operación; una página que incumple el límite de longitud tras agotar los intentos de REQ-025 no se trata como fallo, sino según REQ-026.
 - **Criterios de aceptación:**
   - Dado un cuento con la página 2 aceptada, cuando falla la generación de la página 3, entonces el sistema muestra un mensaje de error, la página 3 no existe y el usuario puede volver a solicitar su generación.
-  - Dada la página 3 pendiente de aceptación, cuando falla la generación de la versión pedida con un hint, entonces el sistema muestra un mensaje de error y la página 3 conserva la versión anterior.
+  - Dada la página 3 pendiente de aceptación, cuando falla la generación de la versión pedida con un hint, entonces el sistema muestra un mensaje de error y la página 3 conserva su histórico y su versión vigente sin cambios.
   - Dada una página cuyas 3 generaciones incumplen el límite de longitud, cuando terminan, entonces el sistema no muestra un mensaje de fallo de generación y presenta la página según REQ-026.
 
 ### REQ-021 Cuento con todas las páginas aceptadas
@@ -175,13 +178,14 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 ### REQ-022 Vista de la portada y las páginas
 
-- **Requisito:** Cuando el usuario abre las páginas de un cuento con escaleta, el sistema deberá mostrar la portada y cada página generada con su texto narrativo, su descripción de escena, su estado (pendiente de aceptación o aceptada), el aviso de longitud si lo tiene y las acciones disponibles en ese estado.
+- **Requisito:** Cuando el usuario abre las páginas de un cuento con escaleta, el sistema deberá mostrar la portada y cada página generada con el texto narrativo, la descripción de escena y el aviso de longitud de su versión vigente, su estado (pendiente de aceptación o aceptada), su histórico de versiones si está pendiente y las acciones disponibles en ese estado.
 - **Criterios de aceptación:**
-  - Dada una página pendiente de aceptación sin aviso, cuando el usuario la visualiza, entonces ve su texto, su escena, el estado pendiente y las acciones de aceptar y de pedir un cambio con hint.
-  - Dada una página pendiente con aviso por exceso de palabras, cuando el usuario la visualiza, entonces ve el aviso y las acciones de aceptar y de pedir un cambio con hint.
-  - Dada una página pendiente con aviso por número de frases, cuando el usuario la visualiza, entonces ve el aviso, la acción de pedir un cambio con hint y la de regenerar sin hint, y no ve la acción de aceptar.
-  - Dada una página aceptada, cuando el usuario la visualiza, entonces ve su texto, su escena, el estado aceptada y la acción de pedir un cambio con hint.
-  - Dada una propuesta pendiente sobre una página reabierta, cuando el usuario la visualiza, entonces dispone además de la acción de descartar la propuesta.
+  - Dada una página pendiente de aceptación cuya versión vigente no tiene aviso, cuando el usuario la visualiza, entonces ve su texto, su escena, el estado pendiente y las acciones de aceptar y de pedir un cambio con hint.
+  - Dada una página pendiente con varias versiones en su histórico, cuando el usuario la visualiza, entonces ve todas las versiones con el aviso de cada una, distingue cuál es la vigente y dispone de la acción de marcar como vigente cualquier otra.
+  - Dada una página pendiente cuya versión vigente tiene aviso por exceso de palabras, cuando el usuario la visualiza, entonces ve el aviso y las acciones de aceptar y de pedir un cambio con hint.
+  - Dada una página pendiente cuya versión vigente tiene aviso por número de frases, cuando el usuario la visualiza, entonces ve el aviso, la acción de pedir un cambio con hint y la de regenerar sin hint, y no ve la acción de aceptar.
+  - Dada una página aceptada sin propuestas pendientes, cuando el usuario la visualiza, entonces ve su texto, su escena, el estado aceptada y la acción de pedir un cambio con hint, y no ve ningún histórico de versiones.
+  - Dada una propuesta pendiente sobre una página reabierta, cuando el usuario la visualiza, entonces ve la versión aceptada separada del histórico de propuestas y dispone además de la acción de descartar las propuestas.
   - Dado un cuento cuya última página existente está aceptada y no es la última de la escaleta, cuando el usuario visualiza las páginas, entonces dispone de la acción de generar la página siguiente.
 
 ### REQ-023 Cuentos antiguos sin escaleta
@@ -200,57 +204,59 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 ### REQ-025 Regeneración automática por incumplimiento de longitud
 
-- **Requisito:** Si el texto narrativo generado para una página incumple el límite de longitud de REQ-007, entonces el sistema deberá pedir otra generación al escritor sin intervención del usuario, hasta un máximo de 3 generaciones en total para esa solicitud, contando la primera.
+- **Requisito:** Si el texto narrativo generado para una página incumple el límite de longitud de REQ-007, entonces el sistema deberá pedir otra generación al escritor sin intervención del usuario, hasta un máximo de 3 generaciones en total para esa solicitud, contando la primera; si una de ellas cumple el límite, solo esa entra en el histórico.
 - **Criterios de aceptación:**
-  - Dada una solicitud de generar la página 3, cuando la primera generación tiene 70 palabras y la segunda tiene 55 palabras y 3 frases, entonces el sistema presenta la segunda al usuario para su revisión sin aviso y no hay tercera generación.
+  - Dada una solicitud de generar la página 3, cuando la primera generación tiene 70 palabras y la segunda tiene 55 palabras y 3 frases, entonces el sistema presenta la segunda al usuario para su revisión sin aviso, no hay tercera generación y el histórico de la página 3 contiene solo la segunda.
   - Dada una solicitud de generar la página 3, cuando las 3 generaciones incumplen el límite, entonces el sistema no pide una cuarta generación.
-  - Dada una solicitud de cambio con hint o de reapertura de una página, cuando la versión generada incumple el límite, entonces el sistema aplica las mismas regeneraciones automáticas.
-  - Dada una regeneración automática en curso, cuando el usuario consulta la página, entonces no se le presentan las versiones intermedias que incumplen el límite.
+  - Dada una solicitud de cambio con hint, de regeneración sin hint o de reapertura de una página, cuando la versión generada incumple el límite, entonces el sistema aplica las mismas regeneraciones automáticas.
+  - Dada una regeneración automática en curso, cuando el usuario consulta la página, entonces no se le presenta ninguna de las versiones de esa solicitud hasta que terminan las regeneraciones.
 
-### REQ-026 Página con aviso tras agotar las generaciones
+### REQ-026 Versiones con aviso tras agotar las generaciones
 
-- **Requisito:** Si tras las 3 generaciones de REQ-025 el texto narrativo sigue incumpliendo el límite de longitud, entonces el sistema deberá presentar la última versión generada como pendiente de aceptación con un aviso que indique qué límite incumple: exceso de palabras, número de frases fuera de 1 a 4, o ambos.
+- **Requisito:** Si tras las 3 generaciones de REQ-025 el texto narrativo sigue incumpliendo el límite de longitud, entonces el sistema deberá añadir las 3 versiones al histórico, cada una con un aviso que indique qué límite incumple (exceso de palabras, número de frases fuera de 1 a 4, o ambos), y dejar vigente la última generada.
 - **Criterios de aceptación:**
-  - Dada una página cuyas 3 generaciones superan 66 palabras con 1 a 4 frases, cuando terminan, entonces la página se muestra pendiente de aceptación con un aviso de exceso de palabras.
-  - Dada una página cuyas 3 generaciones tienen 5 frases, cuando terminan, entonces la página se muestra pendiente de aceptación con un aviso de número de frases.
-  - Dada una página con aviso, cuando el usuario la consulta, entonces la página no se ha descartado y conserva su texto narrativo y su descripción de escena.
+  - Dada una página cuyas 3 generaciones superan 66 palabras con 1 a 4 frases, cuando terminan, entonces el histórico contiene las 3 versiones con aviso de exceso de palabras y la vigente es la tercera.
+  - Dada una página cuyas 3 generaciones tienen 5 frases, cuando terminan, entonces la página se muestra pendiente de aceptación con las 3 versiones con aviso de número de frases.
+  - Dada una página cuya primera generación tiene 5 frases y la segunda y tercera superan 66 palabras con 1 a 4 frases, cuando terminan, entonces la primera muestra aviso de número de frases, la segunda y la tercera muestran aviso de exceso de palabras y la vigente es la tercera.
+  - Dadas las 3 versiones con aviso anteriores, cuando el usuario marca como vigente la primera, entonces la vigente pasa a ser la primera.
 
-### REQ-027 Aceptar una página con aviso de exceso de palabras
+### REQ-027 Aceptar una versión con aviso de exceso de palabras
 
-- **Requisito:** Cuando el usuario acepta una página pendiente cuyo único aviso es de exceso de palabras, el sistema deberá aceptarla tal cual, igual que una página sin aviso.
+- **Requisito:** Cuando el usuario acepta una página pendiente cuya versión vigente tiene como único aviso el de exceso de palabras, el sistema deberá aceptarla tal cual, igual que una versión sin aviso.
 - **Criterios de aceptación:**
-  - Dada la página 3 pendiente con aviso de exceso de palabras, cuando el usuario la acepta, entonces la página 3 queda aceptada con su texto sin cambios y se habilita la acción de generar la página 4.
-  - Dada la página 3 pendiente con aviso de exceso de palabras, cuando el usuario envía un hint, entonces el sistema genera una nueva versión según REQ-012.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de exceso de palabras, cuando el usuario la acepta, entonces la página 3 queda aceptada con el texto de esa versión sin cambios y se habilita la acción de generar la página 4.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de exceso de palabras, cuando el usuario envía un hint, entonces el sistema genera una nueva versión según REQ-012.
 
 ### REQ-028 Aceptación bloqueada por número de frases
 
-- **Requisito:** Si una página pendiente tiene aviso de número de frases fuera de 1 a 4, entonces el sistema deberá rechazar su aceptación e indicar que hay que pedir un cambio con hint o regenerarla.
+- **Requisito:** Si la versión vigente de una página pendiente tiene aviso de número de frases fuera de 1 a 4, entonces el sistema deberá rechazar su aceptación e indicar que hay que elegir otra versión válida, pedir un cambio con hint o regenerarla sin hint.
 - **Criterios de aceptación:**
-  - Dada la página 3 pendiente con aviso de número de frases, cuando se solicita aceptarla, entonces el sistema rechaza la operación, indica el motivo y la página 3 sigue pendiente.
-  - Dada una página pendiente con avisos de número de frases y de exceso de palabras, cuando se solicita aceptarla, entonces el sistema rechaza la operación.
-  - Dada la página 3 pendiente con aviso de número de frases, cuando se solicita generar la página 4, entonces el sistema rechaza la operación según REQ-010.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de número de frases, cuando se solicita aceptarla, entonces el sistema rechaza la operación, indica el motivo y la página 3 sigue pendiente.
+  - Dada una página pendiente cuya versión vigente tiene avisos de número de frases y de exceso de palabras, cuando se solicita aceptarla, entonces el sistema rechaza la operación.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de número de frases y otra versión del histórico sin aviso de número de frases, cuando el usuario marca esa otra versión como vigente, entonces se habilita la acción de aceptar.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de número de frases, cuando se solicita generar la página 4, entonces el sistema rechaza la operación según REQ-010.
 
 ### REQ-029 Regenerar sin hint una página bloqueada
 
-- **Requisito:** Cuando el usuario solicita regenerar sin hint una página pendiente con aviso de número de frases, el sistema deberá pedir al escritor una nueva versión completa de esa página a partir de su beat, aplicando REQ-025 y REQ-026.
+- **Requisito:** Cuando el usuario solicita regenerar sin hint una página pendiente cuya versión vigente tiene aviso de número de frases, el sistema deberá pedir al escritor una nueva versión completa de esa página a partir de su beat, aplicando REQ-025 y REQ-026.
 - **Criterios de aceptación:**
-  - Dada la página 3 pendiente con aviso de número de frases, cuando el usuario solicita regenerarla sin hint, entonces el sistema genera una nueva versión de la página 3 pendiente de aceptación.
-  - Dada una página pendiente sin aviso o con aviso solo de exceso de palabras, cuando el usuario la visualiza, entonces no dispone de la acción de regenerar sin hint.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de número de frases, cuando el usuario solicita regenerarla sin hint, entonces el sistema añade al histórico una nueva versión de la página 3 pendiente de aceptación.
+  - Dada una página pendiente cuya versión vigente no tiene aviso o tiene aviso solo de exceso de palabras, cuando el usuario la visualiza, entonces no dispone de la acción de regenerar sin hint, aunque otra versión de su histórico tenga aviso de número de frases.
 
-### REQ-030 Descartar la propuesta de una página reabierta
+### REQ-030 Descartar las propuestas de una reapertura
 
-- **Requisito:** Cuando el usuario descarta la propuesta pendiente de una página reabierta, el sistema deberá eliminar la propuesta y conservar la versión aceptada de esa página y todas sus páginas posteriores.
+- **Requisito:** Cuando el usuario descarta las propuestas de una portada o página reabierta, el sistema deberá eliminar todo el histórico de propuestas de esa reapertura y conservar la versión aceptada y todas las páginas posteriores.
 - **Criterios de aceptación:**
-  - Dado un cuento con las páginas 1 a 4 aceptadas y una propuesta pendiente para la página 2, cuando el usuario descarta la propuesta, entonces la página 2 muestra su versión aceptada anterior y las páginas 3 y 4 permanecen aceptadas.
-  - Dada una propuesta pendiente con aviso de número de frases sobre una página reabierta, cuando el usuario la descarta, entonces la página conserva su versión aceptada.
+  - Dado un cuento con las páginas 1 a 4 aceptadas y tres propuestas pendientes para la página 2, cuando el usuario descarta las propuestas, entonces la página 2 muestra su versión aceptada anterior, no tiene histórico de propuestas y las páginas 3 y 4 permanecen aceptadas.
+  - Dada una página reabierta cuya propuesta vigente tiene aviso de número de frases, cuando el usuario descarta las propuestas, entonces la página conserva su versión aceptada.
 
 ### REQ-031 Reabrir la portada aceptada
 
-- **Requisito:** Cuando el usuario envía un hint sobre la portada aceptada y después acepta la nueva versión, el sistema deberá sustituir la portada aceptada por la nueva versión sin eliminar ninguna página.
+- **Requisito:** Cuando el usuario envía un hint sobre la portada aceptada y después acepta la propuesta vigente, el sistema deberá sustituir la portada aceptada por esa propuesta sin eliminar ninguna página.
 - **Criterios de aceptación:**
   - Dado un cuento con la portada y las páginas 1 a 3 aceptadas, cuando el usuario envía un hint sobre la portada, entonces el sistema muestra una nueva versión de la portada pendiente de aceptación.
   - Dada la propuesta anterior, cuando el usuario la acepta, entonces la portada queda aceptada con la nueva versión, las páginas 1 a 3 siguen aceptadas y no se muestra aviso de descarte.
-  - Dada la propuesta anterior, cuando el usuario la descarta, entonces la portada conserva su versión aceptada.
+  - Dada la propuesta anterior, cuando el usuario descarta las propuestas, entonces la portada conserva su versión aceptada.
 
 ### REQ-032 Una sola generación a la vez en toda la aplicación
 
@@ -262,12 +268,58 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
   - Dada una página en su segunda generación automática según REQ-025, cuando el usuario solicita cualquier otra generación, entonces el sistema la rechaza, porque las regeneraciones automáticas forman parte de la misma generación.
   - Dada una generación que acaba de terminar con éxito o con fallo, cuando el usuario solicita otra generación, entonces el sistema la inicia.
 
-### REQ-033 Sin aceptar ni descartar durante una generación del cuento
+### REQ-033 Sin aceptar, descartar ni elegir versión durante una generación del cuento
 
-- **Requisito:** Mientras se genera la portada o una página de un cuento, el sistema deberá rechazar en ese cuento las solicitudes de aceptar y de descartar propuestas.
+- **Requisito:** Mientras se genera la portada o una página de un cuento, el sistema deberá rechazar en ese cuento las solicitudes de aceptar, de descartar propuestas y de marcar una versión como vigente.
 - **Criterios de aceptación:**
   - Dada la página 3 pendiente de aceptación y una generación con hint de la página 3 en curso, cuando el usuario solicita aceptar la página 3, entonces el sistema rechaza la operación e indica que hay una generación en curso.
   - Dada una propuesta pendiente sobre la página 2 reabierta y una generación con hint de esa propuesta en curso, cuando el usuario solicita descartarla, entonces el sistema rechaza la operación.
+  - Dada la página 3 con dos versiones en su histórico, la segunda vigente y una generación con hint de la página 3 en curso, cuando el usuario solicita marcar como vigente la primera, entonces el sistema rechaza la operación, indica que hay una generación en curso y la vigente sigue siendo la segunda.
+  - Dada una generación de un cuento que acaba de terminar, cuando el usuario solicita marcar como vigente otra versión del histórico, entonces el sistema la marca como vigente según REQ-036.
+
+### REQ-034 Histórico de versiones de una portada o página pendiente
+
+- **Requisito:** Cuando se presenta al usuario una versión de la portada o de una página pendiente de aceptación (generación inicial, cambio con hint o regeneración sin hint), el sistema deberá añadirla al histórico de versiones de esa portada o página, con su aviso de longitud si lo tiene, y marcarla como vigente.
+- **Criterios de aceptación:**
+  - Dada una solicitud de generar la página 3 cuya primera generación cumple el límite, cuando termina, entonces el histórico de la página 3 contiene una versión y es la vigente.
+  - Dada la página 3 con una versión en su histórico, cuando el usuario envía un hint y la nueva versión cumple el límite, entonces el histórico contiene dos versiones y la vigente es la nueva.
+  - Dada la página 3 pendiente cuya versión vigente tiene aviso de número de frases, cuando el usuario la regenera sin hint y la nueva versión cumple el límite, entonces el histórico gana una versión sin aviso, que pasa a ser la vigente.
+  - Dada la portada pendiente con una versión, cuando el usuario envía un hint, entonces el histórico de la portada contiene dos versiones.
+
+### REQ-035 Hint rechazado o fallo sin nueva versión
+
+- **Requisito:** Si un hint es rechazado (REQ-014) o una generación falla (REQ-020), entonces el sistema no deberá añadir ninguna versión al histórico ni cambiar la versión vigente.
+- **Criterios de aceptación:**
+  - Dada la página 3 con dos versiones en su histórico y la segunda vigente, cuando el escritor rechaza un hint, entonces el histórico sigue con dos versiones y la vigente sigue siendo la segunda.
+  - Dada la página 3 con dos versiones en su histórico, cuando falla la generación pedida con un hint, entonces el histórico sigue con dos versiones.
+
+### REQ-036 Elegir la versión vigente
+
+- **Requisito:** Cuando el usuario marca como vigente una versión del histórico de la portada o de una página pendiente, el sistema deberá hacerla vigente y mostrar su texto narrativo, su descripción de escena y su aviso como los de esa portada o página.
+- **Criterios de aceptación:**
+  - Dada la página 3 con tres versiones y la tercera vigente, cuando el usuario marca como vigente la primera, entonces la página 3 muestra el texto, la escena y el aviso de la primera, y el histórico conserva las tres versiones.
+  - Dada la página 3 con la primera versión marcada como vigente, cuando el usuario la acepta, entonces la página 3 queda aceptada con el texto de la primera versión.
+
+### REQ-037 Aceptar la versión vigente y eliminar el histórico
+
+- **Requisito:** Cuando el usuario acepta la portada o una página pendiente, el sistema deberá aceptar su versión vigente y eliminar el resto de versiones de su histórico.
+- **Criterios de aceptación:**
+  - Dada la página 3 con tres versiones y la segunda vigente, cuando el usuario la acepta, entonces la página 3 queda aceptada con la segunda versión y ya no se muestra ningún histórico de versiones.
+  - Dada la página 3 aceptada tras tener tres versiones, cuando se genera la página 4, entonces el escritor recibe como texto de la página 3 el de la versión aceptada.
+
+### REQ-038 Histórico de propuestas de una reapertura
+
+- **Requisito:** Mientras la portada o una página aceptada tiene propuestas pendientes por una reapertura, el sistema deberá mantener esas propuestas en un histórico propio y conservar la versión aceptada fuera de él, sin cambios, hasta que se acepte una propuesta o se descarten.
+- **Criterios de aceptación:**
+  - Dada la página 2 aceptada y reabierta con dos hints, cuando el usuario la visualiza, entonces ve dos propuestas en el histórico y la versión aceptada aparte, con su texto original.
+  - Dada la página 2 reabierta con dos propuestas, cuando el usuario quiere marcar como vigente una versión, entonces solo puede elegir entre las dos propuestas y no la versión aceptada.
+  - Dada la página 2 reabierta con dos propuestas, cuando el usuario acepta la propuesta vigente, entonces la página 2 queda aceptada con esa propuesta y no se muestra ningún histórico.
+
+### REQ-039 Sin límite de versiones en el histórico
+
+- **Requisito:** El sistema no deberá limitar el número de versiones que puede contener el histórico de una portada o página pendiente ni el de las propuestas de una reapertura.
+- **Criterios de aceptación:**
+  - Dada la página 3 pendiente con una versión, cuando el usuario envía 10 hints aceptados por el escritor y generados sin fallo, entonces el histórico contiene 11 versiones y todas se pueden marcar como vigentes.
 
 ## Requisitos no funcionales
 
@@ -306,7 +358,7 @@ Ninguno.
 ### SUP-005 Una sola generación a la vez en toda la aplicación
 
 - **Tipo:** decisional
-- **Descripción:** Mientras hay una generación en curso de cualquier tipo (escritor, director, agente de personaje, retratos de ComfyUI o temas), el sistema rechaza cualquier otra generación e indica que hay una en curso; además, mientras se genera la portada o una página de un cuento, se rechazan en ese cuento la aceptación y el descarte de propuestas. Motivo: los modelos locales comparten una única GPU y el rendimiento con procesos en paralelo es incierto. Recogido en REQ-032 y REQ-033.
+- **Descripción:** Mientras hay una generación en curso de cualquier tipo (escritor, director, agente de personaje, retratos de ComfyUI o temas), el sistema rechaza cualquier otra generación e indica que hay una en curso; además, mientras se genera la portada o una página de un cuento, se rechazan en ese cuento la aceptación, el descarte de propuestas y la elección de versión vigente (SUP-011). Motivo: los modelos locales comparten una única GPU y el rendimiento con procesos en paralelo es incierto. Recogido en REQ-032 y REQ-033.
 - **Impacto:** REQ-003, REQ-011, REQ-012, REQ-015, REQ-032, REQ-033; también funcionalidades de agent-director, del agente de personaje, de los retratos y de los temas.
 - **Estado:** validado
 
@@ -334,16 +386,23 @@ Ninguno.
 ### SUP-009 Versión presentada tras agotar las generaciones
 
 - **Tipo:** decisional
-- **Descripción:** Cuando las 3 generaciones incumplen el límite de longitud, se presenta la última versión generada, no la que más se acerque al límite.
+- **Descripción:** Cuando las 3 generaciones incumplen el límite de longitud, se presenta la última versión generada, no la que más se acerque al límite. Descartado por el usuario: se sustituye por el histórico de versiones, en el que entran las 3 versiones con su aviso, queda vigente la última y el usuario elige (REQ-026, REQ-034, REQ-036).
 - **Impacto:** REQ-026.
-- **Estado:** pendiente
+- **Estado:** descartado
 
 ### SUP-010 Regeneración sin hint limitada a la página bloqueada
 
 - **Tipo:** decisional
-- **Descripción:** Cuando la aceptación está bloqueada por número de frases, además del cambio con hint, el usuario puede regenerar la página sin hint. Es la única excepción a la exclusión de la regeneración sin hint.
+- **Descripción:** Cuando la aceptación está bloqueada por número de frases en la versión vigente, además del cambio con hint y de elegir otra versión válida, el usuario puede regenerar la página sin hint. Es la única excepción a la exclusión de la regeneración sin hint.
 - **Impacto:** REQ-022, REQ-028, REQ-029, Fuera de alcance.
-- **Estado:** pendiente
+- **Estado:** validado
+
+### SUP-011 Elegir versión vigente durante una generación del cuento
+
+- **Tipo:** decisional
+- **Descripción:** Mientras se genera la portada o una página de un cuento, el usuario no puede marcar una versión como vigente en ese cuento, del mismo modo que no puede aceptar ni descartar (REQ-033), para que un hint en curso no quede aplicado sobre una versión que ya no es la vigente. Recogido en REQ-033.
+- **Impacto:** REQ-012, REQ-033, REQ-036.
+- **Estado:** validado
 
 ## Preguntas abiertas
 

@@ -23,8 +23,6 @@ import es.vargontoc.storyteller.infrastructure.persistence.PortraitGenerationJob
 import es.vargontoc.storyteller.infrastructure.persistence.PortraitGenerationJobJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
-import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaEntity;
-import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -48,7 +46,6 @@ class PortraitForkServiceTest {
     @Autowired private PortraitGenerationJobJpaRepository jobs;
     @Autowired private CharacterJpaRepository snapshots;
     @Autowired private StoryJpaRepository stories;
-    @Autowired private TopicJpaRepository topics;
     @Autowired private CatalogCharacterUsagePort usage;
 
     @Test
@@ -121,11 +118,8 @@ class PortraitForkServiceTest {
     }
 
     private CharacterJpaEntity snapshot(CatalogCharacterJpaEntity catalogCharacter, String name) {
-        TopicJpaEntity topic = new TopicJpaEntity();
-        topic.setName("Amistad");
-        topic.setDescription("Una historia amable");
-        topics.saveAndFlush(topic);
-        StoryJpaEntity story = StoryJpaEntity.draft(topic, StorySize.S, "La aventura", "Una aventura amable");
+        StoryJpaEntity story = StoryJpaEntity.draft(StorySize.S, "Amistad", "Una historia amable",
+            "La aventura", "Una aventura amable");
         stories.saveAndFlush(story);
         CharacterJpaEntity snapshot = CharacterJpaEntity.draft(true, name, "zorra naranja", "Una protagonista amable",
             new ActorMetadata("orange fox", List.of("orange")));

@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
@@ -28,7 +29,6 @@ import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharact
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
@@ -41,7 +41,6 @@ import es.vargontoc.storyteller.domain.model.StoryBeat;
 import es.vargontoc.storyteller.domain.model.StoryOutline;
 import es.vargontoc.storyteller.domain.model.StoryReview;
 import es.vargontoc.storyteller.domain.model.StoryScriptVersion;
-import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.domain.request.DirectorReviewRequest;
 import es.vargontoc.storyteller.domain.request.DirectorScriptRequest;
 import es.vargontoc.storyteller.domain.response.DirectorBeat;
@@ -59,7 +58,6 @@ class StoryServiceTest {
     private StoryRepository stories;
     private StoryReviewRepository reviews;
     private StoryOutlineRepository outlines;
-    private TopicRepository topics;
     private DirectorAgent director;
     private CatalogCharacterRepository catalog;
     private CharacterImageConditionPort images;
@@ -71,21 +69,14 @@ class StoryServiceTest {
         stories = mock(StoryRepository.class);
         reviews = mock(StoryReviewRepository.class);
         outlines = mock(StoryOutlineRepository.class);
-        topics = mock(TopicRepository.class);
         director = mock(DirectorAgent.class);
         catalog = mock(CatalogCharacterRepository.class);
         images = mock(CharacterImageConditionPort.class);
         lock = mock(PortraitLockService.class);
-        service = new StoryService(stories, topics, reviews, outlines, director, catalog, images, lock);
-
-        Topic topic = new Topic();
-        topic.setId(1L);
-        topic.setType("Amistad");
-        topic.setDescription("Un paseo");
-        when(topics.getTopics()).thenReturn(List.of(topic));
+        service = new StoryService(stories, reviews, outlines, director, catalog, images, lock);
 
         Story created = story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE);
-        when(stories.create(any(), any(), anyLong(), anyLong())).thenReturn(created);
+        when(stories.create(any(), any(), anyString(), anyString(), anyLong())).thenReturn(created);
         when(stories.getStory(10L)).thenReturn(created);
     }
 
@@ -102,26 +93,26 @@ class StoryServiceTest {
         when(lock.isLocked(9L)).thenReturn(true);
         when(director.generateScript(any())).thenReturn(script(SIZE.getPages()));
 
-        service.generate(new StoryGenerateCommand(1L, SIZE));
+        service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE));
 
-        verify(stories).create(any(), eq(SIZE), eq(1L), eq(7L));
+        verify(stories).create(any(), eq(SIZE), eq("Amistad"), eq("Un paseo"), eq(7L));
     }
 
     @Test
     void withoutAnyApprovedPortraitIsRejectedAndNothingIsCreated() {
         when(catalog.findAll()).thenReturn(List.of(new CatalogCharacter(8L, "Draft", "n", "v", "e", List.of())));
 
-        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand(1L, SIZE)));
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE)));
 
         verifyNoInteractions(director, outlines);
-        verify(stories, never()).create(any(), any(), anyLong(), anyLong());
+        verify(stories, never()).create(any(), any(), anyString(), anyString(), anyLong());
     }
 
     @Test
     void explicitProtagonistWithoutApprovedPortraitIsRejected() {
         when(catalog.findById(8L)).thenReturn(new CatalogCharacter(8L, "Draft", "n", "v", "e", List.of()));
 
-        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand(1L, SIZE, 8L)));
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 8L)));
 
         verifyNoInteractions(director, outlines);
     }
@@ -132,7 +123,7 @@ class StoryServiceTest {
         when(images.hasApprovedPortrait(7L)).thenReturn(true);
         when(director.generateScript(any())).thenReturn(script(SIZE.getPages()));
 
-        service.generate(new StoryGenerateCommand(1L, SIZE, 7L));
+        service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L));
 
         ArgumentCaptor<DirectorScriptRequest> request = ArgumentCaptor.forClass(DirectorScriptRequest.class);
         verify(director).generateScript(request.capture());
@@ -142,10 +133,11 @@ class StoryServiceTest {
         assertEquals(7L, request.getValue().protagonistCatalogId());
         assertEquals(SIZE.getPages(), request.getValue().pages());
         assertEquals("Amistad", request.getValue().topic());
+        assertEquals("Un paseo", request.getValue().description());
 
         // La instantánea del protagonista (ficha de catálogo) viaja como único personaje del cuento
         ArgumentCaptor<StoryAgentResult> persisted = ArgumentCaptor.forClass(StoryAgentResult.class);
-        verify(stories).create(persisted.capture(), eq(SIZE), eq(1L), eq(7L));
+        verify(stories).create(persisted.capture(), eq(SIZE), eq("Amistad"), eq("Un paseo"), eq(7L));
         assertEquals(1, persisted.getValue().characters().size());
         assertTrue(persisted.getValue().characters().get(0).mainCharacter());
         assertEquals("Luna", persisted.getValue().characters().get(0).name());
@@ -161,10 +153,10 @@ class StoryServiceTest {
                 List.of(new DirectorBeat("algo", "", List.of("Luna"), "alegre", "nota")));
         when(director.generateScript(any())).thenReturn(incomplete);
 
-        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand(1L, SIZE, 7L)));
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L)));
 
         verify(director, times(3)).generateScript(any());
-        verify(stories, never()).create(any(), any(), anyLong(), anyLong());
+        verify(stories, never()).create(any(), any(), anyString(), anyString(), anyLong());
         verify(outlines, never()).save(anyLong(), any());
     }
 
@@ -176,7 +168,7 @@ class StoryServiceTest {
                 .thenThrow(new AppException("incompleta", org.springframework.http.HttpStatus.BAD_REQUEST))
                 .thenReturn(script(SIZE.getPages()));
 
-        service.generate(new StoryGenerateCommand(1L, SIZE, 7L));
+        service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L));
 
         verify(director, times(2)).generateScript(any());
         verify(outlines).save(eq(10L), any());
@@ -188,7 +180,7 @@ class StoryServiceTest {
         when(images.hasApprovedPortrait(7L)).thenReturn(true);
         when(director.generateScript(any())).thenReturn(script(SIZE.getPages()));
 
-        Story result = service.generate(new StoryGenerateCommand(1L, SIZE, 7L));
+        Story result = service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L));
 
         assertEquals(10L, result.getId());
         ArgumentCaptor<StoryOutline> outline = ArgumentCaptor.forClass(StoryOutline.class);
@@ -197,7 +189,7 @@ class StoryServiceTest {
         assertEquals(List.of(new EpisodicCastMember("Pipo", "Amigo")), outline.getValue().cast());
         // El único personaje que se da de alta con el cuento es el protagonista (instantánea de catálogo)
         ArgumentCaptor<StoryAgentResult> persisted = ArgumentCaptor.forClass(StoryAgentResult.class);
-        verify(stories).create(persisted.capture(), any(), anyLong(), anyLong());
+        verify(stories).create(persisted.capture(), any(), anyString(), anyString(), anyLong());
         assertEquals("T", persisted.getValue().title());
         assertEquals(1, persisted.getValue().characters().size());
     }

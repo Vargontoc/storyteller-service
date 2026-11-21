@@ -18,7 +18,6 @@ import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharact
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.enums.StorySize;
 import es.vargontoc.storyteller.domain.model.CatalogCharacter;
@@ -27,14 +26,13 @@ import es.vargontoc.storyteller.shared.exceptions.AppException;
 class StoryCatalogCharacterTest {
     @Test
     void optionalCatalogCharacterKeepsTheLegacyCommandShape() {
-        assertEquals(null, new StoryGenerateCommand(1L, StorySize.S).catalogCharacterId());
-        assertEquals(7L, new StoryGenerateCommand(1L, StorySize.S, 7L).catalogCharacterId());
+        assertEquals(null, new StoryGenerateCommand("Amistad", "Un paseo", StorySize.S).catalogCharacterId());
+        assertEquals(7L, new StoryGenerateCommand("Amistad", "Un paseo", StorySize.S, 7L).catalogCharacterId());
     }
 
     @Test
     void runningCatalogCharacterIsRejectedBeforeCallingTheDirectorOrCreatingAStory() {
         var stories = mock(StoryRepository.class);
-        var topics = mock(TopicRepository.class);
         var director = mock(DirectorAgent.class);
         var catalog = mock(CatalogCharacterRepository.class);
         var images = mock(CharacterImageConditionPort.class);
@@ -42,10 +40,10 @@ class StoryCatalogCharacterTest {
         when(catalog.findById(7L)).thenReturn(new CatalogCharacter(7L, "Luna", "n", "v", "e", List.of()));
         when(images.hasApprovedPortrait(7L)).thenReturn(true);
         doThrow(new AppException("bloqueado", HttpStatus.CONFLICT)).when(lock).assertCanUseAsStoryProtagonist(7L);
-        var service = new StoryService(stories, topics, mock(StoryReviewRepository.class),
+        var service = new StoryService(stories, mock(StoryReviewRepository.class),
                 mock(StoryOutlineRepository.class), director, catalog, images, lock);
 
-        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand(1L, StorySize.S, 7L)));
-        verifyNoInteractions(director, stories, topics);
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", StorySize.S, 7L)));
+        verifyNoInteractions(director, stories);
     }
 }

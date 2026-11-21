@@ -3,10 +3,14 @@
 type: object
 additionalProperties: false
 properties:
-  topicId:
-    type: integer
-    format: int64
-    description: Identificador del tema del catálogo interno (GET /topic)
+  topic:
+    type: string
+    maxLength: 30
+    description: Categoría del tema elegido en el catálogo estático de la app
+  description:
+    type: string
+    maxLength: 100
+    description: Descripción del tema elegido; viaja al director junto con la categoría
   size:
     $ref: "../enums/story-size.yaml"
   catalogCharacterId:
@@ -18,5 +22,6 @@ properties:
       Si se omite o es nulo, el servidor elige al azar uno de los disponibles (con retrato aprobado y sin
       generación en curso). No existe un campo aparte de selección aleatoria
 required:
-  - topicId
+  - topic
+  - description
   - size

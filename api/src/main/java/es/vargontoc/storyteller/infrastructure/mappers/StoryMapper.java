@@ -24,6 +24,8 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         StoryJpaEntity target = new StoryJpaEntity();
         target.setId(model.getId());
         target.setTitle(model.getTitle());
+        target.setTopic(model.getTopic());
+        target.setTopicDescription(model.getTopicDescription());
         target.setSynopsis(model.getSynopsis());
         target.setSize(model.getSize());
         target.setCharacters(characterMapper.toEntity(model.getCharacters()));
@@ -41,6 +43,8 @@ public class StoryMapper extends AbstractMapper<StoryJpaEntity, Story> {
         target.setSize(entity.getSize());
         target.setSynopsis(entity.getSynopsis());
         target.setTitle(entity.getTitle());
+        target.setTopic(entity.getTopic());
+        target.setTopicDescription(entity.getTopicDescription());
 
         target.setCharacters(characterMapper.toModel(entity.getCharacters()));
         target.setPages(pageMapper.toModel(entity.getPages()));

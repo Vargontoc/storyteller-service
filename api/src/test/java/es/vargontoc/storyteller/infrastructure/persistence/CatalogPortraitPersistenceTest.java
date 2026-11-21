@@ -115,14 +115,9 @@ class CatalogPortraitPersistenceTest {
     }
 
     private StoryJpaEntity savedStory() {
-        TopicJpaEntity topic = new TopicJpaEntity();
-        topic.setName("Bosque");
-        topic.setDescription("Una aventura amable");
-        topic.setCreatedAt(LocalDateTime.now());
-        entityManager.persist(topic);
-
         StoryJpaEntity story = new StoryJpaEntity();
-        story.setTopic(topic);
+        story.setTopic("Bosque");
+        story.setTopicDescription("Una aventura amable");
         story.setTitle("La aventura de Luna");
         story.setSynopsis("Luna aprende a ayudar");
         story.setSize(StorySize.S);

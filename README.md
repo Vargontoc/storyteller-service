@@ -7,7 +7,7 @@ Este proyecto es una aplicación web para generar cuentos mediante agentes de IA
 ## Features
 
 * **Generación de cuentos** : generacion de un cuento de manera secuencial y en tiempo real.
-* **Catálogo de temas** : temas internos de aventuras, rutinas, animales, naturaleza, familia y amigos y juegos para niños de 3 a 4 años, sin moraleja.
+* **Catálogo de temas** : catálogo estático de aventuras, rutinas, animales, naturaleza, familia y amigos y juegos para niños de 3 a 4 años, sin moraleja; cada cuento conserva el tema con el que nació.
 * **Gestión de cuentos** : gestión de los cuentos generados permitiendo al usuario revisar guión, descripción de personaejes y las escenas con previo aceptación del agente.
 * **Generación de Imágenes** : generacion de imágenes mediante servicio externo para los personajes y cada una de las escenas.
 * **Generación de Audios** : generacion de audios mediante servicio externo para la narración cada una de las escenas.

@@ -23,7 +23,6 @@ import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaRepository;
-import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaEntity;
@@ -35,7 +34,6 @@ import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 public class StoryRepositoryAdapter implements StoryRepository {
 
     private final AbstractValidator<StoryAgentResult> storyValidator;
-    private final TopicJpaRepository topicRepository;
     private final CharacterJpaRepository characterJpaRepository;
     private final CharacterReviewJpaRepository characterReviewsRepository;
     private final StoryPageJpaRepository pagesRepository;
@@ -48,7 +46,6 @@ public class StoryRepositoryAdapter implements StoryRepository {
     private final CatalogCharacterPortraitJpaRepository catalogPortraits;
 
     public StoryRepositoryAdapter(AbstractValidator<StoryAgentResult> storyValidator,
-        TopicJpaRepository topicRepository,
         StoryJpaRepository repository,
         AbstractMapper<StoryJpaEntity, Story> mapper,
         StoryPageJpaRepository pagesRepository,
@@ -60,7 +57,6 @@ public class StoryRepositoryAdapter implements StoryRepository {
         CatalogCharacterJpaRepository catalogCharacters,
         CatalogCharacterPortraitJpaRepository catalogPortraits){
         this.storyValidator = storyValidator;
-        this.topicRepository = topicRepository;
         this.repository = repository;
         this.storyMapper = mapper;
         this.characterJpaRepository = characterRepository;
@@ -74,17 +70,12 @@ public class StoryRepositoryAdapter implements StoryRepository {
     }
 
     @Override
-    public Story create(StoryAgentResult result, StorySize size, Long topic) {
-        return create(result, size, topic, null);
-    }
-
-    @Override
-    public Story create(StoryAgentResult result, StorySize size, Long topic, Long catalogCharacterId) {
+    public Story create(StoryAgentResult result, StorySize size, String topic, String topicDescription, Long catalogCharacterId) {
         // 1. Validamos resultado
         storyValidator.validate(result);
 
-        // 2. Transformamos a story
-        StoryJpaEntity entity = StoryJpaEntity.draft(topicRepository.findById(topic).get(), size, result.title(), result.synopsis());
+        // 2. Transformamos a story con la instantánea textual del tema
+        StoryJpaEntity entity = StoryJpaEntity.draft(size, topic, topicDescription, result.title(), result.synopsis());
         entity.setSummary("");
         entity.setCreatedAt(LocalDateTime.now());
         StoryJpaEntity stored = repository.save(entity);

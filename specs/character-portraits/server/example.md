@@ -243,8 +243,8 @@ GET /api/v1/catalog-characters/7/portraits/approved/asset
 **Para qué sirve:** Permite asociar explícitamente un personaje maestro al nuevo cuento sin romper solicitudes existentes.
 
 ```java
-var legacy = new StoryGenerateCommand(topicId, StorySize.S);
-var withCatalogCharacter = new StoryGenerateCommand(topicId, StorySize.S, catalogCharacterId);
+var legacy = new StoryGenerateCommand("Aventuras", "Un viaje en globo", StorySize.S);
+var withCatalogCharacter = new StoryGenerateCommand("Aventuras", "Un viaje en globo", StorySize.S, catalogCharacterId);
 ```
 
 **Notas:** Con `catalogCharacterId`, se rechaza el personaje bloqueado antes de llamar al agente y el protagonista del cuento guarda la FK explícita al catálogo. La ficha y el retrato se copian a un asset propio del cuento, por lo que cambios posteriores del catálogo no alteran el snapshot.

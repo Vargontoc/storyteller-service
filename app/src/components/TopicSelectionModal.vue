@@ -20,8 +20,8 @@
 
             <div class="field">
               <label for="topic-select">Tema</label>
-              <select id="topic-select" v-model.number="selectedTopicId" :disabled="loadingTopics">
-                <option :value="null" disabled>{{ loadingTopics ? 'Cargando temas...' : 'Selecciona un tema' }}</option>
+              <select id="topic-select" v-model.number="selectedTopicId">
+                <option :value="null" disabled>Selecciona un tema</option>
                 <option v-for="topic in topics" :key="topic.id" :value="topic.id">
                   {{ topic.type }} — {{ topic.description }}
                 </option>
@@ -71,8 +71,8 @@
 import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
 import { generateStory, type StorySize } from '../api/generations'
-import { getTopics, type Topic } from '../api/topics'
 import { getEligibleProtagonists, isPortraitGenerationRunning, type CatalogCharacter } from '../api/characters'
+import { STORY_TOPICS } from '../data/storyTopics'
 import { useServerStatusStore } from '../stores/serverStatus'
 import { useWebsocketStore } from '../stores/websocket'
 
@@ -93,7 +93,7 @@ const sizeOptions: { value: StorySize; label: string }[] = [
   { value: 'L', label: 'L - 32' },
 ]
 
-const topics = ref<Topic[]>([])
+const topics = STORY_TOPICS
 const catalogCharacters = ref<CatalogCharacter[]>([])
 const portraitRunningByCharacter = ref(new Set<number>())
 // Opción de elección aleatoria: valor propio, distinto de cualquier id de catálogo.
@@ -101,23 +101,9 @@ const RANDOM_PROTAGONIST = 'random'
 const selectedProtagonist = ref<number | typeof RANDOM_PROTAGONIST | null>(null)
 const selectedTopicId = ref<number | null>(null)
 const selectedSize = ref<StorySize | null>(null)
-const loadingTopics = ref(false)
 const loadingCharacters = ref(false)
 const creatingStory = ref(false)
 const error = ref<string | null>(null)
-
-async function loadTopics() {
-  loadingTopics.value = true
-  error.value = null
-
-  try {
-    topics.value = await getTopics()
-  } catch (err) {
-    error.value = err instanceof ApiError ? err.message : 'Unexpected error'
-  } finally {
-    loadingTopics.value = false
-  }
-}
 
 function isCharacterRunning(id: number) { return portraitRunningByCharacter.value.has(id) }
 
@@ -148,14 +134,15 @@ async function loadCatalogCharacters() {
 }
 
 async function onCreateStory() {
-  if (!canCreate.value || !selectedTopicId.value || !selectedSize.value || selectedProtagonist.value === null) return
+  const topic = topics.find((item) => item.id === selectedTopicId.value)
+  if (!canCreate.value || !topic || !selectedSize.value || selectedProtagonist.value === null) return
 
   creatingStory.value = true
   error.value = null
 
   try {
     const catalogCharacterId = selectedProtagonist.value === RANDOM_PROTAGONIST ? null : selectedProtagonist.value
-    const story = await generateStory(selectedTopicId.value, selectedSize.value, catalogCharacterId)
+    const story = await generateStory(topic.type, topic.description, selectedSize.value, catalogCharacterId)
     emit('created', story.id)
   } catch (err) {
     error.value = err instanceof ApiError ? err.message : 'Unexpected error'
@@ -177,7 +164,6 @@ watch(
   (isOpen) => {
     if (isOpen) {
       resetState()
-      loadTopics()
       loadCatalogCharacters()
     }
   },

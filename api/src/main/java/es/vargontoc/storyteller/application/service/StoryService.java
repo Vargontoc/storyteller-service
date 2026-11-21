@@ -14,7 +14,6 @@ import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharact
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryReviewRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.TopicRepository;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
@@ -25,7 +24,6 @@ import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
 import es.vargontoc.storyteller.domain.model.StoryOutline;
 import es.vargontoc.storyteller.domain.model.StoryReview;
-import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.domain.request.DirectorReviewRequest;
 import es.vargontoc.storyteller.domain.request.DirectorScriptRequest;
 import es.vargontoc.storyteller.domain.response.CharacterAgentResult;
@@ -52,7 +50,6 @@ public class StoryService implements StoryGeneration {
     private final StoryRepository repository;
     private final StoryReviewRepository reviewRepository;
     private final StoryOutlineRepository outlineRepository;
-    private final TopicRepository topicRepository;
     private final CatalogCharacterRepository catalog;
     private final CharacterImageConditionPort portraits;
     private final PortraitLockService portraitLock;
@@ -60,7 +57,6 @@ public class StoryService implements StoryGeneration {
     private final Random random = new Random();
 
     public StoryService(StoryRepository repository,
-            TopicRepository topicRepository,
             StoryReviewRepository reviewRepository,
             StoryOutlineRepository outlineRepository,
             DirectorAgent director,
@@ -68,7 +64,6 @@ public class StoryService implements StoryGeneration {
             CharacterImageConditionPort portraits,
             PortraitLockService portraitLock) {
         this.repository = repository;
-        this.topicRepository = topicRepository;
         this.reviewRepository = reviewRepository;
         this.outlineRepository = outlineRepository;
         this.director = director;
@@ -79,15 +74,13 @@ public class StoryService implements StoryGeneration {
 
     @Override
     public Story generate(StoryGenerateCommand cmd) {
+        requireTopic(cmd);
+
         // 1. Protagonista de catálogo con retrato aprobado: el indicado o uno al azar entre los disponibles
         CatalogCharacter protagonist = resolveProtagonist(cmd.catalogCharacterId());
 
-        Topic topic = topicRepository.getTopics().stream()
-            .filter(x -> x.getId().equals(cmd.topicId())).findFirst()
-            .orElseThrow(() -> new ResourceNotFoundException("Topic requerido no encontrado"));
-
-        // 2. El director recibe la ficha del protagonista; una escaleta incompleta se reintenta sin persistir nada
-        DirectorScriptRequest request = new DirectorScriptRequest(topic.getType(), topic.getDescription(),
+        // 2. El director recibe el tema elegido y la ficha del protagonista; una escaleta incompleta se reintenta sin persistir nada
+        DirectorScriptRequest request = new DirectorScriptRequest(cmd.topic(), cmd.description(),
             cmd.size().getPages(), protagonist.name(), protagonist.narrativeDescription(),
             protagonist.visualDescription(), protagonist.id());
         DirectorScriptResult script = callDirector(() -> {
@@ -98,10 +91,10 @@ public class StoryService implements StoryGeneration {
             return result;
         });
 
-        // 3. Persistimos el cuento con la instantánea del protagonista y la escaleta completa
+        // 3. Persistimos el cuento con la instantánea del tema, la del protagonista y la escaleta completa
         Story story = repository.create(
             new StoryAgentResult(script.title(), script.synopsis(), List.of(toCharacter(protagonist))),
-            cmd.size(), cmd.topicId(), protagonist.id());
+            cmd.size(), cmd.topic(), cmd.description(), protagonist.id());
         outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats()));
         return repository.getStory(story.getId());
     }
@@ -193,6 +186,14 @@ public class StoryService implements StoryGeneration {
     private void requireApprovedPortrait(CatalogCharacter character) {
         if (!portraits.hasApprovedPortrait(character.id()))
             throw new AppException("El protagonista debe tener un retrato aprobado", HttpStatus.BAD_REQUEST);
+    }
+
+    private void requireTopic(StoryGenerateCommand cmd) {
+        if (cmd.topic() == null || cmd.topic().isBlank()
+                || cmd.description() == null || cmd.description().isBlank())
+            throw new AppException("El tema y su descripción son obligatorios", HttpStatus.BAD_REQUEST);
+        if (cmd.topic().length() > 30 || cmd.description().length() > 100)
+            throw new AppException("El tema o su descripción superan la longitud máxima", HttpStatus.BAD_REQUEST);
     }
 
     private void requireOutline(Story story) {

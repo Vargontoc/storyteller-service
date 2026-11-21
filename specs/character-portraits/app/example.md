@@ -52,7 +52,7 @@ await refreshPortrait(characterId)
 **Para qué sirve:** Permite asociar opcionalmente un personaje del catálogo al nuevo cuento y evita enviar uno con retratos en generación.
 
 ```ts
-const story = await generateStory(topicId, size, selectedCatalogCharacterId ?? undefined)
+const story = await generateStory('Aventuras', 'Un viaje en globo', size, selectedCatalogCharacterId ?? null)
 ```
 
 **Notas:** La disponibilidad se recarga desde REST al abrir el modal y cuando llega un evento de retrato; el servidor mantiene la validación definitiva del bloqueo.

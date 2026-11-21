@@ -11,9 +11,9 @@
 
 ```ts
 // Elección concreta
-await generateStory(topicId, 'M', 12)
+await generateStory('Aventuras', 'Un viaje en globo', 'M', 12)
 // Elección aleatoria: el servidor elige entre los protagonistas aptos
-await generateStory(topicId, 'M', null)
+await generateStory('Aventuras', 'Un viaje en globo', 'M', null)
 ```
 
 **Notas:** Solo se listan personajes con retrato aprobado (`getEligibleProtagonists`). Si no hay ninguno se muestra un aviso y no se envía ninguna solicitud. La lista se recarga al abrir y ante los eventos o reconexiones de retratos. Los errores definitivos del servidor se muestran tal cual.

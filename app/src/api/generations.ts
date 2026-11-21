@@ -7,6 +7,8 @@ export type PresetVoice = 'CALM_STORYTELLER' | 'ADVENTURE_ENERGIC' | 'SLEEP_SOFT
 export interface Story {
   id: number
   title: string
+  topic: string
+  topicDescription: string
   synopsis: string
   size: StorySize
   characters: Actor[]
@@ -52,9 +54,9 @@ export interface AudioStory {
 }
 
 // catalogCharacterId: id del protagonista elegido, o null para que el servidor elija al azar entre los aptos.
-export function generateStory(topicId: number, size: StorySize, catalogCharacterId: number | null) {
+export function generateStory(topic: string, description: string, size: StorySize, catalogCharacterId: number | null) {
   return httpClient
-    .post<ApiEnvelope<Story>>('/api/v1/generations/story', { topicId, size, catalogCharacterId })
+    .post<ApiEnvelope<Story>>('/api/v1/generations/story', { topic, description, size, catalogCharacterId })
     .then((envelope) => envelope.data)
 }
 

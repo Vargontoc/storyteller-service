@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!--
+        El catálogo de temas deja de persistirse: vive como dato estático en la app.
+        El cuento conserva el tema con el que nació como texto (topic y topic_description)
+        para no perder la trazabilidad, sin FK ni tabla de catálogo.
+    -->
+    <changeSet id="023_drop_topic_catalog" author="vargontoc">
+        <addColumn tableName="story">
+            <column name="topic" type="VARCHAR(30)"/>
+            <column name="topic_description" type="VARCHAR(100)"/>
+        </addColumn>
+
+        <sql>
+            UPDATE story s
+            SET topic = t.name,
+                topic_description = t.description
+            FROM topic t
+            WHERE s.topic_id = t.id;
+        </sql>
+
+        <addNotNullConstraint tableName="story" columnName="topic" columnDataType="VARCHAR(30)"/>
+        <addNotNullConstraint tableName="story" columnName="topic_description" columnDataType="VARCHAR(100)"/>
+
+        <dropForeignKeyConstraint baseTableName="story" constraintName="FK_topic_story"/>
+        <dropColumn tableName="story" columnName="topic_id"/>
+        <dropTable tableName="topic"/>
+    </changeSet>
+
+</databaseChangeLog>

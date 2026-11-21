@@ -32,8 +32,6 @@ import es.vargontoc.storyteller.infrastructure.persistence.StoryJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryPageReviewJpaRepository;
 import es.vargontoc.storyteller.infrastructure.persistence.StoryReviewJpaRepository;
-import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaEntity;
-import es.vargontoc.storyteller.infrastructure.persistence.TopicJpaRepository;
 import es.vargontoc.storyteller.shared.mappers.AbstractMapper;
 import es.vargontoc.storyteller.shared.validations.AbstractValidator;
 
@@ -42,15 +40,12 @@ class StoryCatalogSnapshotPersistenceTest {
     @Test
     void persistsCatalogReferenceAndCopiesApprovedPortraitIntoTheStorySnapshot() {
         var validator = mockValidator();
-        var topics = mock(TopicJpaRepository.class);
         var stories = mock(StoryJpaRepository.class);
         var characters = mock(CharacterJpaRepository.class);
         var storage = mock(ResourceStorage.class);
         var catalogCharacters = mock(CatalogCharacterJpaRepository.class);
         var portraits = mock(CatalogCharacterPortraitJpaRepository.class);
         var mapper = mockMapper();
-        var topic = new TopicJpaEntity();
-        topic.setId(3L);
         var story = new StoryJpaEntity();
         story.setId(41L);
         var catalog = catalogCharacter(9L);
@@ -59,7 +54,6 @@ class StoryCatalogSnapshotPersistenceTest {
         portrait.setAssetPath("characters/catalog/luna.png");
         byte[] portraitBytes = new byte[] { 1, 2, 3 };
 
-        when(topics.findById(3L)).thenReturn(Optional.of(topic));
         when(stories.save(any(StoryJpaEntity.class))).thenReturn(story);
         when(catalogCharacters.findById(9L)).thenReturn(Optional.of(catalog));
         when(portraits.findByCatalogCharacterId(9L)).thenReturn(Optional.of(portrait));
@@ -72,8 +66,8 @@ class StoryCatalogSnapshotPersistenceTest {
         when(storage.saveImage(41L, KindImage.ACTOR, 71L, portraitBytes))
                 .thenReturn("stories/41/characters/71.png");
 
-        adapter(validator, topics, stories, mapper, storage, characters, catalogCharacters, portraits)
-                .create(result(), StorySize.S, 3L, 9L);
+        adapter(validator, stories, mapper, storage, characters, catalogCharacters, portraits)
+                .create(result(), StorySize.S, "Aventuras", "Un paseo", 9L);
 
         ArgumentCaptor<CharacterJpaEntity> snapshotCaptor = ArgumentCaptor.forClass(CharacterJpaEntity.class);
         verify(characters).save(snapshotCaptor.capture());
@@ -88,11 +82,11 @@ class StoryCatalogSnapshotPersistenceTest {
         verify(storage).saveImage(41L, KindImage.ACTOR, 71L, portraitBytes);
     }
 
-    private StoryRepositoryAdapter adapter(AbstractValidator<StoryAgentResult> validator, TopicJpaRepository topics,
+    private StoryRepositoryAdapter adapter(AbstractValidator<StoryAgentResult> validator,
             StoryJpaRepository stories, AbstractMapper<StoryJpaEntity, es.vargontoc.storyteller.domain.model.Story> mapper,
             ResourceStorage storage, CharacterJpaRepository characters, CatalogCharacterJpaRepository catalogCharacters,
             CatalogCharacterPortraitJpaRepository portraits) {
-        return new StoryRepositoryAdapter(validator, topics, stories, mapper,
+        return new StoryRepositoryAdapter(validator, stories, mapper,
                 mock(StoryPageJpaRepository.class), mock(StoryPageReviewJpaRepository.class),
                 mock(StoryReviewJpaRepository.class), storage, characters, mock(CharacterReviewJpaRepository.class),
                 catalogCharacters, portraits);

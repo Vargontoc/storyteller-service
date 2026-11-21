@@ -12,8 +12,6 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
@@ -26,9 +24,12 @@ public class StoryJpaEntity extends BaseEntity {
     @Column(name = "title", nullable = false, length = 50)
     private String title;
 
-    @JoinColumn(name = "topic_id", nullable = false)
-    @ManyToOne(optional = false)
-    private TopicJpaEntity topic;
+    /** Tema con el que nació el cuento; es una instantánea textual, no una FK. */
+    @Column(name = "topic", nullable = false, length = 30)
+    private String topic;
+
+    @Column(name = "topic_description", nullable = false, length = 100)
+    private String topicDescription;
     
     @Column(name = "synopsis", nullable = false, length = 500)
     private String synopsis;
@@ -58,8 +59,10 @@ public class StoryJpaEntity extends BaseEntity {
     public void setTitle(String title) { this.title = title; }
     public StorySize getSize() { return size; }
     public void setSize(StorySize size) { this.size = size;}
-    public TopicJpaEntity getTopic() { return topic; }
-    public void setTopic(TopicJpaEntity topic) { this.topic = topic; }
+    public String getTopic() { return topic; }
+    public void setTopic(String topic) { this.topic = topic; }
+    public String getTopicDescription() { return topicDescription; }
+    public void setTopicDescription(String topicDescription) { this.topicDescription = topicDescription; }
     public String getSynopsis() { return synopsis; }
     public void setSynopsis(String synopsis) { this.synopsis = synopsis; }
     public StoryStatus getStatus() {  return status; }
@@ -74,9 +77,10 @@ public class StoryJpaEntity extends BaseEntity {
     public void setPages(List<StoryPageJpaEntity> pages) { this.pages = pages; }
     
 
-    public static StoryJpaEntity draft(TopicJpaEntity topic, StorySize size, String title, String synopsis) {
+    public static StoryJpaEntity draft(StorySize size, String topic, String topicDescription, String title, String synopsis) {
         StoryJpaEntity story = new StoryJpaEntity();
         story.setTopic(topic);
+        story.setTopicDescription(topicDescription);
         story.setSize(size);
         story.setTitle(title);
         story.setSynopsis(synopsis);

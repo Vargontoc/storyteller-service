@@ -7,10 +7,7 @@ import es.vargontoc.storyteller.domain.response.StoryAgentResult;
 
 public interface StoryRepository {
     
-    Story create(StoryAgentResult result, StorySize size, Long topic);
-    default Story create(StoryAgentResult result, StorySize size, Long topic, Long catalogCharacterId) {
-        return create(result, size, topic);
-    }
+    Story create(StoryAgentResult result, StorySize size, String topic, String topicDescription, Long catalogCharacterId);
 
     Story update(Story story);
 

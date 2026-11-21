@@ -10,6 +10,8 @@ public class Story  extends BaseModel {
     
     private Long id;
     private String title;
+    private String topic;
+    private String topicDescription;
     private List<Actor> characters;
     private List<StoryPage> pages;
     private String synopsis;
@@ -29,6 +31,18 @@ public class Story  extends BaseModel {
     }
     public void setTitle(String title) {
         this.title = title;
+    }
+    public String getTopic() {
+        return topic;
+    }
+    public void setTopic(String topic) {
+        this.topic = topic;
+    }
+    public String getTopicDescription() {
+        return topicDescription;
+    }
+    public void setTopicDescription(String topicDescription) {
+        this.topicDescription = topicDescription;
     }
     public List<Actor> getCharacters() {
         return characters;
