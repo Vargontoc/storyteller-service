@@ -1,16 +1,17 @@
 # Requisitos: agent-writer
 
 Estado: aprobado
-Revisión: 4
+Revisión: 5
 
 ## Contexto
 
-Con el guion aprobado, el agente escritor genera la escena de portada y después las páginas del cuento, una a una y a partir del beat de cada página. El adulto revisa cada resultado, pide cambios con un hint, elige entre las versiones generadas y acepta antes de seguir. El texto es para un niño de 3 a 4 años que lo escucha.
+Con el guion aprobado, el agente escritor genera la escena de portada y después las páginas del cuento, una a una y a partir del beat de cada página. El adulto revisa cada resultado, pide cambios con un hint, elige entre las versiones generadas y acepta antes de seguir. El texto es para un niño de 3 a 4 años que lo escucha. Las imágenes de portada y de página se crean fuera de la aplicación; el sistema solo muestra la imagen importada cuando existe.
 
 ## Fuera de alcance
 
 - Generación de audio de las páginas: es la etapa siguiente y no se especifica aquí.
-- Generación de la ilustración de página e importación de la imagen de la herramienta externa.
+- Generación de la imagen de portada y de la ilustración de página: se hacen fuera de la aplicación y no entran en esta feature ni en futuras.
+- Importación de la imagen de portada o de página creada fuera de la aplicación.
 - Generación de un título nuevo para la portada: el título es el del guion aprobado.
 - Edición manual del texto de una página o de la descripción de escena.
 - Regeneración de una página o de la portada sin hint, salvo el caso de REQ-029.
@@ -19,7 +20,6 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 - Conservar o recuperar las versiones no aceptadas de un histórico después de aceptar o de descartar.
 - Cambios en el comportamiento de los cuentos antiguos sin escaleta.
 - Mecanismo técnico de aprovisionamiento del Modelfile del escritor en el servidor.
-- Política concreta de eliminación física de los assets de las páginas descartadas.
 
 ## Requisitos funcionales
 
@@ -133,13 +133,15 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
   - Dado un cuento con las páginas 1 a 4 aceptadas, cuando el usuario envía un hint sobre la página 2, entonces el sistema muestra una nueva versión de la página 2 pendiente de aceptación.
   - Dada una propuesta pendiente para la página 2 reabierta, cuando el usuario consulta el cuento antes de aceptarla, entonces las páginas 3 y 4 siguen presentes.
   - Dada una propuesta pendiente para la página 2 reabierta, cuando el usuario envía otro hint, entonces el escritor recibe como base la propuesta vigente.
+  - Dada la página 2 aceptada con imagen importada, cuando el usuario envía un hint sobre ella, entonces la versión aceptada sigue mostrando su imagen y la propuesta se muestra sin imagen.
 
 ### REQ-016 Descarte en cascada al aceptar una página reabierta
 
-- **Requisito:** Cuando el usuario acepta la propuesta vigente de una página reabierta K, el sistema deberá eliminar del cuento todas las páginas posteriores a K y aplicar a sus assets las reglas de gestión de assets del producto.
+- **Requisito:** Cuando el usuario acepta la propuesta vigente de una página reabierta K, el sistema deberá eliminar del cuento todas las páginas posteriores a K, junto con la imagen importada que tuvieran.
 - **Criterios de aceptación:**
   - Dado un cuento con las páginas 1 a 4 aceptadas y una propuesta pendiente para la página 2, cuando el usuario acepta la propuesta, entonces la página 2 queda aceptada con la nueva versión y las páginas 3 y 4 dejan de existir en el cuento.
   - Dado el descarte anterior, cuando el usuario consulta el cuento, entonces la siguiente página que puede generar es la 3.
+  - Dado un descarte en cascada que ha eliminado la página 3, que tenía imagen importada, cuando el usuario vuelve a generar la página 3, entonces la nueva página 3 se muestra sin imagen y solo con su descripción de escena.
 
 ### REQ-017 Aviso antes del descarte en cascada
 
@@ -178,8 +180,11 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 
 ### REQ-022 Vista de la portada y las páginas
 
-- **Requisito:** Cuando el usuario abre las páginas de un cuento con escaleta, el sistema deberá mostrar la portada y cada página generada con el texto narrativo, la descripción de escena y el aviso de longitud de su versión vigente, su estado (pendiente de aceptación o aceptada), su histórico de versiones si está pendiente y las acciones disponibles en ese estado.
+- **Requisito:** Cuando el usuario abre las páginas de un cuento con escaleta, el sistema deberá mostrar la portada y cada página generada con el texto narrativo, la descripción de escena y el aviso de longitud de su versión vigente, la imagen importada de su versión aceptada si existe (REQ-040), su estado (pendiente de aceptación o aceptada), su histórico de versiones si está pendiente y las acciones disponibles en ese estado.
 - **Criterios de aceptación:**
+  - Dada una página aceptada con imagen importada, cuando el usuario la visualiza, entonces ve la imagen además de su texto narrativo y su descripción de escena.
+  - Dada una portada aceptada con imagen importada, cuando el usuario la visualiza, entonces ve la imagen además de su título y su descripción de escena.
+  - Dada una página aceptada sin imagen importada, cuando el usuario la visualiza, entonces ve su texto narrativo y su descripción de escena, sin imagen.
   - Dada una página pendiente de aceptación cuya versión vigente no tiene aviso, cuando el usuario la visualiza, entonces ve su texto, su escena, el estado pendiente y las acciones de aceptar y de pedir un cambio con hint.
   - Dada una página pendiente con varias versiones en su histórico, cuando el usuario la visualiza, entonces ve todas las versiones con el aviso de cada una, distingue cuál es la vigente y dispone de la acción de marcar como vigente cualquier otra.
   - Dada una página pendiente cuya versión vigente tiene aviso por exceso de palabras, cuando el usuario la visualiza, entonces ve el aviso y las acciones de aceptar y de pedir un cambio con hint.
@@ -249,6 +254,7 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 - **Criterios de aceptación:**
   - Dado un cuento con las páginas 1 a 4 aceptadas y tres propuestas pendientes para la página 2, cuando el usuario descarta las propuestas, entonces la página 2 muestra su versión aceptada anterior, no tiene histórico de propuestas y las páginas 3 y 4 permanecen aceptadas.
   - Dada una página reabierta cuya propuesta vigente tiene aviso de número de frases, cuando el usuario descarta las propuestas, entonces la página conserva su versión aceptada.
+  - Dada la página 2 aceptada con imagen importada y con propuestas pendientes, cuando el usuario descarta las propuestas, entonces la página 2 muestra su versión aceptada con su imagen.
 
 ### REQ-031 Reabrir la portada aceptada
 
@@ -257,6 +263,8 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
   - Dado un cuento con la portada y las páginas 1 a 3 aceptadas, cuando el usuario envía un hint sobre la portada, entonces el sistema muestra una nueva versión de la portada pendiente de aceptación.
   - Dada la propuesta anterior, cuando el usuario la acepta, entonces la portada queda aceptada con la nueva versión, las páginas 1 a 3 siguen aceptadas y no se muestra aviso de descarte.
   - Dada la propuesta anterior, cuando el usuario descarta las propuestas, entonces la portada conserva su versión aceptada.
+  - Dada la portada aceptada con imagen importada y una propuesta pendiente, cuando el usuario acepta la propuesta, entonces la portada queda aceptada con la nueva versión y sin imagen.
+  - Dada la portada aceptada con imagen importada y una propuesta pendiente, cuando el usuario descarta las propuestas, entonces la portada muestra su versión aceptada con su imagen.
 
 ### REQ-032 Una sola generación a la vez en toda la aplicación
 
@@ -306,6 +314,7 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
 - **Criterios de aceptación:**
   - Dada la página 3 con tres versiones y la segunda vigente, cuando el usuario la acepta, entonces la página 3 queda aceptada con la segunda versión y ya no se muestra ningún histórico de versiones.
   - Dada la página 3 aceptada tras tener tres versiones, cuando se genera la página 4, entonces el escritor recibe como texto de la página 3 el de la versión aceptada.
+  - Dada la página 3 pendiente de aceptación, cuando el usuario la acepta, entonces la página 3 queda aceptada sin imagen.
 
 ### REQ-038 Histórico de propuestas de una reapertura
 
@@ -314,12 +323,27 @@ Con el guion aprobado, el agente escritor genera la escena de portada y después
   - Dada la página 2 aceptada y reabierta con dos hints, cuando el usuario la visualiza, entonces ve dos propuestas en el histórico y la versión aceptada aparte, con su texto original.
   - Dada la página 2 reabierta con dos propuestas, cuando el usuario quiere marcar como vigente una versión, entonces solo puede elegir entre las dos propuestas y no la versión aceptada.
   - Dada la página 2 reabierta con dos propuestas, cuando el usuario acepta la propuesta vigente, entonces la página 2 queda aceptada con esa propuesta y no se muestra ningún histórico.
+  - Dada la página 2 aceptada con imagen importada y reabierta con dos propuestas, cuando el usuario la visualiza, entonces la versión aceptada se muestra con su imagen y las dos propuestas se muestran sin imagen.
 
 ### REQ-039 Sin límite de versiones en el histórico
 
 - **Requisito:** El sistema no deberá limitar el número de versiones que puede contener el histórico de una portada o página pendiente ni el de las propuestas de una reapertura.
 - **Criterios de aceptación:**
   - Dada la página 3 pendiente con una versión, cuando el usuario envía 10 hints aceptados por el escritor y generados sin fallo, entonces el histórico contiene 11 versiones y todas se pueden marcar como vigentes.
+
+### REQ-040 Imagen importada solo en la versión aceptada
+
+- **Requisito:** El sistema deberá mostrar imagen importada únicamente en la versión aceptada de la portada o de una página de un cuento con escaleta; las versiones pendientes de aceptación y las propuestas de una reapertura se mostrarán siempre sin imagen.
+- **Criterios de aceptación:**
+  - Dada la página 3 pendiente con varias versiones en su histórico, cuando el usuario la visualiza, entonces ninguna de sus versiones muestra imagen.
+  - Dada la portada aceptada con imagen importada y reabierta con una propuesta, cuando el usuario la visualiza, entonces solo la versión aceptada muestra imagen.
+
+### REQ-041 Versión recién aceptada sin imagen
+
+- **Requisito:** Cuando el usuario acepta una versión de la portada o de una página, ya sea pendiente de aceptación o propuesta de una reapertura, el sistema deberá dejar la nueva versión aceptada sin imagen y dejar de mostrar la imagen de la versión aceptada anterior.
+- **Criterios de aceptación:**
+  - Dada la página 2 aceptada con imagen importada y una propuesta pendiente, cuando el usuario acepta la propuesta, entonces la página 2 muestra la nueva versión sin imagen y la imagen anterior deja de mostrarse.
+  - Dada la portada pendiente de aceptación, cuando el usuario la acepta, entonces la portada queda aceptada sin imagen.
 
 ## Requisitos no funcionales
 
@@ -372,9 +396,9 @@ Ninguno.
 ### SUP-007 Política de assets de las páginas descartadas
 
 - **Tipo:** contextual
-- **Descripción:** Las páginas eliminadas por un descarte en cascada siguen las reglas de gestión de assets del producto, igual que las páginas invalidadas en agent-director (SUP-005 de esa feature); esta feature no define la eliminación física.
+- **Descripción:** Las páginas eliminadas por un descarte en cascada siguen las reglas de gestión de assets del producto, igual que las páginas invalidadas en agent-director (SUP-005 de esa feature); esta feature no define la eliminación física. Descartado por el usuario: la gestión de assets de escena sale del alcance; la imagen importada desaparece del cuento con su página (REQ-016).
 - **Impacto:** REQ-016.
-- **Estado:** pendiente
+- **Estado:** descartado
 
 ### SUP-008 Interacción con la edición del guion
 
