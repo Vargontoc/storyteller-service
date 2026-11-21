@@ -42,6 +42,7 @@ import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.PageVersion;
 import es.vargontoc.storyteller.domain.request.WriterContext;
 import es.vargontoc.storyteller.domain.response.GenerationStarted;
+import es.vargontoc.storyteller.domain.response.WriterHintResult;
 import es.vargontoc.storyteller.domain.response.WriterResult;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.domain.model.Story;
@@ -218,6 +219,69 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         return accepted;
     }
 
+    /**
+     * Cambio con hint sobre la portada o una página pendiente: la versión vigente es la base y el resultado se añade al
+     * histórico como vigente (la página pasa por el bucle de longitud; la portada, no). Si el escritor rechaza el hint
+     * se anuncia el motivo y no cambia nada.
+     */
+    @Override
+    public GenerationStarted startHint(Long storyId, Long pageId, String hint) {
+        if(hint == null || hint.isBlank())
+            throw new AppException("El hint es obligatorio", HttpStatus.BAD_REQUEST);
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.PENDING)
+            throw new AppException("Solo se puede pedir un cambio sobre la portada o una página pendiente", HttpStatus.CONFLICT);
+
+        PageVersion base = versions.findByPage(page.getId()).stream()
+            .filter(PageVersion::isCurrent).findFirst()
+            .orElseThrow(() -> new AppException("La página no tiene versión vigente", HttpStatus.CONFLICT));
+
+        // Contexto y base cerrados antes de pedir turno, igual que en la generación inicial
+        Story story = storyRepository.getStory(storyId);
+        int number = page.getPage();
+        boolean cover = number == 0;
+        WriterContext context = cover
+            ? WriterContext.cover(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()))
+            : hintPageContext(story, number);
+        WriterResult baseResult = new WriterResult(base.getText(), base.getScene());
+        String cleanHint = hint.strip();
+
+        Supplier<WriterResult> rewrite = () -> {
+            WriterHintResult result = writer.rewrite(context, baseResult, cleanHint);
+            if(!result.hintAccepted())
+                throw new HintRejectedException(result.rejectionReason());
+            return new WriterResult(result.text(), result.scene());
+        };
+        Long realPageId = page.getId();
+        return launch(storyId, number, () -> addHintVersions(realPageId, cover, rewrite));
+    }
+
+    private WriterContext hintPageContext(Story story, int number) {
+        StoryOutline outline = requireOutline(story.getId());
+        if(number > outline.beats().size())
+            throw new AppException("La página " + number + " no tiene beat en la escaleta", HttpStatus.CONFLICT);
+        List<String> previousTexts = story.getPages().stream()
+            .filter(p -> p.getPage() != 0 && p.getPage() < number)
+            .sorted(Comparator.comparingInt(StoryPage::getPage)).map(StoryPage::getText).toList();
+        return new WriterContext(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()),
+            outline.cast(), outline.beats().get(number - 1), previousTexts);
+    }
+
+    /** Añade al histórico de la página real la nueva versión (portada) o las del bucle de longitud (página); la última queda vigente. */
+    private void addHintVersions(Long pageId, boolean cover, Supplier<WriterResult> rewrite) {
+        List<PageVersion> generated = cover
+            ? List.of(new PageVersion(null, rewrite.get().scene(), PageLengthWarning.NONE, true))
+            : generateWithinLimit(rewrite);
+        generated.forEach(v -> versions.add(pageId, v));
+    }
+
+    /** El escritor rechaza el hint con un motivo; no es un fallo de generación. */
+    private static class HintRejectedException extends RuntimeException {
+        HintRejectedException(String reason) { super(reason); }
+    }
+
     /** Concede el turno, anuncia el inicio y lanza la generación en segundo plano; si no se puede lanzar, libera el turno. */
     private GenerationStarted launch(Long storyId, int pageNumber, Runnable generation) {
         acquireTurn(storyId);
@@ -234,9 +298,12 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
     /** Tarea asíncrona: el turno se libera siempre y después se anuncia el resultado. */
     private void run(Long storyId, int pageNumber, Runnable generation) {
         boolean created = false;
+        String rejection = null;
         try {
             generation.run();
             created = true;
+        } catch(HintRejectedException e) {
+            rejection = e.getMessage();
         } catch(RuntimeException e) {
             // El resultado se anuncia como FAILED tras liberar el turno
         } finally {
@@ -244,6 +311,8 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         }
         if(created)
             notifier.versionPresented(storyId, pageNumber);
+        else if(rejection != null)
+            notifier.hintRejected(storyId, pageNumber, rejection);
         else
             notifier.failed(storyId, pageNumber);
     }
@@ -272,7 +341,10 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
     /** Página N pendiente, vinculada al beat N, con las versiones del bucle de longitud (la última, vigente). */
     private void createPage(Long storyId, int number, Supplier<WriterResult> generation) {
         List<PageVersion> generated = generateWithinLimit(generation);
-        StoryPage page = repository.createPending(storyId, number, (long) number);
+        // beat_id referencia la fila real de story_beat (no el número de página); se lee justo antes de persistir
+        Long beatId = outlineRepository.findBeatId(storyId, number)
+            .orElseThrow(() -> new AppException("La página " + number + " no tiene beat en la escaleta", HttpStatus.CONFLICT));
+        StoryPage page = repository.createPending(storyId, number, beatId);
         try {
             generated.forEach(v -> versions.add(page.getId(), v));
         } catch(RuntimeException e) {

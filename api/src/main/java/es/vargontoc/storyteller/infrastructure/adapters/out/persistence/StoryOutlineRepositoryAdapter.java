@@ -78,6 +78,15 @@ public class StoryOutlineRepositoryAdapter implements StoryOutlineRepository {
 
     @Override
     @Transactional(readOnly = true)
+    public Optional<Long> findBeatId(Long storyId, int page) {
+        return outlines.findByStoryId(storyId).flatMap(outline -> outline.getBeats().stream()
+                .filter(b -> b.getPageNumber() == page)
+                .map(StoryBeatJpaEntity::getId)
+                .findFirst());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Optional<Integer> scriptVersion(Long storyId) {
         return stories.findById(storyId).map(StoryJpaEntity::getScriptVersion);
     }

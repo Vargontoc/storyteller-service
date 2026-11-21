@@ -8,6 +8,7 @@ import es.vargontoc.storyteller.application.ports.in.generator.CoverGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.PageAcceptance;
 import es.vargontoc.storyteller.application.ports.in.generator.PageGeneration;
 import es.vargontoc.storyteller.domain.model.StoryPage;
+import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.PageHintRequestDto;
 import es.vargontoc.storyteller.domain.response.PageAccepted;
 import es.vargontoc.storyteller.application.ports.in.persistence.StorytellerUseCase;
 import es.vargontoc.storyteller.domain.response.GenerationStarted;
@@ -72,6 +73,12 @@ public class StorytellerController {
     @Operation(description = "Inicia la generación de la página N (la siguiente) de un cuento con escaleta, con la portada y las páginas anteriores aceptadas. Responde al conceder el turno; el resultado llega por /storyteller (STARTED, VERSION_PRESENTED o FAILED con pageNumber N). 409 si falta aceptar la portada o una página anterior, si N no es la siguiente o hay una generación en curso")
     public ResponseEntity<ApiResponse<GenerationStarted>> generatePage(@PathVariable("storyId") Long storyId, @PathVariable("number") int number) {
         return ResponseEntity.accepted().body(ApiResponse.ok(pageGeneration.startPage(storyId, number)));
+    }
+
+    @PostMapping("/{storyId}/pages/{id}/hint")
+    @Operation(description = "Pide una nueva versión de la portada (página 0) o de una página pendiente aplicando un hint sobre su versión vigente. Responde al conceder el turno; el resultado llega por /storyteller (STARTED, VERSION_PRESENTED, HINT_REJECTED con reason o FAILED). 400 si el hint está vacío; 409 si la página no está pendiente o hay una generación en curso")
+    public ResponseEntity<ApiResponse<GenerationStarted>> hintPage(@PathVariable("storyId") Long storyId, @PathVariable("id") Long id, @RequestBody PageHintRequestDto request) {
+        return ResponseEntity.accepted().body(ApiResponse.ok(pageGeneration.startHint(storyId, id, request == null ? null : request.hint())));
     }
 
     @GetMapping

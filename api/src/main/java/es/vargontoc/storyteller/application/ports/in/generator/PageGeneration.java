@@ -7,4 +7,7 @@ public interface PageGeneration {
 
     /** Valida la secuencia, pide turno y devuelve el inicio; la página se crea después, de forma asíncrona. */
     GenerationStarted startPage(Long storyId, int number);
+
+    /** Cambio con hint sobre la portada o una página pendiente: valida, pide turno y devuelve el inicio; la nueva versión se crea después. */
+    GenerationStarted startHint(Long storyId, Long pageId, String hint);
 }

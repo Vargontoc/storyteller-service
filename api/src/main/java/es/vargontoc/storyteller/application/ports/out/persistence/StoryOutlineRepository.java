@@ -16,6 +16,9 @@ public interface StoryOutlineRepository {
     /** Escaleta del cuento; vacio si es un cuento antiguo. */
     Optional<StoryOutline> find(Long storyId);
 
+    /** Identificador de la fila del beat de la página interior indicada (1 = primer beat); vacío si no existe. */
+    Optional<Long> findBeatId(Long storyId, int page);
+
     /** Marcador de version de guion; vacio en cuentos antiguos. */
     Optional<Integer> scriptVersion(Long storyId);
 }

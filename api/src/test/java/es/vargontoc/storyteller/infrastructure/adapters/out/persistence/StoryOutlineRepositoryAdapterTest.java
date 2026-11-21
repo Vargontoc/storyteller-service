@@ -144,6 +144,31 @@ class StoryOutlineRepositoryAdapterTest {
         verify(stories, never()).save(any(StoryJpaEntity.class));
     }
 
+    @Test
+    void beatIdIsTheBeatRowIdAndNotThePageNumber() {
+        var outline = new StoryOutlineJpaEntity();
+        outline.getBeats().add(beatRow(901L, 1));
+        outline.getBeats().add(beatRow(902L, 2));
+        when(outlines.findByStoryId(5L)).thenReturn(Optional.of(outline));
+
+        assertEquals(Optional.of(902L), adapter.findBeatId(5L, 2));
+        assertTrue(adapter.findBeatId(5L, 3).isEmpty());
+    }
+
+    @Test
+    void beatIdIsEmptyForAStoryWithoutOutline() {
+        when(outlines.findByStoryId(1L)).thenReturn(Optional.empty());
+
+        assertTrue(adapter.findBeatId(1L, 1).isEmpty());
+    }
+
+    private es.vargontoc.storyteller.infrastructure.persistence.StoryBeatJpaEntity beatRow(Long id, int page) {
+        var row = new es.vargontoc.storyteller.infrastructure.persistence.StoryBeatJpaEntity();
+        row.setId(id);
+        row.setPageNumber(page);
+        return row;
+    }
+
     private StoryJpaEntity story(Long id, String title, String synopsis) {
         var story = new StoryJpaEntity();
         story.setId(id);

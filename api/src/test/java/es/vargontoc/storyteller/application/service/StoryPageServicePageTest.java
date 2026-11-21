@@ -82,6 +82,9 @@ class StoryPageServicePageTest {
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run);
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
+        // Ids de fila de story_beat distintos del número de página, como en la base de datos real
+        when(outlines.findBeatId(STORY, 1)).thenReturn(Optional.of(501L));
+        when(outlines.findBeatId(STORY, 2)).thenReturn(Optional.of(502L));
         StoryPage created = new StoryPage();
         created.setId(70L);
         when(pages.createPending(eq(STORY), anyInt(), any())).thenReturn(created);
@@ -96,7 +99,7 @@ class StoryPageServicePageTest {
 
         assertEquals(new GenerationStarted(STORY, 1), started);
         verify(gate).tryAcquire(GenerationType.WRITER, STORY);
-        verify(pages).createPending(STORY, 1, 1L);
+        verify(pages).createPending(STORY, 1, 501L);
         ArgumentCaptor<PageVersion> version = ArgumentCaptor.forClass(PageVersion.class);
         verify(versions).add(eq(70L), version.capture());
         assertEquals("Luna sale. Luna corre.", version.getValue().getText());
@@ -107,6 +110,18 @@ class StoryPageServicePageTest {
         verify(notifier).started(STORY, 1);
         verify(notifier).versionPresented(STORY, 1);
         verify(notifier, never()).failed(anyLong(), anyInt());
+        verify(gate).release();
+    }
+
+    @Test
+    void pageWithoutARealBeatRowIsNotCreatedAndFailsCleanly() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, PageStatus.ACCEPTED));
+        when(outlines.findBeatId(STORY, 1)).thenReturn(Optional.empty());
+
+        service.startPage(STORY, 1);
+
+        verify(pages, never()).createPending(anyLong(), anyInt(), any());
+        verify(notifier).failed(STORY, 1);
         verify(gate).release();
     }
 
@@ -258,7 +273,7 @@ class StoryPageServicePageTest {
 
         service.startPage(STORY, 2);
 
-        verify(pages).createPending(STORY, 2, 2L);
+        verify(pages).createPending(STORY, 2, 502L);
         verify(writer).writePage(any());
         verify(pages, never()).createPending(eq(STORY), eq(3), any());
     }
