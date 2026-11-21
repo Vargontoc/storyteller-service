@@ -99,7 +99,6 @@ app:
         ipadapter-weight-budget: 0.5
         
     agents:
-        topics: "${APP_AGENT_TOPICS:storyteller-topics}"
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
         scriptwriter: "${APP_AGENT_WRITER:storyteller-writer}"
         narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"

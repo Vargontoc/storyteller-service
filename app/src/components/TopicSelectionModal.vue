@@ -20,23 +20,12 @@
 
             <div class="field">
               <label for="topic-select">Tema</label>
-              <div class="topic-row">
-                <select id="topic-select" v-model.number="selectedTopicId" :disabled="loadingTopics">
-                  <option :value="null" disabled>{{ loadingTopics ? 'Cargando temas...' : 'Selecciona un tema' }}</option>
-                  <option v-for="topic in topics" :key="topic.id" :value="topic.id">
-                    {{ topic.type }} - {{ topic.description }}
-                  </option>
-                </select>
-                <button
-                  type="button"
-                  class="btn"
-                  :disabled="!topicAgentActive || generatingTopic"
-                  :title="topicAgentActive ? '' : 'El agente de temas no está disponible'"
-                  @click="onGenerateTopic"
-                >
-                  {{ generatingTopic ? 'Generando...' : 'Generar tema' }}
-                </button>
-              </div>
+              <select id="topic-select" v-model.number="selectedTopicId" :disabled="loadingTopics">
+                <option :value="null" disabled>{{ loadingTopics ? 'Cargando temas...' : 'Selecciona un tema' }}</option>
+                <option v-for="topic in topics" :key="topic.id" :value="topic.id">
+                  {{ topic.type }} — {{ topic.description }}
+                </option>
+              </select>
             </div>
 
             <div class="field">
@@ -81,7 +70,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { generateStory, generateTopic, type StorySize } from '../api/generations'
+import { generateStory, type StorySize } from '../api/generations'
 import { getTopics, type Topic } from '../api/topics'
 import { getEligibleProtagonists, isPortraitGenerationRunning, type CatalogCharacter } from '../api/characters'
 import { useServerStatusStore } from '../stores/serverStatus'
@@ -96,7 +85,6 @@ const emit = defineEmits<{ close: []; created: [storyId: number] }>()
 
 const serverStatus = useServerStatusStore()
 const websocketStore = useWebsocketStore()
-const topicAgentActive = computed(() => serverStatus.data?.ollama.topic ?? false)
 const directorAgentActive = computed(() => serverStatus.data?.ollama.director ?? false)
 
 const sizeOptions: { value: StorySize; label: string }[] = [
@@ -115,7 +103,6 @@ const selectedTopicId = ref<number | null>(null)
 const selectedSize = ref<StorySize | null>(null)
 const loadingTopics = ref(false)
 const loadingCharacters = ref(false)
-const generatingTopic = ref(false)
 const creatingStory = ref(false)
 const error = ref<string | null>(null)
 
@@ -157,21 +144,6 @@ async function loadCatalogCharacters() {
     error.value = err instanceof ApiError ? err.message : 'No se pudo comprobar el catálogo de personajes'
   } finally {
     loadingCharacters.value = false
-  }
-}
-
-async function onGenerateTopic() {
-  generatingTopic.value = true
-  error.value = null
-
-  try {
-    const topic = await generateTopic()
-    topics.value = [...topics.value, topic]
-    selectedTopicId.value = topic.id
-  } catch (err) {
-    error.value = err instanceof ApiError ? err.message : 'Unexpected error'
-  } finally {
-    generatingTopic.value = false
   }
 }
 
@@ -296,13 +268,8 @@ function onClose() {
   color: var(--text-h);
 }
 
-.topic-row {
-  display: flex;
-  gap: 8px;
-}
-
-.topic-row select {
-  flex: 1;
+#topic-select {
+  width: 100%;
   min-width: 0;
   padding: 8px;
   font: inherit;

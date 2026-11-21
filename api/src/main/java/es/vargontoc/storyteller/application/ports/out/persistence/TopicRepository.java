@@ -4,15 +4,9 @@ import java.util.List;
 
 import es.vargontoc.storyteller.domain.model.Topic;
 
-/** Interface para la persistencia de Topìcs de historias */
+/** Interface para la consulta del catálogo interno de temas */
 public interface TopicRepository {
-    
-    /** Crea un nuevo tema */
-    Topic createTopic(Topic topic);
 
-    /** Obtiene la lista de temas persistidos */
+    /** Obtiene la lista de temas del catálogo */
     List<Topic> getTopics();
-
-    /** Obtiene el topic relacionado a un story */
-    Topic getTopicByStoryId(Long storyId);
 }

@@ -28,7 +28,7 @@ public class TopicController {
     }
 
     @GetMapping()
-    @Operation(description = "Obtiene listado de temas generados")
+    @Operation(description = "Obtiene el catálogo interno de temas para cuentos")
     public ResponseEntity<ApiResponse<List<Topic>>> getTopics() {
         return ResponseEntity.ok(ApiResponse.ok(useCase.getTopics()));
     }

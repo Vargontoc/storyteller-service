@@ -15,11 +15,6 @@
     "description": "URL for Chatterbox API"
   },
   {
-    "name": "app.agents.topics",
-    "type": "java.lang.String",
-    "description": "Name of agent who generate topics"
-  },
-  {
     "name": "app.agents.director",
     "type": "java.lang.String",
     "description": "Name of agent who generate stories"

@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+        https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!--
+        El catálogo interno sustituye a los temas generados por el agente.
+        Los temas se agrupan por tipo (aventuras, rutinas, animales, naturaleza,
+        familia y amigos, juegos) y son situaciones cotidianas o aventuras suaves
+        para 3-4 años, sin moraleja ni carga moral.
+
+        Se borran los temas anteriores. Si algún cuento antiguo los referencia,
+        la FK topic_id impedirá el borrado y habrá que decidir su reasignación.
+    -->
+    <changeSet id="022_seed_topic_catalog" author="vargontoc">
+        <delete tableName="topic"/>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="1"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Un viaje en globo entre las nubes"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="2"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Una búsqueda del tesoro en el jardín"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="3"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Un paseo en tren por la montaña"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="4"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Una excursión a la cueva de los ecos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="5"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Un día en el faro junto al mar"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="6"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Un cohete de cartón rumbo a la luna"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="7"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Una isla con flores gigantes"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="8"/>
+            <column name="name" value="Aventuras"/>
+            <column name="description" value="Un barco de papel en el charco"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="9"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="Levantarse y vestirse por la mañana"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="10"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="El desayuno con tostadas y mermelada"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="11"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="Lavarse los dientes antes de dormir"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="12"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="La hora del baño con muchas burbujas"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="13"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="Recoger los juguetes al terminar"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="14"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="Preparar la mochila para ir al parque"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="15"/>
+            <column name="name" value="Rutinas"/>
+            <column name="description" value="El cuento de antes de dormir"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="16"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Un gatito que persigue mariposas"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="17"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Un perrito que encuentra un balón"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="18"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Una pata y sus patitos en el estanque"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="19"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Un erizo que busca su gorrito"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="20"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Un búho que no puede dormir"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="21"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Una tortuga que pasea despacio al río"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="22"/>
+            <column name="name" value="Animales"/>
+            <column name="description" value="Un conejo que salta entre zanahorias"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="23"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Una tarde de lluvia y charcos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="24"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="El arcoíris después de la tormenta"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="25"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Un paseo por el bosque de pinos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="26"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Las estrellas desde la ventana"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="27"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Las hojas de otoño que vuelan"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="28"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Un día de nieve y muñecos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="29"/>
+            <column name="name" value="Naturaleza"/>
+            <column name="description" value="Las flores que abren por la mañana"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="30"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Una merienda con los abuelos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="31"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Un cumpleaños con globos de colores"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="32"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Un picnic en el parque"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="33"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Jugar con un amigo nuevo"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="34"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Una tarde con la tía y sus cuentos"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="35"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Regar las plantas con papá"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="36"/>
+            <column name="name" value="Familia y amigos"/>
+            <column name="description" value="Una siesta con la manta favorita"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <insert tableName="topic">
+            <column name="id" valueNumeric="37"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Una torre de bloques muy alta"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="38"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Un tren de juguete por el pasillo"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="39"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Pintar con las manos de colores"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="40"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Una caja de cartón que es un castillo"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="41"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Un puzzle de animales del bosque"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="42"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Una pelota que rueda y rueda"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+        <insert tableName="topic">
+            <column name="id" valueNumeric="43"/>
+            <column name="name" value="Juegos"/>
+            <column name="description" value="Unas marionetas que cobran vida"/>
+            <column name="created_at" valueComputed="now()"/>
+        </insert>
+
+        <sql>SELECT setval('default_seq', 43, true);</sql>
+    </changeSet>
+
+</databaseChangeLog>

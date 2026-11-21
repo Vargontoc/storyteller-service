@@ -1,7 +1,6 @@
 import { httpClient } from './httpClient'
 
 export interface OllamaApiResponse {
-  topic: boolean
   director: boolean
   scriptwriter: boolean
 }

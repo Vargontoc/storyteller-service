@@ -1,5 +1,5 @@
 type: object
-description: Tema generado para un cuento infantil
+description: Tema del catálogo interno para un cuento infantil
 additionalProperties: false
 properties:
   id:
@@ -8,10 +8,11 @@ properties:
     example: 12
   type:
     type: string
-    example: animales
+    description: Categoría del tema (aventuras, rutinas, animales, naturaleza, familia y amigos, juegos)
+    example: Aventuras
   description:
     type: string
-    example: Un cachorro que aprende a compartir sus juguetes
+    example: Un viaje en globo entre las nubes
 required:
   - id
   - type

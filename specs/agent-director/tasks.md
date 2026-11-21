@@ -225,7 +225,7 @@ El trabajo se divide entre la redefinición del agente director y su aprovisiona
   2. Abrir un cuento creado antes de la feature y comprobar que se muestra la vista previa de guion y personajes, sin escaleta.
   3. Aprobar el guion de un cuento nuevo y comprobar que se habilita el acceso a la generación de páginas.
 
-### [ ] TASK-013 Integrar el flujo completo de creación, aprobación y escritura
+### [X] TASK-013 Integrar el flujo completo de creación, aprobación y escritura
 
 - **Cubre:** REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-016, REQ-017, REQ-018, REQ-019, REQ-020, ALT-001, ALT-002, ALT-003, ALT-004, ALT-005, ALT-006, DEC-001, DEC-004, DEC-005, DEC-006
 - **Componente:** story-modal | app/src/components/StoryModal.vue

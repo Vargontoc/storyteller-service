@@ -17,10 +17,6 @@
 
         <div v-if="expanded && api" class="agents">
           <div class="agent">
-            <span class="dot" :class="`dot-${api.ollama.topic ? 'ok' : 'down'}`"></span>
-            <span>Agente temas</span>
-          </div>
-          <div class="agent">
             <span class="dot" :class="`dot-${api.ollama.director ? 'ok' : 'down'}`"></span>
             <span>Agente director</span>
           </div>
@@ -59,9 +55,9 @@ type Status = 'ok' | 'down' | 'partial' | 'unknown'
 
 const ollamaStatus = computed<Status>(() => {
     if (!props.api) return 'unknown'
-    const { topic, director, scriptwriter } = props.api.ollama
-    if (topic && director && scriptwriter) return 'ok'
-    if (!topic && !director && !scriptwriter) return 'down'
+    const { director, scriptwriter } = props.api.ollama
+    if (director && scriptwriter) return 'ok'
+    if (!director && !scriptwriter) return 'down'
     return 'partial'
 })
 

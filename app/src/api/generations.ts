@@ -1,6 +1,5 @@
 import { httpClient } from './httpClient'
 import type { ApiEnvelope } from './envelope'
-import type { Topic } from './topics'
 
 export type StorySize = 'S' | 'M' | 'L'
 export type KindImage = 'ACTOR' | 'PAGE' | 'COVER'
@@ -50,10 +49,6 @@ export interface AudioPage {
 
 export interface AudioStory {
   pages: AudioPage[]
-}
-
-export function generateTopic() {
-  return httpClient.post<ApiEnvelope<Topic>>('/api/v1/generations/topic').then((envelope) => envelope.data)
 }
 
 // catalogCharacterId: id del protagonista elegido, o null para que el servidor elija al azar entre los aptos.

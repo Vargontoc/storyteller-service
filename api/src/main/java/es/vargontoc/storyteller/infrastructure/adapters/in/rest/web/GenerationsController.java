@@ -18,13 +18,10 @@ import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryScriptReading;
 import es.vargontoc.storyteller.domain.response.StoryScript;
-import es.vargontoc.storyteller.application.ports.in.generator.TopicGenerator;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
-import es.vargontoc.storyteller.domain.command.TopicGenerateCommand;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryPage;
-import es.vargontoc.storyteller.domain.model.Topic;
 import es.vargontoc.storyteller.domain.response.AudioStoryAgentResult;
 import es.vargontoc.storyteller.shared.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -37,29 +34,20 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 @Tag(name = "Generators")
 public class GenerationsController
 {
-    private final TopicGenerator topicGenerator;
     private final StoryGeneration storyGenerator;
     private final StoryPageGeneration pageGeneration;
     private final AudioStoryGeneration audioStoryGeneration;
     private final BeatEditing beatEditing;
     private final StoryScriptReading scriptReading;
 
-    public GenerationsController(TopicGenerator topicGenerator,
-        StoryGeneration storyGenerator,
+    public GenerationsController(StoryGeneration storyGenerator,
         StoryPageGeneration pageGeneration, AudioStoryGeneration audioStoryGeneration,
         BeatEditing beatEditing, StoryScriptReading scriptReading) {
         this.scriptReading = scriptReading;
-        this.topicGenerator = topicGenerator;
         this.storyGenerator = storyGenerator;
         this.pageGeneration = pageGeneration;
         this.audioStoryGeneration = audioStoryGeneration;
         this.beatEditing = beatEditing;
-    }
-
-    @PostMapping("/topic")
-    @Operation(description = "El Agente genera un nuevo tema para cuentos infantiles")
-    public ResponseEntity<ApiResponse<Topic>> generateTopic() {
-        return ResponseEntity.ok(ApiResponse.ok(topicGenerator.generate(new TopicGenerateCommand())));
     }
 
     @PostMapping("/story")

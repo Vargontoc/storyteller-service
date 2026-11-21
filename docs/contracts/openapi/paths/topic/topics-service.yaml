@@ -1,12 +1,12 @@
 get:
   operationId: getTopics
-  summary: Lista los temas generados
-  description: Obtiene el listado de temas ya persistidos
+  summary: Lista el catálogo interno de temas
+  description: Obtiene los temas del catálogo interno con los que se crean los cuentos. El catálogo es fijo y se carga por migración; no se generan temas.
   tags:
     - Topics
   responses:
     "200":
-      description: Listado de temas
+      description: Catálogo de temas
       content:
         application/json:
           schema:

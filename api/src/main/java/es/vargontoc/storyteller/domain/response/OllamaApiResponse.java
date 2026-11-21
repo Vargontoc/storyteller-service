@@ -1,3 +1,3 @@
 package es.vargontoc.storyteller.domain.response;
 
-public record OllamaApiResponse(boolean topic, boolean director, boolean scriptwriter) { }
+public record OllamaApiResponse(boolean director, boolean scriptwriter) { }

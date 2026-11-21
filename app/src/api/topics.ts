@@ -7,6 +7,7 @@ export interface Topic {
   description: string
 }
 
+/** Catálogo interno de temas para cuentos. */
 export function getTopics() {
   return httpClient.get<ApiEnvelope<Topic[]>>('/api/v1/topic').then((envelope) => envelope.data)
 }

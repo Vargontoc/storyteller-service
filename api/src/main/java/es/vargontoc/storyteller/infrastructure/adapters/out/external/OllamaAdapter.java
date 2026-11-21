@@ -23,14 +23,13 @@ public class OllamaAdapter implements OllamaPort {
     private final List<String> models;
     public OllamaAdapter(@Value("${spring.ai.ollama.base-url}") String url, 
         OllamaApi api,
-        @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String topicModel,
         @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String directorModel,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL) String scriptwriterModel,
         @Qualifier(Constants.BeanNames.AGENT_CHARACTER_MODEL) String characterModel) {
         restClient =  RestClient.builder().baseUrl(url).build();
         this.api = api;
 
-        models = List.of(topicModel, directorModel, scriptwriterModel, characterModel);
+        models = List.of(directorModel, scriptwriterModel, characterModel);
     }
 
     public boolean isAvailableService(){

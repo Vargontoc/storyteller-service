@@ -15,9 +15,6 @@ import es.vargontoc.storyteller.shared.Constants;
 @Configuration
 public class AgentsConfig {
 
-    @Bean(name = Constants.BeanNames.AGENT_TOPICS_MODEL)
-    public String topicModel(@Value("${app.agents.topics}") String value) { return value;}
-
     @Bean(name = Constants.BeanNames.AGENT_DIRECTOR_MODEL)
     public String directorModel(@Value("${app.agents.director}") String value) { return value;}
 
@@ -31,14 +28,6 @@ public class AgentsConfig {
     public String characterModel(@Value("${app.agents.character}") String value) { return value;}
 
 
-
-    @Bean(name = Constants.BeanNames.AGENT_TOPICS)
-    public ChatClient topicAgent(OllamaChatModel ollamaModel, @Qualifier(Constants.BeanNames.AGENT_TOPICS_MODEL) String model) {
-        return ChatClient.builder(ollamaModel)
-            .defaultAdvisors(new SimpleLoggerAdvisor())
-            .defaultOptions(ChatOptions.builder().model(model))
-            .build();
-    }
 
     @Bean(name = Constants.BeanNames.AGENT_DIRECTOR)
     public ChatClient directorAgent(OllamaChatModel ollama, @Qualifier(Constants.BeanNames.AGENT_DIRECTOR_MODEL) String model) {

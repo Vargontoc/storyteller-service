@@ -4,7 +4,7 @@ post:
   operationId: generateStory
   summary: Genera una nueva historia con escaleta
   description: |
-    Crea un cuento a partir de un tema y un protagonista del catálogo con retrato aprobado: el indicado en
+    Crea un cuento a partir de un tema del catálogo interno y un protagonista del catálogo con retrato aprobado: el indicado en
     catalogCharacterId o, si se omite, uno elegido al azar entre los disponibles. El director recibe la ficha
     del protagonista y devuelve título, sinopsis, reparto episódico ligero y una escaleta con un beat por página
     interior. Una escaleta incompleta se reintenta hasta 3 veces sin persistir nada. El cuento se crea con

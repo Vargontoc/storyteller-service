@@ -7,6 +7,7 @@ Este proyecto es una aplicación web para generar cuentos mediante agentes de IA
 ## Features
 
 * **Generación de cuentos** : generacion de un cuento de manera secuencial y en tiempo real.
+* **Catálogo de temas** : temas internos de aventuras, rutinas, animales, naturaleza, familia y amigos y juegos para niños de 3 a 4 años, sin moraleja.
 * **Gestión de cuentos** : gestión de los cuentos generados permitiendo al usuario revisar guión, descripción de personaejes y las escenas con previo aceptación del agente.
 * **Generación de Imágenes** : generacion de imágenes mediante servicio externo para los personajes y cada una de las escenas.
 * **Generación de Audios** : generacion de audios mediante servicio externo para la narración cada una de las escenas.
@@ -133,17 +134,6 @@ Capa de agentes donde reside la configuración de los distintos agentes encargad
 ### Requisitos
 
 * Contendor de [Ollama](#contenedor-ollama) levantado.
-
-#### Agente Topics
-
-Agente generativo que genera distintos temas apropiados para los cuentos
-
-Para instalarlo en ollama
-
-```bash
-cd agents
-load_model.ps1 "storyteller-topics" ".\topic-story-agent"
-```
 
 #### Agente director
 

@@ -6,6 +6,7 @@ properties:
   topicId:
     type: integer
     format: int64
+    description: Identificador del tema del catálogo interno (GET /topic)
   size:
     $ref: "../enums/story-size.yaml"
   catalogCharacterId:

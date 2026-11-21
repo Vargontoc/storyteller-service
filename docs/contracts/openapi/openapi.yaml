@@ -12,7 +12,7 @@ tags:
   - name: Api
     description: Estado de los servicios externos de la aplicación
   - name: Generators
-    description: Generación de contenido mediante agentes (temas, historias, páginas)
+    description: Generación de contenido mediante agentes (historias, páginas)
   - name: Reviews
     description: Revisión, confirmación y descarte de contenido generado
   - name: Assets
@@ -20,7 +20,7 @@ tags:
   - name: Storyteller
     description: Consulta, listado y borrado de cuentos, personajes y páginas
   - name: Topics
-    description: Consulta de temas
+    description: Catálogo interno de temas para cuentos
   - name: CatalogCharacters
     description: Catálogo maestro de protagonistas reutilizables y sus revisiones
 
@@ -33,8 +33,6 @@ paths:
   /assets/audios/generate:
     $ref: "./paths/assets/audio-service.yaml"
 
-  /generations/topic:
-    $ref: "./paths/topic/generation-service.yaml"
   /generations/story:
     $ref: "./paths/story/generation-service.yaml"
   /generations/story/{id}/approve:
