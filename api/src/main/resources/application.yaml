@@ -109,6 +109,8 @@ app:
             enabled: "${APP_AGENT_CHARACTER_PROVISIONING_ENABLED:true}"
         director-provisioning:
             enabled: "${APP_AGENT_DIRECTOR_PROVISIONING_ENABLED:true}"
+        writer-provisioning:
+            enabled: "${APP_AGENT_WRITER_PROVISIONING_ENABLED:true}"
         character-rules:
             audience: "niños y niñas de 3 a 4 años"
             allowed-species: "animales fáciles de dibujar y personajes humanos infantiles"

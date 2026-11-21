@@ -10,10 +10,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 
 ## Tareas
 
-### [ ] TASK-001 Puerta de generación única en memoria
+### [x] TASK-001 Puerta de generación única en memoria
 
 - **Cubre:** REQ-032, REQ-033, DEC-002, ALT-003
-- **Componente:** generation-gate | por definir (analista técnico)
+- **Componente:** generation-gate | api/src/main/java/es/vargontoc/storyteller/application/service/GenerationGate.java
 - **Depende de:** -
 - **Alcance:** Componente que concede un único turno de generación para toda la aplicación, registra su tipo y, si es del escritor, su cuento, lo libera al terminar y responde si la generación en curso es de un cuento concreto.
 - **Hecho cuando:** con un turno concedido se niega cualquier otro, sea del tipo que sea; al liberarlo se concede el siguiente; se puede consultar si la generación en curso es de un cuento dado, y al arrancar el servidor la puerta está libre.
@@ -30,10 +30,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Instancia recién creada: la puerta está libre.
 - **Prueba manual:** No aplica: no tiene comportamiento observable por sí solo; se verifica de forma manual en las tareas que lo integran (TASK-010, TASK-011 y TASK-024 a TASK-028).
 
-### [ ] TASK-002 Validador de longitud del texto narrativo
+### [x] TASK-002 Validador de longitud del texto narrativo
 
 - **Cubre:** REQ-007, REQ-026, REQ-028, DEC-004, DEC-011
-- **Componente:** page-length-validator | por definir (analista técnico)
+- **Componente:** page-length-validator | api/src/main/java/es/vargontoc/storyteller/domain/service/PageLengthValidator.java
 - **Depende de:** -
 - **Alcance:** Componente determinista que cuenta las frases y las palabras del texto narrativo y lo clasifica como sin aviso, exceso de palabras, número de frases fuera de 1 a 4 o ambos.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-007 y la regla de segmentación de frases para diálogos, puntos suspensivos y signos dobles está fijada y probada según DEC-011.
@@ -49,10 +49,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Texto con puntos suspensivos y con signos dobles (¿?, ¡!): el recuento sigue la regla fijada y no cuenta frases de más.
 - **Prueba manual:** No aplica: es un componente interno sin interfaz propia; su efecto visible se comprueba de forma manual en TASK-014.
 
-### [ ] TASK-003 Histórico de versiones de portada y página
+### [x] TASK-003 Histórico de versiones de portada y página
 
 - **Cubre:** REQ-034, REQ-036, REQ-037, REQ-038, REQ-039, DEC-001
-- **Componente:** story-page-version-repository | por definir (analista técnico)
+- **Componente:** story-page-version-repository | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/persistence/StoryPageVersionRepositoryAdapter.java
 - **Depende de:** -
 - **Alcance:** Persistencia de `PageVersion` (texto narrativo, escena, aviso de longitud y marca de vigente, sin imagen) asociada a una `StoryPage`, con alta, cambio de vigente, lectura del histórico y borrado de todas las versiones de una página.
 - **Hecho cuando:** se pueden guardar y leer las versiones de una página con su aviso, en cada página hay como mucho una vigente, se borran todas a la vez y no hay límite de número de versiones.
@@ -65,10 +65,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Alta de 11 versiones en una página: se leen las 11 y cualquiera se puede marcar como vigente.
 - **Prueba manual:** No aplica: es persistencia interna; se verifica a través de la interfaz en TASK-032.
 
-### [ ] TASK-004 Estado, contenido aceptado e imagen importada de la página
+### [x] TASK-004 Estado, contenido aceptado e imagen importada de la página
 
 - **Cubre:** REQ-005, REQ-022, REQ-040, REQ-041, DEC-012
-- **Componente:** story-page-repository | no consta en el mapa
+- **Componente:** story-page-repository | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/persistence/StoryPageRepositoryAdapter.java
 - **Depende de:** -
 - **Alcance:** Modificar `StoryPage` y su persistencia para los cuentos con escaleta: estado (pendiente de aceptación o aceptada), vínculo con el beat N (la portada es la página 0), contenido aceptado (texto y escena, o título y escena en la portada) y asociación opcional a una `ImportedImage` del contenido aceptado, que se puede leer y desasociar.
 - **Hecho cuando:** una página de un cuento con escaleta se persiste y se lee con su estado, su beat, su contenido aceptado y, si la tiene, la referencia a su imagen importada; la asociación se puede eliminar sin tocar el resto del contenido, y las páginas de cuentos antiguos se siguen leyendo como antes.
@@ -126,10 +126,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con el modelo del escritor cargado, pedir una página desde un beat cuyo campo "quiénes aparecen" lista al protagonista y a un conejo blanco: el texto y la escena narran el hecho del beat, recogen su nota visual y no incluyen otros personajes con nombre.
   2. Pedir una nueva versión con el hint "que aparezca el lobo" sobre un beat sin lobo: se devuelve un rechazo con motivo.
 
-### [ ] TASK-008 Notificador de eventos de generación de portada y página
+### [x] TASK-008 Notificador de eventos de generación de portada y página
 
 - **Cubre:** REQ-014, REQ-020, REQ-022, DEC-003
-- **Componente:** story-page-notifier | por definir (analista técnico)
+- **Componente:** story-page-notifier | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageNotifier.java
 - **Depende de:** -
 - **Alcance:** Componente que publica los eventos de inicio, versión presentada, hint rechazado con motivo y fallo de una generación de portada o página, con el cuento y la página a los que afectan.
 - **Hecho cuando:** cada uno de los cuatro eventos se publica con su tipo, su cuento, su página y, en el rechazo, el motivo.

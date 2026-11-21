@@ -15,6 +15,9 @@ public class StoryPageMapper extends AbstractMapper<StoryPageJpaEntity, StoryPag
         target.setId(model.getId());
         target.setText(model.getText());
         target.setSceneComposition(model.getComposition());
+        target.setStatus(model.getPageStatus());
+        target.setBeatId(model.getBeatId());
+        target.setImportedImage(model.getImportedImage());
         return target;
     }
 
@@ -27,6 +30,9 @@ public class StoryPageMapper extends AbstractMapper<StoryPageJpaEntity, StoryPag
         target.setPage(entity.getPage());
         target.setText(entity.getText());
         target.setComposition(entity.getSceneComposition());
+        target.setPageStatus(entity.getStatus());
+        target.setBeatId(entity.getBeatId());
+        target.setImportedImage(entity.getImportedImage());
         return target;
     }
     

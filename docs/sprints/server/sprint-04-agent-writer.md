@@ -284,6 +284,6 @@ Se mantiene la arquitectura hexagonal existente: puertos de aplicación y persis
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: correcta. Origen: confirmación del usuario en la sesión del desarrollador-router. Alcance: `mvn -f api/pom.xml test` completa tras TASK-008 y la corrección de contextLoads con el publicador provisional (incluye TASK-001 a TASK-004).
 - Integración: pendiente
-- Validación manual: pendiente
+- Validación manual: el usuario confirmó "success (tests y migraciones)": migraciones 024 y 025 comprobadas por el usuario (alcance: TASK-003 y TASK-004); TASK-001, TASK-002 y TASK-008 no aplica; el resto, pendiente. Nota TASK-009: eliminar LoggingStoryPageEventPublisher al conectar el publicador real.

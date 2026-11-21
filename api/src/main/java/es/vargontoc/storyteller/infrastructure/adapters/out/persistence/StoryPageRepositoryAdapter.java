@@ -11,6 +11,8 @@ import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.domain.enums.PageReviewTarget;
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.enums.PageStatus;
+import es.vargontoc.storyteller.domain.model.SceneComposition;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
@@ -80,6 +82,34 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
 
 
         return entity;
+    }
+
+    @Override
+    public StoryPage createPending(Long storyId, int page, Long beatId) {
+        StoryPageJpaEntity entity = new StoryPageJpaEntity();
+        entity.setStory(storyRepository.findById(storyId).orElseThrow());
+        entity.setPage(page);
+        entity.setStatus(PageStatus.PENDING);
+        entity.setBeatId(beatId);
+        entity.setCreatedAt(LocalDateTime.now());
+        return mapper.toModel(repository.save(entity));
+    }
+
+    @Override
+    public StoryPage accept(Long idPage, String text, SceneComposition scene) {
+        StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow();
+        entity.setStatus(PageStatus.ACCEPTED);
+        entity.setText(text);
+        entity.setSceneComposition(scene);
+        entity.setImportedImage(null);
+        return mapper.toModel(repository.save(entity));
+    }
+
+    @Override
+    public StoryPage removeImportedImage(Long idPage) {
+        StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow();
+        entity.setImportedImage(null);
+        return mapper.toModel(repository.save(entity));
     }
 
     @Override

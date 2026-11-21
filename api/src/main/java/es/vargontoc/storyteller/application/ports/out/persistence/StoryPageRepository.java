@@ -3,6 +3,7 @@ package es.vargontoc.storyteller.application.ports.out.persistence;
 import java.util.List;
 
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.SceneComposition;
 import es.vargontoc.storyteller.domain.model.StoryPage;
 import es.vargontoc.storyteller.domain.model.StoryPageReview;
 import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
@@ -10,6 +11,15 @@ import es.vargontoc.storyteller.domain.response.StoryPageAgentResult;
 public interface StoryPageRepository {
     
     StoryPage create(StoryPageAgentResult result, Long storyId, int page);
+
+    /** Cuentos con escaleta: crea la portada (page 0, sin beat) o la página N pendiente, sin contenido aceptado ni imagen. */
+    StoryPage createPending(Long storyId, int page, Long beatId);
+
+    /** Cuentos con escaleta: deja la página aceptada con ese contenido (texto null en la portada) y sin imagen importada. */
+    StoryPage accept(Long idPage, String text, SceneComposition scene);
+
+    /** Quita solo la asociación con la imagen importada; el contenido aceptado no cambia. */
+    StoryPage removeImportedImage(Long idPage);
 
     StoryPage getPage(Long idPage);
 

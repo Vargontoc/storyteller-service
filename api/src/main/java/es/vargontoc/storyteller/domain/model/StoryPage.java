@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.domain.model;
 
+import es.vargontoc.storyteller.domain.enums.PageStatus;
 import es.vargontoc.storyteller.shared.BaseModel;
 
 public class StoryPage  extends BaseModel {
@@ -13,7 +14,32 @@ public class StoryPage  extends BaseModel {
     private String imageAsset;
     private String audioAsset;
     private SceneComposition composition;
+    /** Solo cuentos con escaleta; null en los antiguos. */
+    private PageStatus pageStatus;
+    /** Beat vinculado a la página N; null en la portada y en los cuentos antiguos. */
+    private Long beatId;
+    /** Imagen importada del contenido aceptado; null si no tiene. */
+    private String importedImage;
 
+    /** Se llama pageStatus porque StoryPageReview, que extiende esta clase, ya tiene getStatus(). */
+    public PageStatus getPageStatus() {
+        return pageStatus;
+    }
+    public void setPageStatus(PageStatus pageStatus) {
+        this.pageStatus = pageStatus;
+    }
+    public Long getBeatId() {
+        return beatId;
+    }
+    public void setBeatId(Long beatId) {
+        this.beatId = beatId;
+    }
+    public String getImportedImage() {
+        return importedImage;
+    }
+    public void setImportedImage(String importedImage) {
+        this.importedImage = importedImage;
+    }
     public Long getId() {
         return id;
     }

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Paginas de cuentos con escaleta. Las columnas nuevas son NULL en los cuentos antiguos (sin backfill). -->
+    <changeSet id="025-add-outline-fields-to-story-page" author="storyteller">
+        <addColumn tableName="story_page">
+            <!-- PENDING | ACCEPTED -->
+            <column name="status" type="VARCHAR(20)"/>
+            <!-- Beat de la escaleta vinculado a la pagina N. NULL en la portada. -->
+            <column name="beat_id" type="BIGINT"/>
+            <!-- Referencia a la imagen importada del contenido aceptado. -->
+            <column name="imported_image" type="TEXT"/>
+        </addColumn>
+        <addForeignKeyConstraint baseTableName="story_page" baseColumnNames="beat_id" constraintName="fk_story_page_beat" referencedTableName="story_beat" referencedColumnNames="id" onDelete="SET NULL"/>
+    </changeSet>
+
+    <!-- Una pagina pendiente aun no tiene contenido aceptado: su texto vive en las versiones. -->
+    <changeSet id="025-drop-not-null-story-page-text" author="storyteller">
+        <dropNotNullConstraint tableName="story_page" columnName="text" columnDataType="VARCHAR(500)"/>
+    </changeSet>
+</databaseChangeLog>
