@@ -21,6 +21,9 @@ public interface StoryPageRepository {
     /** Quita solo la asociación con la imagen importada; el contenido aceptado no cambia. */
     StoryPage removeImportedImage(Long idPage);
 
+    /** Elimina una sola página recién creada (sin revisiones ni versiones). */
+    void delete(Long idPage);
+
     StoryPage getPage(Long idPage);
 
     StoryPage update(Long idPage, StoryPageReview review);

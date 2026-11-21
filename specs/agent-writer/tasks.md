@@ -80,10 +80,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Página de un cuento antiguo sin escaleta ya existente: se lee igual que antes del cambio.
 - **Prueba manual:** No aplica: es persistencia interna; se verifica a través de la interfaz en TASK-031.
 
-### [ ] TASK-005 Modelfile del escritor como recurso del backend y su aprovisionamiento
+### [x] TASK-005 Modelfile del escritor como recurso del backend y su aprovisionamiento
 
 - **Cubre:** REQ-024, REQ-006, REQ-008, REQ-009, DEC-004, DEC-005
-- **Componente:** writer-model-provisioner | por definir (analista técnico)
+- **Componente:** writer-model-provisioner | api/src/main/java/es/vargontoc/storyteller/infrastructure/config/WriterModelProvisioner.java
 - **Depende de:** -
 - **Alcance:** Mover el Modelfile del escritor a los recursos del backend, con instrucciones de fidelidad al beat, límite de frases y palabras, sin subordinadas encadenadas y con vocabulario para 3 a 4 años sin imitar el habla infantil, y registrar el modelo en Ollama al arrancar si no existe, con el mismo patrón que `director-model-provisioner`.
 - **Hecho cuando:** se cumple el primer criterio de aceptación de REQ-024; al arrancar el backend con Ollama sin el modelo del escritor, este queda registrado desde el recurso del backend, y las instrucciones del Modelfile recogen las reglas de REQ-006, REQ-007, REQ-008 y REQ-009.
@@ -107,10 +107,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Revisar `agents/`: no hay Modelfile del escritor.
   2. Ejecutar el script de carga de `agents/`: termina sin errores y no intenta registrar el modelo del escritor.
 
-### [ ] TASK-007 Adaptador del escritor
+### [x] TASK-007 Adaptador del escritor
 
 - **Cubre:** REQ-001, REQ-003, REQ-004, REQ-005, REQ-006, REQ-012, REQ-014, REQ-029, DEC-006, DEC-010, ALT-006, ALT-011
-- **Componente:** writer-agent | por definir (analista técnico)
+- **Componente:** writer-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiWriterAgent.java
 - **Depende de:** TASK-005
 - **Alcance:** Adaptador del escritor en Ollama, extraído de `story-page-service`, con tres operaciones: escena de portada (con título, sinopsis e instantánea del protagonista), página N con su contexto (beat N, título, sinopsis, reparto episódico, instantánea y texto aceptado de las páginas anteriores) y nueva versión a partir de una base y un hint, que devuelve el contenido o un rechazo con motivo.
 - **Hecho cuando:** cada operación envía al modelo del escritor el contexto indicado y devuelve la escena de portada, o el texto narrativo y la escena de la página, o el rechazo motivado del hint; una respuesta sin texto o sin escena, o un error del modelo, se devuelve como fallo.
@@ -140,10 +140,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Publicar fallo: el evento lleva el tipo fallo y la página afectada.
 - **Prueba manual:** No aplica: no tiene salida visible por sí solo; se verifica de forma manual en TASK-009 y TASK-034.
 
-### [ ] TASK-009 Integración: difusión por /storyteller de los eventos de portada y página
+### [x] TASK-009 Integración: difusión por /storyteller de los eventos de portada y página
 
 - **Cubre:** REQ-020, REQ-022, DEC-003
-- **Componente:** story-page-notifier | por definir (analista técnico); websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java
+- **Componente:** story-page-notifier | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/WebsocketStoryPageEventPublisher.java; websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java
 - **Depende de:** TASK-008
 - **Alcance:** Hacer que `websocket-adapter` difunda por el canal /storyteller los eventos de `story-page-notifier`, sin alterar las notificaciones generales ni los eventos de retratos.
 - **Hecho cuando:** un evento publicado por `story-page-notifier` llega a un cliente suscrito a /storyteller con su tipo, su cuento y su página, y los eventos de retratos se siguen recibiendo igual.
@@ -153,7 +153,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Conectar un cliente WebSocket a /storyteller y lanzar una generación de portada: llegan los eventos de inicio y de versión presentada.
 
-### [ ] TASK-010 Bifurcación por escaleta y cuentos antiguos a través de la puerta
+### [x] TASK-010 Bifurcación por escaleta y cuentos antiguos a través de la puerta
 
 - **Cubre:** REQ-023, REQ-032, DEC-001, DEC-007, ALT-003
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -170,7 +170,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Abrir un cuento antiguo y generar una página: se comporta como antes.
   2. Con retratos en generación, generar una página de un cuento antiguo: se rechaza indicando que hay una generación en curso.
 
-### [ ] TASK-011 Generar la escena de portada
+### [x] TASK-011 Generar la escena de portada
 
 - **Cubre:** REQ-001, REQ-020, REQ-032, REQ-034, DEC-003, DEC-006, DEC-010, ALT-003, ALT-011
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -189,7 +189,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con un cuento con guion aprobado, pedir la portada por la API: la respuesta indica que la generación ha empezado.
   2. Consultar la portada al terminar: está pendiente, con el título del guion y la escena, sin imagen.
 
-### [ ] TASK-012 Aceptar la portada o una página pendiente
+### [x] TASK-012 Aceptar la portada o una página pendiente
 
 - **Cubre:** REQ-011, REQ-027, REQ-028, REQ-033, REQ-037, REQ-041, DEC-001, DEC-002, DEC-010, DEC-012, ALT-004, ALT-009
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -208,7 +208,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Aceptar una portada pendiente por la API y consultarla: está aceptada, sin imagen y sin histórico.
 
-### [ ] TASK-013 Generar la página N desde su beat
+### [x] TASK-013 Generar la página N desde su beat
 
 - **Cubre:** REQ-002, REQ-003, REQ-004, REQ-005, REQ-010, REQ-028, REQ-034, DEC-003, DEC-006, DEC-007, ALT-001, ALT-002, ALT-014
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -230,7 +230,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con la portada aceptada, pedir la página 1 por la API: la respuesta indica que la generación ha empezado y al terminar la página 1 está pendiente, con texto y escena del beat 1.
   2. Pedir la página 2 sin haber aceptado la página 1: se rechaza con el motivo.
 
-### [ ] TASK-014 Regeneración automática por longitud y versiones con aviso
+### [x] TASK-014 Regeneración automática por longitud y versiones con aviso
 
 - **Cubre:** REQ-007, REQ-020, REQ-025, REQ-026, REQ-032, REQ-034, REQ-035, DEC-004, DEC-009, ALT-007, ALT-008, ALT-011
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java

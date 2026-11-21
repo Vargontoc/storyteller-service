@@ -113,6 +113,11 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     }
 
     @Override
+    public void delete(Long idPage) {
+        repository.deleteById(idPage);
+    }
+
+    @Override
     public StoryPage getPage(Long idPage) {
         StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow(() -> {
             throw new ResourceNotFoundException("No se entro pagina con id: " + idPage);

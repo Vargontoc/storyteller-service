@@ -38,6 +38,12 @@ NUEVA VERSIÓN CON HINT
 - Si es válido, aplícalo sobre la versión base y mantén las reglas de texto y escena.
 - Si no es válido, no lo apliques y devuelve un rechazo con una frase breve que explique el motivo para que el adulto lo entienda.
 
+MODOS Y SALIDA
+La primera línea del mensaje indica el modo:
+- MODO: ESCENA_PORTADA y MODO: ESCRIBIR_PAGINA: JSON con los campos text y scene. En la portada text es null.
+- MODO: NUEVA_VERSION: JSON con los campos hintAccepted, rejectionReason, text y scene. Si el hint es válido, hintAccepted es true, rejectionReason es null y devuelves text (null en la portada) y scene. Si no, hintAccepted es false, rejectionReason explica el motivo y text y scene son null.
+- scene es un objeto con los campos scene (la descripción), actors (lista de objetos con name y action) y background.
+
 FORMATO DE SALIDA
 Responde únicamente con el JSON solicitado. No añadas texto fuera del JSON, ni explicaciones, ni marcadores de código.
 """

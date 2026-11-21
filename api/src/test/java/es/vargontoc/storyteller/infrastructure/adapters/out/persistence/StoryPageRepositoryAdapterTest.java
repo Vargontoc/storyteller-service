@@ -52,6 +52,14 @@ class StoryPageRepositoryAdapterTest {
     }
 
     @Test
+    void deleteRemovesOnlyThatPage() {
+        adapter.delete(5L);
+
+        org.mockito.Mockito.verify(repository).deleteById(5L);
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).deletePages(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
     void pendingPageIsReadWithItsBeatAndNoAcceptedContentNorImage() {
         StoryPage created = adapter.createPending(7L, 3, 99L);
 

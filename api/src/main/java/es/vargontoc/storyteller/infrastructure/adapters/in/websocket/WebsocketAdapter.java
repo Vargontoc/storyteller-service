@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import es.vargontoc.storyteller.application.ports.in.WebsocketUseCase;
 import es.vargontoc.storyteller.domain.events.WebsocketNotificationEvent;
 import es.vargontoc.storyteller.domain.events.PortraitGenerationEvent;
+import es.vargontoc.storyteller.domain.events.StoryPageGenerationEvent;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 @Component
@@ -47,6 +48,11 @@ public class WebsocketAdapter extends TextWebSocketHandler implements WebsocketU
 
     @Override
     public void sendPortraitNotification(PortraitGenerationEvent event) {
+        broadcast(event);
+    }
+
+    @Override
+    public void sendStoryPageNotification(StoryPageGenerationEvent event) {
         broadcast(event);
     }
 

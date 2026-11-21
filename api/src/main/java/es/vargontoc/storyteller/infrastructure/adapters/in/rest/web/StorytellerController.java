@@ -4,7 +4,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import es.vargontoc.storyteller.application.ports.in.generator.CoverGeneration;
+import es.vargontoc.storyteller.application.ports.in.generator.PageAcceptance;
+import es.vargontoc.storyteller.application.ports.in.generator.PageGeneration;
+import es.vargontoc.storyteller.domain.model.StoryPage;
+import es.vargontoc.storyteller.domain.response.PageAccepted;
 import es.vargontoc.storyteller.application.ports.in.persistence.StorytellerUseCase;
+import es.vargontoc.storyteller.domain.response.GenerationStarted;
 import es.vargontoc.storyteller.domain.model.ActorSummary;
 import es.vargontoc.storyteller.domain.model.PageSummary;
 import es.vargontoc.storyteller.domain.model.PaginatedResponse;
@@ -37,9 +43,35 @@ import org.springframework.web.bind.annotation.RequestBody;
 public class StorytellerController {
     
     private final StorytellerUseCase useCase;
+    private final CoverGeneration coverGeneration;
 
-    public StorytellerController(StorytellerUseCase useCase) {
+    private final PageGeneration pageGeneration;
+    private final PageAcceptance pageAcceptance;
+
+    public StorytellerController(StorytellerUseCase useCase, CoverGeneration coverGeneration, PageGeneration pageGeneration, PageAcceptance pageAcceptance) {
         this.useCase = useCase;
+        this.coverGeneration = coverGeneration;
+        this.pageGeneration = pageGeneration;
+        this.pageAcceptance = pageAcceptance;
+    }
+
+    @PostMapping("/{storyId}/pages/{id}/accept")
+    @Operation(description = "Acepta la portada (página 0) o una página pendiente con su versión vigente, sin imagen, y borra el histórico. No inicia ninguna generación. 409 si la vigente avisa del número de frases o hay una generación en curso del cuento")
+    public ResponseEntity<ApiResponse<PageAccepted>> acceptPage(@PathVariable("storyId") Long storyId, @PathVariable("id") Long id) {
+        StoryPage page = pageAcceptance.acceptPage(storyId, id);
+        return ResponseEntity.ok(ApiResponse.ok(new PageAccepted(storyId, page.getId(), page.getPage(), page.getPageStatus())));
+    }
+
+    @PostMapping("/{storyId}/cover/generate")
+    @Operation(description = "Inicia la generación de la escena de portada de un cuento con escaleta y guion aprobado. Responde al conceder el turno; el resultado llega por /storyteller (STARTED, VERSION_PRESENTED o FAILED con pageNumber 0)")
+    public ResponseEntity<ApiResponse<GenerationStarted>> generateCover(@PathVariable("storyId") Long storyId) {
+        return ResponseEntity.accepted().body(ApiResponse.ok(coverGeneration.startCover(storyId)));
+    }
+
+    @PostMapping("/{storyId}/pages/{number}/generate")
+    @Operation(description = "Inicia la generación de la página N (la siguiente) de un cuento con escaleta, con la portada y las páginas anteriores aceptadas. Responde al conceder el turno; el resultado llega por /storyteller (STARTED, VERSION_PRESENTED o FAILED con pageNumber N). 409 si falta aceptar la portada o una página anterior, si N no es la siguiente o hay una generación en curso")
+    public ResponseEntity<ApiResponse<GenerationStarted>> generatePage(@PathVariable("storyId") Long storyId, @PathVariable("number") int number) {
+        return ResponseEntity.accepted().body(ApiResponse.ok(pageGeneration.startPage(storyId, number)));
     }
 
     @GetMapping
