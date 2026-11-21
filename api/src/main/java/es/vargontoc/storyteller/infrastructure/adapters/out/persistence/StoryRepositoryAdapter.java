@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
@@ -197,6 +198,7 @@ public class StoryRepositoryAdapter implements StoryRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public Story getStory(Long idStory) {
         StoryJpaEntity entity = repository.findById(idStory).orElseThrow(() -> {
             throw new ResourceNotFoundException("Story not found with id: " + idStory);

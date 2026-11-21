@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.stream.IntStream;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryScriptReading;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
@@ -15,6 +16,7 @@ import es.vargontoc.storyteller.domain.response.StoryScript.ScriptBeat;
 
 /** Devuelve el guion vigente de un cuento. Un cuento antiguo (sin escaleta) devuelve reparto y beats vacios. */
 @Service
+@Transactional(readOnly = true)
 public class StoryScriptService implements StoryScriptReading {
 
     private final StoryRepository stories;
