@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Narracion del cuento: estado y copia del nombre de la voz (sin clave a la tabla voice). Cero o una por cuento. -->
+    <changeSet id="027-create-story-narration" author="storyteller">
+        <createTable tableName="story_narration">
+            <column name="id" type="BIGINT"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="story_id" type="BIGINT"><constraints nullable="false" unique="true"/></column>
+            <column name="status" type="VARCHAR(20)"><constraints nullable="false"/></column>
+            <column name="voice_name" type="VARCHAR(100)"/>
+            <column name="created_at" type="TIMESTAMPTZ"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="story_narration" baseColumnNames="story_id" constraintName="fk_story_narration_story" referencedTableName="story" referencedColumnNames="id" onDelete="CASCADE"/>
+    </changeSet>
+
+    <!-- Audio por pagina interior: page >= 1, la portada (0) nunca tiene audio. -->
+    <changeSet id="027-create-story-narration-audio" author="storyteller">
+        <createTable tableName="story_narration_audio">
+            <column name="id" type="BIGINT"><constraints primaryKey="true" nullable="false"/></column>
+            <column name="narration_id" type="BIGINT"><constraints nullable="false"/></column>
+            <column name="page" type="INT"><constraints nullable="false"/></column>
+            <column name="audio_asset" type="VARCHAR(255)"><constraints nullable="false"/></column>
+            <column name="created_at" type="TIMESTAMPTZ"><constraints nullable="false"/></column>
+            <column name="updated_at" type="TIMESTAMPTZ"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="story_narration_audio" baseColumnNames="narration_id" constraintName="fk_story_narration_audio_narration" referencedTableName="story_narration" referencedColumnNames="id" onDelete="CASCADE"/>
+        <addUniqueConstraint tableName="story_narration_audio" columnNames="narration_id, page" constraintName="uq_story_narration_audio_page"/>
+        <sql>ALTER TABLE story_narration_audio ADD CONSTRAINT ck_story_narration_audio_interior CHECK (page &gt;= 1)</sql>
+    </changeSet>
+</databaseChangeLog>

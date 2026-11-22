@@ -17,6 +17,7 @@ import es.vargontoc.storyteller.application.ports.in.WebsocketUseCase;
 import es.vargontoc.storyteller.domain.events.WebsocketNotificationEvent;
 import es.vargontoc.storyteller.domain.events.PortraitGenerationEvent;
 import es.vargontoc.storyteller.domain.events.StoryPageGenerationEvent;
+import es.vargontoc.storyteller.domain.events.NarrationEvent;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 
 @Component
@@ -53,6 +54,12 @@ public class WebsocketAdapter extends TextWebSocketHandler implements WebsocketU
 
     @Override
     public void sendStoryPageNotification(StoryPageGenerationEvent event) {
+        broadcast(event);
+    }
+
+    // Implementacion minima para compilar; TASK-018 la verifica con pruebas de websocket.
+    @Override
+    public void sendNarrationNotification(NarrationEvent event) {
         broadcast(event);
     }
 

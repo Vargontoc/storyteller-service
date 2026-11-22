@@ -46,6 +46,39 @@ class WriterModelProvisionerTest {
     }
 
     @Test
+    void modelfileContainsOnomatopoeiaRules() throws Exception {
+        String content = new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(content.contains("Como máximo una onomatopeya por página"));
+        assertTrue(content.contains("Solo si el beat tiene un sonido natural en la escena"));
+        assertTrue(content.contains("forma estándar y pronunciable del español"));
+        assertTrue(content.contains("sin letras repetidas alargadas ni símbolos"));
+        assertTrue(content.contains("Nunca incluyas onomatopeyas en la portada"));
+    }
+
+    @Test
+    void missingModelRegistersUpdatedModelfileWithOnomatopoeiaRules() {
+        RestClient client = mock(RestClient.class);
+        RestClient.RequestBodyUriSpec request = mock(RestClient.RequestBodyUriSpec.class);
+        RestClient.RequestBodySpec body = mock(RestClient.RequestBodySpec.class);
+        RestClient.ResponseSpec response = mock(RestClient.ResponseSpec.class);
+        when(client.post()).thenReturn(request);
+        when(request.uri("/api/create")).thenReturn(request);
+        when(request.contentType(any())).thenReturn(request);
+        when(request.body(any(Object.class))).thenReturn(body);
+        when(body.retrieve()).thenReturn(response);
+        org.mockito.ArgumentCaptor<Object> sent = org.mockito.ArgumentCaptor.forClass(Object.class);
+
+        new WriterModelProvisioner(apiWith(), client, "storyteller-writer",
+                new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)).run(args);
+
+        verify(request).body(sent.capture());
+        String system = (String) ((Map<?, ?>) sent.getValue()).get("system");
+        assertTrue(system.contains("ONOMATOPEYAS"));
+        assertTrue(system.contains("Nunca incluyas onomatopeyas en la portada"));
+    }
+
+    @Test
     void missingModelCreatesWithNameAndResourceContent() {
         RestClient client = mock(RestClient.class);
         RestClient.RequestBodyUriSpec request = mock(RestClient.RequestBodyUriSpec.class);

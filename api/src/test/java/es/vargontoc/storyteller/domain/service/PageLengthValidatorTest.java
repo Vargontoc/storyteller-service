@@ -82,6 +82,30 @@ class PageLengthValidatorTest {
     }
 
     @Test
+    void onomatopoeia_countsAsOneWord() {
+        assertEquals(1, validator.countWords("¡Guau!"));
+        assertEquals(3, validator.countWords("¡Guau! Luna corrió."));
+    }
+
+    @Test
+    void onomatopoeiaReachingWordLimit_noWordWarning() {
+        // "¡Guau!" + 65 palabras = 66 (límite exacto)
+        String t = "¡Guau! " + text(1, MAX_WORDS_MINUS_ONOMATOPOEIA);
+        assertEquals(PageLengthValidator.MAX_WORDS, validator.countWords(t));
+        assertEquals(PageLengthWarning.NONE, validator.validate(t));
+    }
+
+    @Test
+    void onomatopoeiaPlusOneWord_tooManyWords() {
+        // "¡Guau!" + 66 palabras = 67 (una más que el límite)
+        String t = "¡Guau! " + text(1, MAX_WORDS_MINUS_ONOMATOPOEIA + 1);
+        assertEquals(PageLengthValidator.MAX_WORDS + 1, validator.countWords(t));
+        assertEquals(PageLengthWarning.TOO_MANY_WORDS, validator.validate(t));
+    }
+
+    private static final int MAX_WORDS_MINUS_ONOMATOPOEIA = PageLengthValidator.MAX_WORDS - 1;
+
+    @Test
     void dashesAloneAreNotWords() {
         assertEquals(2, validator.countWords("— Hola — dijo."));
     }

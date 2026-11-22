@@ -87,6 +87,67 @@ public class ResourceStorageAdapter implements ResourceStorage {
         }
     }
 
+    private Path narrationDir(long storyId) {
+        return basePath.resolve(String.valueOf(storyId)).resolve("narration");
+    }
+
+    @Override
+    public String saveNarrationAudio(long storyId, int page, byte[] audioBytes) {
+        try {
+            Path dir = narrationDir(storyId);
+            Files.createDirectories(dir);
+            Path file = dir.resolve(page + ".wav");
+            Files.write(file, audioBytes);
+            return file.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo guardar el audio de la narracion", e);
+        }
+    }
+
+    @Override
+    public void deleteNarrationAudio(long storyId) {
+        try {
+            Path dir = narrationDir(storyId);
+            if (!Files.exists(dir))
+                return;
+            clearDirectory(dir, ".wav");
+            Files.deleteIfExists(dir);
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo eliminar el audio de la narracion", e);
+        }
+    }
+
+    private Path voiceSamplePath(long voiceId) {
+        return basePath.resolve("voices").resolve(String.valueOf(voiceId)).resolve("sample");
+    }
+
+    @Override
+    public void saveVoiceSample(long voiceId, byte[] sampleBytes) {
+        try {
+            Path file = voiceSamplePath(voiceId);
+            Files.createDirectories(file.getParent());
+            Files.write(file, sampleBytes);
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo guardar la muestra de voz", e);
+        }
+    }
+
+    @Override
+    public byte[] getVoiceSample(long voiceId) {
+        return getResource(voiceSamplePath(voiceId).toString());
+    }
+
+    @Override
+    public void deleteVoiceSample(long voiceId) {
+        try {
+            Path file = voiceSamplePath(voiceId);
+            Files.deleteIfExists(file);
+            Files.deleteIfExists(file.getParent());
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo eliminar la muestra de voz", e);
+        }
+    }
+
     @Override
     public void deleteStoryAssets(long idStory) {
 
