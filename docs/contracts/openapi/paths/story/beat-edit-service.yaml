@@ -1,4 +1,4 @@
-# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004)
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004), specs/agent-writer (REQ-032, DEC-002, DEC-008)
 # Estado del contrato: contrastado con el código
 put:
   operationId: editStoryBeat
@@ -53,7 +53,7 @@ put:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: El cuento es anterior a la escaleta y no admite edición de beats
+      description: El cuento es anterior a la escaleta y no admite edición de beats, o hay una generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:

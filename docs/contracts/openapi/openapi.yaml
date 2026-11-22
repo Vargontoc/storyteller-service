@@ -75,6 +75,24 @@ paths:
     $ref: "./paths/storyteller/pages-service.yaml"
   /storyteller/{storyId}/pages/{id}:
     $ref: "./paths/storyteller/page-service.yaml"
+  /storyteller/{storyId}/pages/{id}/image:
+    $ref: "./paths/story/page-image-service.yaml"
+  /storyteller/{storyId}/cover/generate:
+    $ref: "./paths/story/cover-generate-service.yaml"
+  /storyteller/{storyId}/pages/{number}/generate:
+    $ref: "./paths/story/page-generate-service.yaml"
+  /storyteller/{storyId}/pages/{id}/hint:
+    $ref: "./paths/story/page-hint-service.yaml"
+  /storyteller/{storyId}/pages/{id}/regenerate:
+    $ref: "./paths/story/page-regenerate-service.yaml"
+  /storyteller/{storyId}/pages/{id}/versions/{versionId}/select:
+    $ref: "./paths/story/page-version-select-service.yaml"
+  /storyteller/{storyId}/pages/{id}/accept:
+    $ref: "./paths/story/page-accept-service.yaml"
+  /storyteller/{storyId}/pages/{id}/accept-proposal:
+    $ref: "./paths/story/page-accept-proposal-service.yaml"
+  /storyteller/{storyId}/pages/{id}/proposals/discard:
+    $ref: "./paths/story/page-discard-proposals-service.yaml"
   /storyteller/asset:
     $ref: "./paths/storyteller/asset-service.yaml"
 
@@ -102,3 +120,36 @@ paths:
     $ref: "./paths/character/character-review-pending-service.yaml"
   /catalog-characters/{characterId}/reviews/{reviewId}/resolution:
     $ref: "./paths/character/character-review-resolution-service.yaml"
+
+components:
+  schemas:
+    StoryStatus:
+      $ref: "./schemas/enums/story-status.yaml"
+    PageStatus:
+      $ref: "./schemas/enums/page-status.yaml"
+    PageLengthWarning:
+      $ref: "./schemas/enums/page-length-warning.yaml"
+    PageAction:
+      $ref: "./schemas/enums/page-action.yaml"
+    StoryPage:
+      $ref: "./schemas/story-page.yaml"
+    PageVersion:
+      $ref: "./schemas/page-version.yaml"
+    AcceptedContent:
+      $ref: "./schemas/accepted-content.yaml"
+    PageDetail:
+      $ref: "./schemas/page-detail.yaml"
+    StoryPagesView:
+      $ref: "./schemas/story-pages-view.yaml"
+    GenerationStarted:
+      $ref: "./schemas/generation-started.yaml"
+    PageAccepted:
+      $ref: "./schemas/page-accepted.yaml"
+    ProposalAccepted:
+      $ref: "./schemas/proposal-accepted.yaml"
+    ProposalsDiscarded:
+      $ref: "./schemas/proposals-discarded.yaml"
+    VersionSelected:
+      $ref: "./schemas/version-selected.yaml"
+    PageHintRequest:
+      $ref: "./schemas/requests/page-hint-request.yaml"

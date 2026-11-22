@@ -1,0 +1,39 @@
+# Origen: specs/agent-writer (REQ-022, REQ-040, DEC-012)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getStoryPageAcceptedImage
+  summary: Obtiene la imagen importada del contenido aceptado de la portada o página
+  description: |
+    Descarga los bytes de la imagen importada asociada al contenido aceptado de la portada o página. Las versiones pendientes y las
+    propuestas de reapertura nunca tienen imagen (DEC-012). Devuelve 404 si la página no está aceptada o no tiene imagen importada.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      description: Identificador de la portada o página (StoryPage.id)
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Bytes binarios de la imagen importada del contenido aceptado
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: El cuento o la página no existe, la página no pertenece al cuento, no está aceptada o no tiene imagen importada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

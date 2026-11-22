@@ -1,4 +1,4 @@
-# Origen: specs/character-inventory (REQ-001, REQ-003, REQ-004)
+# Origen: specs/character-inventory (REQ-001, REQ-003, REQ-004), specs/agent-writer (REQ-032, DEC-002)
 # Estado del contrato: contrastado con el código
 get:
   operationId: getCatalogCharacters
@@ -16,7 +16,7 @@ get:
 post:
   operationId: createCatalogCharacter
   summary: Crea un personaje en el catálogo (automático o manual)
-  description: Crea un personaje mediante el agente de personaje. En modo automático (sin hint) genera la ficha completa; en modo manual (con hint) valida la frase y completa la ficha o devuelve el motivo de rechazo (REQ-003, REQ-004, ALT-001).
+  description: Crea un personaje mediante el agente de personaje. En modo automático (sin hint) genera la ficha completa; en modo manual (con hint) valida la frase y completa la ficha o devuelve el motivo de rechazo (REQ-003, REQ-004, ALT-001). Pide turno a generation-gate y rechaza con 409 si hay otra generación en curso (REQ-032).
   tags:
     - CatalogCharacters
   requestBody:
@@ -34,6 +34,12 @@ post:
             $ref: "../../schemas/responses/catalog-character-creation-response.yaml"
     "400":
       description: Error en la solicitud o servicio no disponible
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: Hay una generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:

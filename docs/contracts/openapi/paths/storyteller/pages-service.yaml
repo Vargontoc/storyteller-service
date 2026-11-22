@@ -1,6 +1,12 @@
+# Origen: specs/agent-writer (REQ-022, REQ-023, DEC-007)
+# Estado del contrato: contrastado con el código
 get:
   operationId: getStorytellerPages
-  summary: Lista las páginas de un cuento
+  summary: Lista la portada y las páginas de un cuento
+  description: |
+    En cuentos con escaleta devuelve StoryPagesView (estado del cuento, indicador generating, nextPage permitida y listado de PageDetail
+    con contenido aceptado, histórico de versiones o propuestas y acciones disponibles). En cuentos antiguos sin escaleta conserva la
+    lista de PageSummary.
   tags:
     - Storyteller
   parameters:
@@ -12,8 +18,16 @@ get:
         format: int64
   responses:
     "200":
-      description: Listado de páginas
+      description: Vista de páginas (cuento con escaleta) o listado de resúmenes (cuento antiguo sin escaleta)
       content:
         application/json:
           schema:
-            $ref: "../../schemas/responses/page-summary-list-response.yaml"
+            oneOf:
+              - $ref: "../../schemas/responses/story-pages-view-response.yaml"
+              - $ref: "../../schemas/responses/page-summary-list-response.yaml"
+    "404":
+      description: No existe el cuento indicado
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

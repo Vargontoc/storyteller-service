@@ -600,7 +600,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Abrir un cuento con escaleta y luego uno antiguo: el primero muestra el panel nuevo y el segundo la vista de páginas de siempre.
 
-### [ ] TASK-036 Contrato: openapi - esquema de página del cuento
+### [x] TASK-036 Contrato: openapi - esquema de página del cuento
 
 - **Cubre:** REQ-005, REQ-011, REQ-021, REQ-022, REQ-038, REQ-040, DEC-001, DEC-010, DEC-012
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/schemas/story-page.yaml
@@ -612,7 +612,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Comparar cada campo del esquema con la respuesta real de la consulta de páginas: coinciden.
 
-### [ ] TASK-037 Contrato: openapi - esquema de versión de página
+### [x] TASK-037 Contrato: openapi - esquema de versión de página
 
 - **Cubre:** REQ-026, REQ-034, REQ-036, REQ-040, DEC-001, DEC-012
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/schemas/, fichero por definir (analista técnico)
@@ -624,7 +624,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Comparar el esquema con una versión real devuelta por la API: coinciden los campos y los valores del aviso.
 
-### [ ] TASK-038 Contrato: openapi - estado de cuento listo para audio
+### [x] TASK-038 Contrato: openapi - estado de cuento listo para audio
 
 - **Cubre:** REQ-021
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/schemas/enums/story-status.yaml
@@ -636,7 +636,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Comprobar que el valor del enumerado coincide con el que devuelve la API para un cuento completo.
 
-### [ ] TASK-039 Contrato: openapi - paths de portada y páginas
+### [x] TASK-039 Contrato: openapi - paths de portada y páginas
 
 - **Cubre:** REQ-001, REQ-002, REQ-010, REQ-012, REQ-013, REQ-015, REQ-016, REQ-017, REQ-021, REQ-028, REQ-029, REQ-030, REQ-032, REQ-033, REQ-036, REQ-040, DEC-003, DEC-007
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/paths/story/, ficheros por definir (analista técnico)
@@ -649,7 +649,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Repasar que cada operación de la fila del diseño aparece en el contrato y coincide con la implementación.
 
-### [ ] TASK-040 Contrato: openapi - registro de paths y esquemas en openapi.yaml
+### [x] TASK-040 Contrato: openapi - registro de paths y esquemas en openapi.yaml
 
 - **Cubre:** REQ-022, DEC-003
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/openapi.yaml
@@ -661,7 +661,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Abrir `openapi.yaml` en un visor OpenAPI: aparecen las nuevas operaciones de portada y páginas.
 
-### [ ] TASK-041 Contrato: openapi - rechazo por generación en curso en guion, revisión y edición de beat
+### [x] TASK-041 Contrato: openapi - rechazo por generación en curso en guion, revisión y edición de beat
 
 - **Cubre:** REQ-032, DEC-002, DEC-008
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java. Contrato: docs/contracts/openapi/paths/story/generation-service.yaml, review-service.yaml, beat-edit-service.yaml
@@ -673,7 +673,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Provocar el rechazo en cada operación con la puerta ocupada y comprobar que la respuesta coincide con la del contrato.
 
-### [ ] TASK-042 Contrato: openapi - rechazo por generación en curso en personajes y retratos
+### [x] TASK-042 Contrato: openapi - rechazo por generación en curso en personajes y retratos
 
 - **Cubre:** REQ-032, DEC-002
 - **Componente:** character-catalog-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java. Contrato: docs/contracts/openapi/paths/character/catalog-characters-service.yaml, character-review-request-service.yaml, character-portrait-generate-service.yaml
@@ -685,7 +685,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Provocar el rechazo en cada operación con la puerta ocupada y comprobar que la respuesta coincide con la del contrato.
 
-### [ ] TASK-043 Contrato: websocket - eventos de generación de portada y página
+### [x] TASK-043 Contrato: websocket - eventos de generación de portada y página
 
 - **Cubre:** REQ-014, REQ-020, REQ-022, DEC-003
 - **Componente:** websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java. Contrato: docs/contracts/websocket/, fichero por definir (analista técnico)

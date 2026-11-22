@@ -1,4 +1,4 @@
-# Origen: specs/character-portraits (REQ-001, REQ-004, REQ-005, REQ-006)
+# Origen: specs/character-portraits (REQ-001, REQ-004, REQ-005, REQ-006), specs/agent-writer (REQ-032, DEC-002)
 # Estado del contrato: contrastado con el código
 post:
   operationId: generateCatalogCharacterPortraits
@@ -28,7 +28,7 @@ post:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: El personaje ya está bloqueado por una generación de retratos en curso (REQ-006)
+      description: El personaje ya está bloqueado por una generación de retratos en curso (REQ-006) o hay una generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:

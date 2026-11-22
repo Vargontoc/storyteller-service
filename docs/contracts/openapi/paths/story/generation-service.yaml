@@ -1,4 +1,4 @@
-# Origen: specs/agent-director (REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-020, ALT-001, ALT-002)
+# Origen: specs/agent-director (REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, REQ-020, ALT-001, ALT-002), specs/agent-writer (REQ-032, DEC-002)
 # Estado del contrato: contrastado con el código
 post:
   operationId: generateStory
@@ -38,7 +38,7 @@ post:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: El protagonista indicado tiene una generación de retratos en curso
+      description: El protagonista indicado tiene una generación de retratos en curso o hay otra generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:

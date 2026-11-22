@@ -1,4 +1,4 @@
-# Origen: specs/agent-director (REQ-008, REQ-009, REQ-018, ALT-003, DEC-001)
+# Origen: specs/agent-director (REQ-008, REQ-009, REQ-018, ALT-003, DEC-001), specs/agent-writer (REQ-032, DEC-002)
 # Estado del contrato: contrastado con el código
 post:
   operationId: reviewStory
@@ -36,7 +36,7 @@ post:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: El cuento es anterior a la escaleta y no admite revisión del guion
+      description: El cuento es anterior a la escaleta y no admite revisión del guion, o hay una generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:
