@@ -41,7 +41,7 @@ class StoryCatalogCharacterTest {
         when(images.hasApprovedPortrait(7L)).thenReturn(true);
         doThrow(new AppException("bloqueado", HttpStatus.CONFLICT)).when(lock).assertCanUseAsStoryProtagonist(7L);
         var service = new StoryService(stories, mock(StoryReviewRepository.class),
-                mock(StoryOutlineRepository.class), director, catalog, images, lock);
+                mock(StoryOutlineRepository.class), director, catalog, images, lock, new GenerationGate());
 
         assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", StorySize.S, 7L)));
         verifyNoInteractions(director, stories);

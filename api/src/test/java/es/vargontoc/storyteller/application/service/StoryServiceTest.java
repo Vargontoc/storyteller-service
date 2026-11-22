@@ -23,6 +23,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import org.springframework.http.HttpStatus;
+
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.CharacterImageConditionPort;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharacterRepository;
@@ -62,6 +65,7 @@ class StoryServiceTest {
     private CatalogCharacterRepository catalog;
     private CharacterImageConditionPort images;
     private PortraitLockService lock;
+    private GenerationGate gate;
     private StoryService service;
 
     @BeforeEach
@@ -73,7 +77,8 @@ class StoryServiceTest {
         catalog = mock(CatalogCharacterRepository.class);
         images = mock(CharacterImageConditionPort.class);
         lock = mock(PortraitLockService.class);
-        service = new StoryService(stories, reviews, outlines, director, catalog, images, lock);
+        gate = new GenerationGate();
+        service = new StoryService(stories, reviews, outlines, director, catalog, images, lock, gate);
 
         Story created = story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE);
         when(stories.create(any(), any(), anyString(), anyString(), anyLong())).thenReturn(created);
@@ -285,6 +290,83 @@ class StoryServiceTest {
 
         verify(reviews).changeStatus(10L, RevisionStatus.DISCARDED);
         verify(stories, never()).updateScript(anyLong(), any(), any());
+    }
+
+    // --- Turno de generación ---
+
+    @Test
+    void generateWithBusyGateIsRejectedWithoutCallingTheDirectorNorCreatingAnything() {
+        when(catalog.findById(7L)).thenReturn(luna(7L));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        assertTrue(gate.tryAcquire(GenerationType.PORTRAITS, null));
+
+        AppException e = assertThrows(AppException.class,
+                () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L)));
+
+        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+        assertEquals("Hay una generación en curso", e.getMessage());
+        verifyNoInteractions(director, outlines);
+        verify(stories, never()).create(any(), any(), anyString(), anyString(), anyLong());
+        gate.release(); // la puerta sigue ocupada por quien la tenía: no la ha liberado el rechazo
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, null));
+    }
+
+    @Test
+    void reviewWithBusyGateIsRejectedWithoutCallingTheDirectorNorDiscardingTheReview() {
+        arrangeCurrentOutline();
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, 10L));
+
+        AppException e = assertThrows(AppException.class, () -> service.review(new StoryReviewCommand(10L, "hint")));
+
+        assertEquals(HttpStatus.CONFLICT, e.getStatus());
+        assertEquals("Hay una generación en curso", e.getMessage());
+        verifyNoInteractions(director, reviews);
+    }
+
+    @Test
+    void whileTheScriptIsGeneratedOtherGenerationsAreRejectedAndGateIsFreedAfterwards() {
+        when(catalog.findById(7L)).thenReturn(luna(7L));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        boolean[] otherAcquired = {true};
+        when(director.generateScript(any())).thenAnswer(inv -> {
+            otherAcquired[0] = gate.tryAcquire(GenerationType.CHARACTER_AGENT, null);
+            return script(SIZE.getPages());
+        });
+
+        service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L));
+
+        assertTrue(!otherAcquired[0]);
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, null));
+    }
+
+    @Test
+    void whileTheReviewRunsTheStoryIsBusyAndGateIsFreedAfterwards() {
+        arrangeCurrentOutline();
+        boolean[] busy = {false};
+        when(director.reviewScript(any())).thenAnswer(inv -> {
+            busy[0] = gate.isGeneratingStory(10L);
+            return new DirectorReviewResult(false, "No apto", null, null, null, null);
+        });
+
+        service.review(new StoryReviewCommand(10L, "hint"));
+
+        assertTrue(busy[0]);
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, null));
+    }
+
+    @Test
+    void gateIsFreedWhenGenerateOrReviewFail() {
+        when(catalog.findById(7L)).thenReturn(luna(7L));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        when(director.generateScript(any())).thenThrow(new RuntimeException("caído"));
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L)));
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, null));
+        gate.release();
+
+        arrangeCurrentOutline();
+        when(director.reviewScript(any())).thenThrow(new RuntimeException("caído"));
+        assertThrows(AppException.class, () -> service.review(new StoryReviewCommand(10L, "hint")));
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, null));
     }
 
     // --- Utilidades ---

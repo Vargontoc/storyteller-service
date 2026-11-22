@@ -1,6 +1,7 @@
 package es.vargontoc.storyteller.application.service;
 
 import es.vargontoc.storyteller.application.ports.in.character.PortraitGenerationUseCase;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.PortraitCandidateAssetStorage;
 import es.vargontoc.storyteller.application.ports.out.PortraitGenerationTaskRegistry;
 import es.vargontoc.storyteller.application.ports.out.external.PortraitGeneratorPort;
@@ -26,11 +27,12 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
     private final PortraitWebsocketNotifier notifier;
     private final CatalogCharacterJpaRepository characters;
     private final TaskExecutor executor;
+    private final GenerationGatePort gate;
 
     public PortraitGenerationService(PortraitGenerationJobStore jobs, PortraitCandidateStore candidates,
             PortraitGeneratorPort generator, PortraitCandidateAssetStorage assets,
             PortraitGenerationTaskRegistry tasks, PortraitWebsocketNotifier notifier,
-            CatalogCharacterJpaRepository characters, TaskExecutor executor) {
+            CatalogCharacterJpaRepository characters, TaskExecutor executor, GenerationGatePort gate) {
         this.jobs = jobs;
         this.candidates = candidates;
         this.generator = generator;
@@ -39,6 +41,7 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
         this.notifier = notifier;
         this.characters = characters;
         this.executor = executor;
+        this.gate = gate;
     }
 
     @Override
@@ -52,6 +55,7 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
             tasks.unregister(job.id());
             jobs.fail(job.id(), START_FAILURE);
             notifyFailure(catalogCharacterId, START_FAILURE);
+            gate.release();
         }
     }
 
@@ -81,6 +85,7 @@ public class PortraitGenerationService implements PortraitGenerationUseCase {
             notifyFailure(catalogCharacterId, reason);
         } finally {
             tasks.unregister(jobId);
+            gate.release();
         }
     }
 

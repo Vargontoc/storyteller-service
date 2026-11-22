@@ -65,7 +65,7 @@ class CharacterCatalogPortraitAssetTest {
             ResourceStorage storage, CatalogCharacterPortraitJpaRepository portraits) {
         return new CharacterCatalogService(mock(CharacterAgent.class), repository,
                 new CatalogCharacterAgentResultValidator(), mock(CatalogCharacterPendingReviewReader.class), Optional.empty(),
-                mock(PortraitLockService.class), mock(PortraitGenerationUseCase.class), mock(PortraitSelectionUseCase.class),
+                mock(PortraitLockService.class), new GenerationGate(), mock(PortraitGenerationUseCase.class), mock(PortraitSelectionUseCase.class),
                 candidates, storage, Optional.of(portraits));
     }
 }

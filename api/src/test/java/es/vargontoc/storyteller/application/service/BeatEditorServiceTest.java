@@ -1,7 +1,9 @@
 package es.vargontoc.storyteller.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -20,9 +22,11 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
 
+import org.springframework.http.HttpStatus;
+
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.BeatEditCommand;
 import es.vargontoc.storyteller.domain.enums.BeatEditStatus;
@@ -44,8 +48,9 @@ class BeatEditorServiceTest {
 
     private StoryRepository stories;
     private StoryOutlineRepository outlines;
-    private StoryPageRepository pages;
+    private StoryPageService pages;
     private DirectorAgent director;
+    private GenerationGate gate;
     private BeatEditorService service;
 
     private final StoryOutline outline = new StoryOutline(
@@ -56,9 +61,10 @@ class BeatEditorServiceTest {
     void setUp() {
         stories = mock(StoryRepository.class);
         outlines = mock(StoryOutlineRepository.class);
-        pages = mock(StoryPageRepository.class);
+        pages = mock(StoryPageService.class);
         director = mock(DirectorAgent.class);
-        service = new BeatEditorService(stories, outlines, pages, director);
+        gate = new GenerationGate();
+        service = new BeatEditorService(stories, outlines, pages, director, gate);
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(director.validateBeat(any())).thenReturn(new DirectorBeatVerdict(true, null));
     }
@@ -75,7 +81,7 @@ class BeatEditorServiceTest {
         assertEquals("Luna regala la piedra", saved.getValue().beats().get(1).event());
         assertEquals("Luna sale", saved.getValue().beats().get(0).event());
         verify(stories).updateStatus(STORY, StoryStatus.SCRIPT_PENDING);
-        verify(pages, never()).deleteByStory(anyLong());
+        verify(pages, never()).deleteInvalidatedPages(anyLong());
     }
 
     @Test
@@ -102,13 +108,13 @@ class BeatEditorServiceTest {
         assertEquals(4, result.invalidatedPages());
         verify(outlines, never()).save(anyLong(), any());
         verify(stories, never()).updateStatus(anyLong(), any());
-        verify(pages, never()).deleteByStory(anyLong());
+        verify(pages, never()).deleteInvalidatedPages(anyLong());
     }
 
     @Test
     void confirmingDeletesPagesThenAppliesEdit() {
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 4));
-        when(pages.deleteByStory(STORY)).thenReturn(4);
+        when(pages.deleteInvalidatedPages(STORY)).thenReturn(4);
 
         BeatEditResult result = service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), true));
 
@@ -116,7 +122,7 @@ class BeatEditorServiceTest {
         assertEquals(4, result.invalidatedPages());
         assertEquals(0, result.story().getPages().size());
         InOrder order = Mockito.inOrder(pages, outlines, stories);
-        order.verify(pages).deleteByStory(STORY);
+        order.verify(pages).deleteInvalidatedPages(STORY);
         order.verify(outlines).save(Mockito.eq(STORY), any());
         order.verify(stories).updateStatus(STORY, StoryStatus.SCRIPT_PENDING);
     }
@@ -163,6 +169,81 @@ class BeatEditorServiceTest {
         when(stories.getStory(STORY)).thenReturn(old);
 
         assertThrows(AppException.class, () -> service.edit(new BeatEditCommand(STORY, 1, beat("x"), null)));
+    }
+
+    @Test
+    void busyGateRejectsWithConflictAndChangesNothing() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 4));
+        gate.tryAcquire(GenerationType.WRITER, STORY);
+
+        AppException ex = assertThrows(AppException.class,
+            () -> service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), true)));
+
+        assertEquals("Hay una generación en curso", ex.getMessage());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+        verifyNoInteractions(director, pages);
+        verify(outlines, never()).save(anyLong(), any());
+        verify(stories, never()).updateStatus(anyLong(), any());
+        assertTrue(gate.isGeneratingStory(STORY)); // el turno ajeno sigue intacto
+    }
+
+    @Test
+    void gateIsHeldWhileValidatingAndRejectsOtherGenerations() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        boolean[] otherAcquired = {true};
+        boolean[] heldAsDirector = {false};
+        when(director.validateBeat(any())).thenAnswer(inv -> {
+            heldAsDirector[0] = gate.isGeneratingStory(STORY);
+            otherAcquired[0] = gate.tryAcquire(GenerationType.WRITER, STORY);
+            return new DirectorBeatVerdict(true, null);
+        });
+
+        service.edit(new BeatEditCommand(STORY, 1, beat("Luna sale de casa"), null));
+
+        assertTrue(heldAsDirector[0]);
+        assertFalse(otherAcquired[0]);
+    }
+
+    @Test
+    void gateIsFreeAfterApplyRejectionConfirmationAndCancel() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 3));
+
+        service.edit(new BeatEditCommand(STORY, 1, beat("a"), null)); // pide confirmación
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY));
+        gate.release();
+
+        service.edit(new BeatEditCommand(STORY, 1, beat("a"), true)); // aplica
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY));
+        gate.release();
+
+        when(director.validateBeat(any())).thenReturn(new DirectorBeatVerdict(false, "No"));
+        service.edit(new BeatEditCommand(STORY, 1, beat("a"), true)); // rechazo del director
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY));
+        gate.release();
+
+        service.edit(new BeatEditCommand(STORY, 1, beat("a"), false)); // cancelación
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY));
+    }
+
+    @Test
+    void gateIsFreeAfterDirectorFailure() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        when(director.validateBeat(any())).thenThrow(new IllegalStateException("ollama caído"));
+
+        assertThrows(IllegalStateException.class,
+            () -> service.edit(new BeatEditCommand(STORY, 1, beat("a"), null)));
+
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY));
+    }
+
+    @Test
+    void cancelAndInvalidInputDoNotTouchGate() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 3));
+        gate.tryAcquire(GenerationType.WRITER, STORY);
+
+        assertEquals(BeatEditStatus.CANCELLED,
+            service.edit(new BeatEditCommand(STORY, 1, beat("a"), false)).status());
+        assertTrue(gate.isGeneratingStory(STORY));
     }
 
     private static StoryBeat beat(String event) {

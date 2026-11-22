@@ -7,9 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.BeatEditing;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
-import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.BeatEditCommand;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
@@ -26,7 +27,9 @@ import jakarta.transaction.Transactional;
 /**
  * Edición directa de un beat: el director solo valida la edad. Si el texto es válido y hay páginas generadas,
  * se avisa y solo con confirmación se eliminan las páginas, se guarda el beat y el guion vuelve a SCRIPT_PENDING.
- * Todo el cambio ocurre en una sola transacción. Los secundarios del reparto nunca pasan por el catálogo.
+ * Las páginas se retiran con su histórico de versiones y propuestas vía {@link StoryPageService}.
+ * La validación y la aplicación ocurren dentro de un turno de la puerta de generación (tipo DIRECTOR), que se libera
+ * siempre al terminar; con la puerta ocupada se rechaza con 409. Todo el cambio ocurre en una sola transacción. Los secundarios del reparto nunca pasan por el catálogo.
  */
 @Service
 @Transactional
@@ -34,15 +37,17 @@ public class BeatEditorService implements BeatEditing {
 
     private final StoryRepository stories;
     private final StoryOutlineRepository outlines;
-    private final StoryPageRepository pages;
+    private final StoryPageService pages;
     private final DirectorAgent director;
+    private final GenerationGatePort gate;
 
     public BeatEditorService(StoryRepository stories, StoryOutlineRepository outlines,
-            StoryPageRepository pages, DirectorAgent director) {
+            StoryPageService pages, DirectorAgent director, GenerationGatePort gate) {
         this.stories = stories;
         this.outlines = outlines;
         this.pages = pages;
         this.director = director;
+        this.gate = gate;
     }
 
     @Override
@@ -64,6 +69,18 @@ public class BeatEditorService implements BeatEditing {
         if (Boolean.FALSE.equals(cmd.confirmInvalidation()))
             return BeatEditResult.cancelled();
 
+        // El turno cubre validar y aplicar: una generación del mismo cuento no puede colarse a mitad de la edición
+        if (!gate.tryAcquire(GenerationType.DIRECTOR, cmd.storyId()))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+        try {
+            return validateAndApply(cmd, story, outline, index, beat);
+        } finally {
+            gate.release();
+        }
+    }
+
+    private BeatEditResult validateAndApply(BeatEditCommand cmd, Story story, StoryOutline outline, int index,
+            StoryBeat beat) {
         // El director solo da el veredicto de edad; ante rechazo no se muta nada
         DirectorBeatVerdict verdict = director.validateBeat(new DirectorBeat(
             beat.event(), beat.narrativeFunction(), beat.participants(), beat.tone(), beat.visualNote()));
@@ -75,7 +92,7 @@ public class BeatEditorService implements BeatEditing {
         if (generated > 0 && !Boolean.TRUE.equals(cmd.confirmInvalidation()))
             return BeatEditResult.confirmationRequired(generated);
 
-        int removed = generated > 0 ? pages.deleteByStory(cmd.storyId()) : 0;
+        int removed = generated > 0 ? pages.deleteInvalidatedPages(cmd.storyId()) : 0;
         List<StoryBeat> beats = new ArrayList<>(outline.beats());
         beats.set(index, beat);
         outlines.save(cmd.storyId(), new StoryOutline(outline.cast(), beats));

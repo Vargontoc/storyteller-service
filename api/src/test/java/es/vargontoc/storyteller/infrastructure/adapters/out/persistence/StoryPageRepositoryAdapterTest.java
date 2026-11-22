@@ -33,6 +33,8 @@ class StoryPageRepositoryAdapterTest {
     private final StoryPageJpaRepository repository = mock(StoryPageJpaRepository.class);
     private final StoryJpaRepository stories = mock(StoryJpaRepository.class);
     private final StoryJpaEntity story = new StoryJpaEntity();
+    private final StoryPageReviewJpaRepository reviews = mock(StoryPageReviewJpaRepository.class);
+    private final ResourceStorage storage = mock(ResourceStorage.class);
     private final StoryPageRepositoryAdapter adapter;
 
     StoryPageRepositoryAdapterTest() {
@@ -47,8 +49,8 @@ class StoryPageRepositoryAdapterTest {
             return entity;
         });
         when(repository.findById(any(Long.class))).thenAnswer(call -> Optional.ofNullable(store.get(call.getArgument(0))));
-        adapter = new StoryPageRepositoryAdapter(null, repository, mock(StoryPageReviewJpaRepository.class),
-            stories, new StoryPageMapper(), mock(ResourceStorage.class));
+        adapter = new StoryPageRepositoryAdapter(null, repository, reviews,
+            stories, new StoryPageMapper(), storage);
     }
 
     @Test
@@ -56,6 +58,30 @@ class StoryPageRepositoryAdapterTest {
         adapter.delete(5L);
 
         org.mockito.Mockito.verify(repository).deleteById(5L);
+        org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).deletePages(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void deleteByStoryRemovesAllPagesWithReviewsSummaryAndAssets() {
+        when(repository.getPagesIdByStory(7L, -1)).thenReturn(List.of(10L, 11L, 12L));
+
+        int removed = adapter.deleteByStory(7L);
+
+        assertEquals(3, removed);
+        org.mockito.InOrder order = org.mockito.Mockito.inOrder(reviews, repository, stories, storage);
+        order.verify(reviews).deleteByPageIds(List.of(10L, 11L, 12L));
+        order.verify(repository).deletePages(7L, -1);   // story_page_version cae por ON DELETE CASCADE
+        order.verify(stories).setSummary(7L, "");
+        order.verify(storage).deletePageAssets(7L, 10L, List.of(11L, 12L));
+    }
+
+    @Test
+    void deleteByStoryWithoutPagesDoesNothing() {
+        when(repository.getPagesIdByStory(7L, -1)).thenReturn(List.of());
+
+        assertEquals(0, adapter.deleteByStory(7L));
+
+        org.mockito.Mockito.verifyNoInteractions(reviews, storage);
         org.mockito.Mockito.verify(repository, org.mockito.Mockito.never()).deletePages(org.mockito.ArgumentMatchers.anyLong(), org.mockito.ArgumentMatchers.anyInt());
     }
 

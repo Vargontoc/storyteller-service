@@ -8,6 +8,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.CharacterImageConditionPort;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharacterRepository;
@@ -54,6 +56,7 @@ public class StoryService implements StoryGeneration {
     private final CharacterImageConditionPort portraits;
     private final PortraitLockService portraitLock;
     private final DirectorAgent director;
+    private final GenerationGatePort gate;
     private final Random random = new Random();
 
     public StoryService(StoryRepository repository,
@@ -62,7 +65,9 @@ public class StoryService implements StoryGeneration {
             DirectorAgent director,
             CatalogCharacterRepository catalog,
             CharacterImageConditionPort portraits,
-            PortraitLockService portraitLock) {
+            PortraitLockService portraitLock,
+            GenerationGatePort gate) {
+        this.gate = gate;
         this.repository = repository;
         this.reviewRepository = reviewRepository;
         this.outlineRepository = outlineRepository;
@@ -79,24 +84,30 @@ public class StoryService implements StoryGeneration {
         // 1. Protagonista de catálogo con retrato aprobado: el indicado o uno al azar entre los disponibles
         CatalogCharacter protagonist = resolveProtagonist(cmd.catalogCharacterId());
 
-        // 2. El director recibe el tema elegido y la ficha del protagonista; una escaleta incompleta se reintenta sin persistir nada
-        DirectorScriptRequest request = new DirectorScriptRequest(cmd.topic(), cmd.description(),
-            cmd.size().getPages(), protagonist.name(), protagonist.narrativeDescription(),
-            protagonist.visualDescription(), protagonist.id());
-        DirectorScriptResult script = callDirector(() -> {
-            DirectorScriptResult result = director.generateScript(request);
-            if (result == null || !toOutline(result.cast(), result.beats()).isComplete()) {
-                throw new AppException("Escaleta incompleta", HttpStatus.BAD_REQUEST);
-            }
-            return result;
-        });
+        // El cuento aún no existe: turno sin storyId. Cubre la llamada al director y la persistencia
+        acquireTurn(null);
+        try {
+            // 2. El director recibe el tema elegido y la ficha del protagonista; una escaleta incompleta se reintenta sin persistir nada
+            DirectorScriptRequest request = new DirectorScriptRequest(cmd.topic(), cmd.description(),
+                cmd.size().getPages(), protagonist.name(), protagonist.narrativeDescription(),
+                protagonist.visualDescription(), protagonist.id());
+            DirectorScriptResult script = callDirector(() -> {
+                DirectorScriptResult result = director.generateScript(request);
+                if (result == null || !toOutline(result.cast(), result.beats()).isComplete()) {
+                    throw new AppException("Escaleta incompleta", HttpStatus.BAD_REQUEST);
+                }
+                return result;
+            });
 
-        // 3. Persistimos el cuento con la instantánea del tema, la del protagonista y la escaleta completa
-        Story story = repository.create(
-            new StoryAgentResult(script.title(), script.synopsis(), List.of(toCharacter(protagonist))),
-            cmd.size(), cmd.topic(), cmd.description(), protagonist.id());
-        outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats()));
-        return repository.getStory(story.getId());
+            // 3. Persistimos el cuento con la instantánea del tema, la del protagonista y la escaleta completa
+            Story story = repository.create(
+                new StoryAgentResult(script.title(), script.synopsis(), List.of(toCharacter(protagonist))),
+                cmd.size(), cmd.topic(), cmd.description(), protagonist.id());
+            outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats()));
+            return repository.getStory(story.getId());
+        } finally {
+            gate.release();
+        }
     }
 
     @Override
@@ -122,28 +133,40 @@ public class StoryService implements StoryGeneration {
         StoryOutline outline = outlineRepository.find(review.storyId())
             .orElseThrow(() -> new ResourceNotFoundException("Escaleta no encontrada"));
 
-        // Descartamos la revisión pendiente anterior
-        reviewRepository.changeStatus(review.storyId(), RevisionStatus.DISCARDED);
+        // Con la puerta ocupada se rechaza antes de descartar la revisión pendiente
+        acquireTurn(review.storyId());
+        try {
+            // Descartamos la revisión pendiente anterior
+            reviewRepository.changeStatus(review.storyId(), RevisionStatus.DISCARDED);
 
-        DirectorReviewRequest request = new DirectorReviewRequest(current.getTitle(), current.getSynopsis(),
-            outline.cast().stream().map(c -> new DirectorCastMember(c.name(), c.role())).toList(),
-            outline.beats().stream().map(b -> new DirectorBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList(),
-            review.hint());
-        DirectorReviewResult result = callDirector(() -> {
-            DirectorReviewResult r = director.reviewScript(request);
-            if (r == null || (!r.hintAccepted() && (r.rejectionReason() == null || r.rejectionReason().isBlank()))
-                    || (r.hintAccepted() && !toOutline(r.cast(), r.beats()).isComplete())) {
-                throw new AppException("Respuesta de revisión incompleta", HttpStatus.BAD_REQUEST);
+            DirectorReviewRequest request = new DirectorReviewRequest(current.getTitle(), current.getSynopsis(),
+                outline.cast().stream().map(c -> new DirectorCastMember(c.name(), c.role())).toList(),
+                outline.beats().stream().map(b -> new DirectorBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList(),
+                review.hint());
+            DirectorReviewResult result = callDirector(() -> {
+                DirectorReviewResult r = director.reviewScript(request);
+                if (r == null || (!r.hintAccepted() && (r.rejectionReason() == null || r.rejectionReason().isBlank()))
+                        || (r.hintAccepted() && !toOutline(r.cast(), r.beats()).isComplete())) {
+                    throw new AppException("Respuesta de revisión incompleta", HttpStatus.BAD_REQUEST);
+                }
+                return r;
+            });
+
+            // Aceptado: revisión PENDING con la candidata. Rechazado: revisión con el motivo; la escaleta vigente no cambia
+            if (!result.hintAccepted()) {
+                return reviewRepository.createOutlineReview(review.storyId(), review.hint(), false, result.rejectionReason(), null, null, null);
             }
-            return r;
-        });
-
-        // Aceptado: revisión PENDING con la candidata. Rechazado: revisión con el motivo; la escaleta vigente no cambia
-        if (!result.hintAccepted()) {
-            return reviewRepository.createOutlineReview(review.storyId(), review.hint(), false, result.rejectionReason(), null, null, null);
+            return reviewRepository.createOutlineReview(review.storyId(), review.hint(), true, null,
+                result.title(), result.synopsis(), toOutline(result.cast(), result.beats()));
+        } finally {
+            gate.release();
         }
-        return reviewRepository.createOutlineReview(review.storyId(), review.hint(), true, null,
-            result.title(), result.synopsis(), toOutline(result.cast(), result.beats()));
+    }
+
+    /** Pide el turno de generación del director; si hay otra en curso se rechaza con 409. */
+    private void acquireTurn(Long storyId) {
+        if (!gate.tryAcquire(GenerationType.DIRECTOR, storyId))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
     }
 
     @Override

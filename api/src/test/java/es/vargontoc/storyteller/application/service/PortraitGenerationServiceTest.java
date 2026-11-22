@@ -1,6 +1,8 @@
 package es.vargontoc.storyteller.application.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
@@ -24,6 +26,7 @@ import es.vargontoc.storyteller.domain.model.PortraitGenerationJob;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaEntity;
 import es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterJpaRepository;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
@@ -180,6 +183,41 @@ class PortraitGenerationServiceTest {
         verify(fixture.jobs).complete(16L);
     }
 
+    @Test
+    void gateIsReleasedWhenTheJobEndsInSuccessOrError() {
+        var fixture = fixture();
+        var executor = new RecordingExecutor();
+        var service = fixture.service(executor);
+        var character = new CatalogCharacterJpaEntity();
+        character.setVisualDescription("zorra");
+        when(fixture.characters.findById(7L)).thenReturn(Optional.of(character));
+        when(fixture.generator.generatePortraits(any(CharacterPortraitPrompt.class)))
+                .thenReturn(fourImages()).thenThrow(new IllegalStateException("ComfyUI no disponible"));
+
+        fixture.gate.tryAcquire(GenerationType.PORTRAITS, null);
+        service.generate(7L);
+        assertFalse(fixture.gate.tryAcquire(GenerationType.WRITER, null));
+        executor.run();
+        assertTrue(fixture.gate.tryAcquire(GenerationType.WRITER, null));
+
+        fixture.gate.release();
+        fixture.gate.tryAcquire(GenerationType.PORTRAITS, null);
+        service.generate(7L);
+        executor.run();
+        assertTrue(fixture.gate.tryAcquire(GenerationType.WRITER, null));
+    }
+
+    @Test
+    void gateIsReleasedWhenTheJobCannotBeQueued() {
+        var fixture = fixture();
+        var service = fixture.service(task -> { throw new IllegalStateException("executor unavailable"); });
+        fixture.gate.tryAcquire(GenerationType.PORTRAITS, null);
+
+        service.generate(7L);
+
+        assertTrue(fixture.gate.tryAcquire(GenerationType.WRITER, null));
+    }
+
     private List<byte[]> fourImages() {
         return List.of(new byte[] {1}, new byte[] {2}, new byte[] {3}, new byte[] {4});
     }
@@ -189,15 +227,15 @@ class PortraitGenerationServiceTest {
         when(jobs.start(7L)).thenReturn(new PortraitGenerationJob(15L, 7L, PortraitGenerationStatus.RUNNING, null));
         return new Fixture(jobs, mock(PortraitCandidateStore.class), mock(PortraitGeneratorPort.class),
                 mock(PortraitCandidateAssetStorage.class), mock(PortraitGenerationTaskRegistry.class),
-                mock(PortraitWebsocketNotifier.class), mock(CatalogCharacterJpaRepository.class));
+                mock(PortraitWebsocketNotifier.class), mock(CatalogCharacterJpaRepository.class), new GenerationGate());
     }
 
     private record Fixture(PortraitGenerationJobStore jobs, PortraitCandidateStore candidates,
             PortraitGeneratorPort generator, PortraitCandidateAssetStorage assets,
             PortraitGenerationTaskRegistry registry, PortraitWebsocketNotifier notifier,
-            CatalogCharacterJpaRepository characters) {
+            CatalogCharacterJpaRepository characters, GenerationGate gate) {
         PortraitGenerationService service(TaskExecutor executor) {
-            return new PortraitGenerationService(jobs, candidates, generator, assets, registry, notifier, characters, executor);
+            return new PortraitGenerationService(jobs, candidates, generator, assets, registry, notifier, characters, executor, gate);
         }
     }
 

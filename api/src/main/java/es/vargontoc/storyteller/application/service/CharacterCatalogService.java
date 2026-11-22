@@ -20,6 +20,8 @@ import es.vargontoc.storyteller.application.ports.in.character.PortraitGeneratio
 import es.vargontoc.storyteller.application.ports.in.character.PortraitSelectionUseCase;
 import es.vargontoc.storyteller.application.ports.out.persistence.PortraitCandidateStore;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
+import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import org.springframework.beans.factory.annotation.Autowired;
 import java.util.Optional;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
@@ -32,27 +34,37 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     private final CharacterAgent agent;
     private final CatalogCharacterRepository repository;
     private final CatalogCharacterAgentResultValidator validator;
-    private final CatalogCharacterPendingReviewReader reviews; private final Optional<CharacterImageConditionPort> images; private final PortraitLockService lock;
-    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock) {
-        this.agent = agent; this.repository = repository; this.validator=validator; this.reviews=reviews; this.images=images; this.lock=lock;
+    private final CatalogCharacterPendingReviewReader reviews; private final Optional<CharacterImageConditionPort> images; private final PortraitLockService lock; private final GenerationGatePort gate;
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, GenerationGatePort gate) {
+        this.agent = agent; this.repository = repository; this.validator=validator; this.reviews=reviews; this.images=images; this.lock=lock; this.gate=gate;
     }
-    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage) {
-        this(agent, repository, validator, reviews, images, lock, generation, selection, candidates, storage, Optional.empty());
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, GenerationGatePort gate, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage) {
+        this(agent, repository, validator, reviews, images, lock, gate, generation, selection, candidates, storage, Optional.empty());
     }
     @Autowired
-    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage, Optional<es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository> portraits) {
-        this(agent, repository, validator, reviews, images, lock); this.generation=generation; this.selection=selection; this.candidates=candidates; this.storage=storage; this.portraits=portraits;
+    public CharacterCatalogService(CharacterAgent agent, CatalogCharacterRepository repository, CatalogCharacterAgentResultValidator validator, CatalogCharacterPendingReviewReader reviews, Optional<CharacterImageConditionPort> images, PortraitLockService lock, GenerationGatePort gate, PortraitGenerationUseCase generation, PortraitSelectionUseCase selection, PortraitCandidateStore candidates, ResourceStorage storage, Optional<es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository> portraits) {
+        this(agent, repository, validator, reviews, images, lock, gate); this.generation=generation; this.selection=selection; this.candidates=candidates; this.storage=storage; this.portraits=portraits;
     }
     private PortraitGenerationUseCase generation; private PortraitSelectionUseCase selection; private PortraitCandidateStore candidates; private ResourceStorage storage; private Optional<es.vargontoc.storyteller.infrastructure.persistence.CatalogCharacterPortraitJpaRepository> portraits=Optional.empty();
     @Override @Transactional
     public CatalogCharacterAgentResult create(CatalogCharacterCreateCommand command) {
-        CatalogCharacterAgentResult result = command.automatic()
-                ? agent.generateAutomatically() : agent.generateFromHint(command.hint());
-        if (!ValidationGuard.guard(validator,result,ValidationOptions.defaults()).isValid())
-            throw new AppException("El agente devolvió una ficha de catálogo incompleta", HttpStatus.BAD_REQUEST);
-        if (!result.accepted()) return result;
-        persistAccepted(result);
-        return result;
+        acquireTurn(GenerationType.CHARACTER_AGENT);
+        try {
+            CatalogCharacterAgentResult result = command.automatic()
+                    ? agent.generateAutomatically() : agent.generateFromHint(command.hint());
+            if (!ValidationGuard.guard(validator,result,ValidationOptions.defaults()).isValid())
+                throw new AppException("El agente devolvió una ficha de catálogo incompleta", HttpStatus.BAD_REQUEST);
+            if (!result.accepted()) return result;
+            persistAccepted(result);
+            return result;
+        } finally {
+            gate.release();
+        }
+    }
+    /** Pide el turno de generación; si hay otra en curso se rechaza con 409. */
+    private void acquireTurn(GenerationType type) {
+        if (!gate.tryAcquire(type, null))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
     }
     @Override
     public CatalogCharacter persistAccepted(CatalogCharacterAgentResult result) {
@@ -62,7 +74,15 @@ public class CharacterCatalogService implements CharacterCatalogUseCase {
     public List<CatalogCharacterView> list(){return repository.findAll().stream().map(this::view).toList();}
     public CatalogCharacterView get(Long id){return view(repository.findById(id));}
     @Transactional public CatalogCharacterView rename(Long id,String name){lock.requireUnlocked(id);return view(repository.rename(id,name));}
-    @Override public void generatePortraits(Long id){repository.findById(id); generation.generate(id);}
+    /**
+     * Pide el turno PORTRAITS y lo entrega a PortraitGenerationService, que lo libera al terminar el trabajo.
+     * Si el servicio no llega a aceptar la solicitud (excepción), el turno se libera aquí.
+     */
+    @Override public void generatePortraits(Long id){
+        repository.findById(id);
+        acquireTurn(GenerationType.PORTRAITS);
+        try { generation.generate(id); } catch (RuntimeException e) { gate.release(); throw e; }
+    }
     @Override public List<PortraitCandidate> candidates(Long id){repository.findById(id); return candidates.findByCatalogCharacterId(id);}
     @Override public void selectPortrait(Long id,Long candidateId){selection.select(id,candidateId);}
     @Override public boolean generatingPortraits(Long id){repository.findById(id);return lock.isLocked(id);}

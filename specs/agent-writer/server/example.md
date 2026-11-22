@@ -401,3 +401,130 @@ curl http://localhost:8080/api/v1/storyteller/7/pages/40
 curl -o portada.png http://localhost:8080/api/v1/storyteller/7/pages/40/image
 # 200 con la imagen; sin imagen o página de otro cuento -> 404
 ```
+
+## Invalidación de páginas por edición de beat (BeatEditorService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java` (borrado en `StoryPageService.deleteInvalidatedPages` y `StoryPageRepositoryAdapter.deleteByStory`)
+**Para qué sirve:** el contrato de la edición de beat no cambia. Al confirmar la edición, `BeatEditorService` pide a `StoryPageService.deleteInvalidatedPages` retirar todas las páginas del cuento (portada incluida) en la misma transacción que guarda el beat y devuelve el cuento a `SCRIPT_PENDING` (también desde `PAGES_ACCEPTED`). El adaptador borra las revisiones antiguas, las páginas (sus `story_page_version` caen por `ON DELETE CASCADE`, incluidas las propuestas pendientes, y el contenido aceptado y la imagen importada van en la propia fila), vacía el resumen acumulado y retira los assets. `story_page.beat_id` usa `ON DELETE SET NULL` si se reemplaza la escaleta. Sin páginas generadas no se borra nada.
+
+```java
+BeatEditResult r = beatEditing.edit(new BeatEditCommand(storyId, 3, beat, true));   // confirmInvalidation = true
+r.status();            // APPLIED
+r.invalidatedPages();  // páginas retiradas (con sus versiones)
+r.story().getStatus(); // SCRIPT_PENDING
+```
+
+```
+# Sin confirmación: avisa con el contador y no cambia nada
+curl -X PUT http://localhost:8080/api/v1/generations/story/7/beat/3 -H "Content-Type: application/json" -d '{"event":"...","narrativeFunction":"nudo","participants":["Luna"],"tone":"curioso","visualNote":"claro"}'
+# Repetido con "confirmInvalidation": true -> páginas y versiones eliminadas
+# SQL: SELECT count(*) FROM story_page WHERE story_id = 7;  -> 0
+```
+
+## Turno de generación en la validación de beat (BeatEditorService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java`
+**Para qué sirve:** la edición de un beat pide turno a `GenerationGatePort` (tipo `DIRECTOR`, con el `storyId` del cuento) justo antes de llamar al director y lo libera en `finally`, tanto en éxito como en rechazo, aviso de confirmación o fallo. El turno cubre la validación y la aplicación (borrado de páginas y guardado del beat), de modo que una generación de página del mismo cuento no puede colarse a mitad. Si la puerta está ocupada, responde 409 "Hay una generación en curso" sin llamar al director ni modificar nada. La cancelación (`confirmInvalidation: false`) y las entradas inválidas no usan la puerta. El contrato no cambia salvo ese 409.
+
+```java
+try {
+    BeatEditResult r = beatEditing.edit(new BeatEditCommand(storyId, 3, beat, null));
+} catch (AppException e) {
+    // e.getStatus() == HttpStatus.CONFLICT, mensaje "Hay una generación en curso"
+}
+// Durante la validación cualquier otra generación se rechaza:
+// gate.tryAcquire(GenerationType.WRITER, storyId) -> false
+```
+
+```
+# Con una página generándose (puerta ocupada):
+curl -X PUT http://localhost:8080/api/v1/generations/story/7/beat/3 -H "Content-Type: application/json" -d '{"event":"...","narrativeFunction":"nudo","participants":["Luna"],"tone":"curioso","visualNote":"claro"}'
+# 409 "Hay una generación en curso"
+```
+
+## Turno de generación en el guion y su revisión global (StoryService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java`
+**Para qué sirve:** `generate` (crear el cuento y su escaleta) y `review` (revisión global por hint) son las únicas operaciones de `StoryService` que llaman al director, así que son las únicas que piden turno a `GenerationGatePort` (tipo `DIRECTOR`) y lo liberan en `finally`, en éxito y en error. En `generate` el turno va sin `storyId` (el cuento aún no existe) y cubre la llamada al director y la persistencia; en `review` va con el `storyId` y se pide antes de descartar la revisión pendiente, de modo que un rechazo no cambia nada. Con la puerta ocupada responden 409 "Hay una generación en curso" sin llamar al director. `approve` y `confirmReview` no llaman al director y no usan la puerta. El turno no se retiene tras responder. El contrato no cambia salvo ese 409.
+
+```java
+try {
+    Story story = storyGeneration.generate(new StoryGenerateCommand("Amistad", "Un paseo", StorySize.S, 7L));
+} catch (AppException e) {
+    // e.getStatus() == HttpStatus.CONFLICT, mensaje "Hay una generación en curso"
+}
+// Durante la generación cualquier otra se rechaza:
+// gate.tryAcquire(GenerationType.CHARACTER_AGENT, null) -> false
+```
+
+```
+# Con una página generándose (puerta ocupada), crear un cuento:
+curl -X POST http://localhost:8080/api/v1/generations/story -H "Content-Type: application/json" -d '{"topic":"Amistad","description":"Un paseo","size":"S"}'
+# 409 "Hay una generación en curso"
+# Revisión global por hint con la puerta ocupada:
+curl -X POST http://localhost:8080/api/v1/reviews/story -H "Content-Type: application/json" -d '{"storyId":7,"hint":"Final en la playa"}'
+# 409 "Hay una generación en curso"
+```
+
+## Turno de generación en el alta de personajes y la solicitud de retratos (CharacterCatalogService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java`
+**Para qué sirve:** `create` (alta con el agente de personaje, automática o por frase) pide turno `CHARACTER_AGENT` a `GenerationGatePort` y lo libera en `finally`, en éxito, rechazo del agente y error. `generatePortraits` pide turno `PORTRAITS` y lo **entrega** a `PortraitGenerationService`: el catálogo no lo libera cuando el trabajo se acepta; lo libera `PortraitGenerationService` al terminar el trabajo (éxito o error) o si no consigue encolarlo. Solo si `generate` lanza una excepción antes de aceptar el trabajo (por ejemplo, ya hay un trabajo de ese personaje) el catálogo libera el turno. Con la puerta ocupada ambas operaciones responden 409 "Hay una generación en curso" sin llamar al agente, sin crear nada y sin crear ningún trabajo de retratos. El bloqueo por personaje (`PortraitLockService`) no cambia. El contrato no cambia salvo ese 409.
+
+```java
+try {
+    catalog.create(new CatalogCharacterCreateCommand(null));   // alta automática
+} catch (AppException e) {
+    // e.getStatus() == HttpStatus.CONFLICT, mensaje "Hay una generación en curso"
+}
+catalog.generatePortraits(7L);   // la puerta queda ocupada (PORTRAITS) hasta que terminen los retratos
+// gate.tryAcquire(GenerationType.WRITER, 7L) -> false mientras tanto
+```
+
+```
+# Con una página generándose (puerta ocupada), alta automática:
+curl -X POST http://localhost:8080/api/v1/catalog-characters
+# 409 "Hay una generación en curso"
+# Con la puerta ocupada, solicitar retratos:
+curl -X POST http://localhost:8080/api/v1/catalog-characters/7/portraits/generate
+# 409 "Hay una generación en curso" (no se crea trabajo)
+```
+
+## Turno de generación en la solicitud de revisión de ficha (CharacterReviewService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/CharacterReviewService.java`
+**Para qué sirve:** `request` pide turno `CHARACTER_AGENT` (sin cuento) a `GenerationGatePort` justo antes de descartar la revisión pendiente y llamar al agente, y lo libera en `finally`, en éxito, rechazo del agente y error. Con la puerta ocupada responde 409 "Hay una generación en curso" sin llamar al agente y sin descartar ni modificar la revisión pendiente. Si hay una pendiente y no se confirma el reemplazo, devuelve la petición de confirmación sin pedir turno (no llama al agente). `resolve` (confirmar o descartar) no llama al agente y no usa la puerta. El contrato no cambia salvo ese 409.
+
+```java
+try {
+    reviews.request(new CatalogCharacterReviewCommand(7L, CharacterReviewTarget.NARRATIVE, "más valiente", false));
+} catch (AppException e) {
+    // e.getStatus() == HttpStatus.CONFLICT, mensaje "Hay una generación en curso"
+}
+```
+
+```
+# Con un guion generándose (puerta ocupada), pedir un cambio de ficha:
+curl -X POST http://localhost:8080/api/v1/catalog-characters/7/reviews -H "Content-Type: application/json" -d '{"target":"NARRATIVE","hint":"más valiente","replacePending":false}'
+# 409 "Hay una generación en curso" (la revisión pendiente, si la hay, sigue intacta)
+```
+
+## Turno ocupado durante la generación de retratos (PortraitGenerationService)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/PortraitGenerationService.java`
+**Para qué sirve:** el turno `PORTRAITS` que adquiere `CharacterCatalogService.generatePortraits` se conserva desde que se crea el trabajo hasta que termina: `PortraitGenerationService` lo libera en el `finally` del trabajo (éxito o error) y, si no consigue encolarlo, tras marcarlo fallido. Mientras tanto la portada, la página y la generación antigua responden 409 "Hay una generación en curso". El bloqueo por personaje (`PortraitLockService`) sigue funcionando a la vez: renombrar o pedir una revisión de ese personaje responde 409 mientras haya un trabajo en ejecución. Al terminar, ambos quedan libres. El contrato no cambia salvo ese 409.
+
+```java
+catalog.generatePortraits(7L);        // turno PORTRAITS ocupado y trabajo en ejecución
+pageService.startPage(5L, 1);         // AppException 409 "Hay una generación en curso"
+catalog.rename(7L, "Otra");           // AppException 409 (bloqueo por personaje)
+// Al terminar el trabajo (éxito o error) el turno queda libre
+pageService.startPage(5L, 1);         // GenerationStarted(5, 1)
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/catalog-characters/7/portraits/generate
+curl -X POST http://localhost:8080/api/v1/storyteller/5/pages/1/generate
+# 409 "Hay una generación en curso"
+# Al terminar los retratos, la misma petición de página responde 202
+```

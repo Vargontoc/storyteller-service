@@ -398,7 +398,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con datos preparados de una página aceptada con imagen, consultar las páginas por la API: la página indica que tiene imagen y la imagen se descarga.
   2. Revisar la API de páginas: no hay ninguna operación para escribir texto o escena a mano.
 
-### [ ] TASK-023 Integración: eliminación de páginas invalidadas con sus históricos
+### [x] TASK-023 Integración: eliminación de páginas invalidadas con sus históricos
 
 - **Cubre:** REQ-023, DEC-001
 - **Componente:** beat-editor | api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java; story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -411,7 +411,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Editar un beat de un cuento con páginas generadas y confirmar la invalidación: las páginas invalidadas desaparecen sin dejar versiones visibles.
 
-### [ ] TASK-024 Turno de generación en la validación de beat
+### [x] TASK-024 Turno de generación en la validación de beat
 
 - **Cubre:** REQ-032, DEC-002, DEC-008, ALT-003
 - **Componente:** beat-editor | api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java
@@ -425,7 +425,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con una generación de página en curso, editar un beat: se rechaza indicando que hay una generación en curso.
 
-### [ ] TASK-025 Turno de generación en el guion
+### [x] TASK-025 Turno de generación en el guion
 
 - **Cubre:** REQ-032, DEC-002, ALT-003
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -440,7 +440,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con retratos en generación, crear un cuento: se rechaza indicando que hay una generación en curso.
 
-### [ ] TASK-026 Turno de generación en el alta de personajes y la solicitud de retratos
+### [x] TASK-026 Turno de generación en el alta de personajes y la solicitud de retratos
 
 - **Cubre:** REQ-032, DEC-002, ALT-003
 - **Componente:** character-catalog-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterCatalogService.java
@@ -455,7 +455,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con una página en generación, dar de alta un personaje en modo automático: se rechaza indicando que hay una generación en curso.
 
-### [ ] TASK-027 Turno de generación en la revisión de fichas
+### [x] TASK-027 Turno de generación en la revisión de fichas
 
 - **Cubre:** REQ-032, DEC-002, ALT-003
 - **Componente:** character-review-service | api/src/main/java/es/vargontoc/storyteller/application/service/CharacterReviewService.java
@@ -468,7 +468,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con un guion en generación, pedir un cambio de ficha: se rechaza indicando que hay una generación en curso.
 
-### [ ] TASK-028 Turno ocupado durante la generación de retratos
+### [x] TASK-028 Turno ocupado durante la generación de retratos
 
 - **Cubre:** REQ-032, DEC-002, ALT-003
 - **Componente:** portrait-generation-service | api/src/main/java/es/vargontoc/storyteller/application/service/PortraitGenerationService.java
