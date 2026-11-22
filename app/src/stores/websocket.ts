@@ -19,6 +19,18 @@ export interface PortraitGenerationEvent {
   id: number
 }
 
+// Evento de generación de portada (pageNumber 0) o página de un cuento. `reason` solo en rechazo de hint o fallo.
+export type StoryPageGenerationEventType = 'STARTED' | 'VERSION_PRESENTED' | 'HINT_REJECTED' | 'FAILED'
+export interface StoryPageGenerationEvent {
+  storyId: number
+  pageNumber: number
+  type: StoryPageGenerationEventType
+  reason?: string
+  id: number
+}
+
+const PAGE_EVENT_TYPES: string[] = ['STARTED', 'VERSION_PRESENTED', 'HINT_REJECTED', 'FAILED']
+
 interface NotificationEvent extends WebsocketNotification {
   id: number
 }
@@ -34,9 +46,10 @@ function toWsUrl(path: string): string {
 }
 
 export const useWebsocketStore = defineStore('websocket', {
-  state: (): { lastEvent: NotificationEvent | null; lastPortraitEvent: PortraitGenerationEvent | null; connectionId: number } => ({
+  state: (): { lastEvent: NotificationEvent | null; lastPortraitEvent: PortraitGenerationEvent | null; lastStoryPageEvent: StoryPageGenerationEvent | null; connectionId: number } => ({
     lastEvent: null,
     lastPortraitEvent: null,
+    lastStoryPageEvent: null,
     connectionId: 0,
   }),
   actions: {
@@ -62,6 +75,17 @@ export const useWebsocketStore = defineStore('websocket', {
           this.lastPortraitEvent = { catalogCharacterId: portrait.catalogCharacterId, type: portrait.type as PortraitGenerationEventType, status: portrait.status as PortraitGenerationStatus, reason: portrait.reason, id: nextEventId++ }
           const notificationType: NotificationType = portrait.type === 'ERROR' ? 'ERROR' : portrait.type === 'SUCCESS' ? 'SUCCESS' : 'INFO'
           useToastStore().show(portrait.reason, notificationType.toLowerCase() as Lowercase<NotificationType>)
+          return
+        }
+        const page = data as Partial<StoryPageGenerationEvent>
+        if (typeof page.storyId === 'number' && typeof page.pageNumber === 'number' && typeof page.type === 'string' && PAGE_EVENT_TYPES.includes(page.type)) {
+          this.lastStoryPageEvent = {
+            storyId: page.storyId,
+            pageNumber: page.pageNumber,
+            type: page.type as StoryPageGenerationEventType,
+            reason: typeof page.reason === 'string' ? page.reason : undefined,
+            id: nextEventId++,
+          }
           return
         }
         const notification = data as Partial<WebsocketNotification>

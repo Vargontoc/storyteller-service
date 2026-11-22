@@ -484,10 +484,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Solicitar retratos de un protagonista y, mientras se generan, pedir una página: se rechaza indicando que hay una generación en curso.
   2. Al terminar los retratos, pedir la página: se inicia.
 
-### [ ] TASK-029 Cliente REST de portada y páginas
+### [x] TASK-029 Cliente REST de portada y páginas
 
 - **Cubre:** REQ-019, REQ-022, REQ-040, DEC-003
-- **Componente:** story-pages-api | por definir (analista técnico)
+- **Componente:** story-pages-api | app/src/api/storyPages.ts
 - **Depende de:** TASK-022
 - **Alcance:** Cliente REST con las operaciones de portada y páginas de los cuentos con escaleta: pedir portada o página N, cambio con hint, regenerar sin hint, marcar vigente, aceptar (con confirmación del descarte), descartar propuestas, consultar y obtener la imagen de la versión aceptada; sin operaciones de edición manual.
 - **Hecho cuando:** cada operación llama al servicio correspondiente con sus datos y devuelve la respuesta o el rechazo con su motivo.
@@ -497,7 +497,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Respuesta de rechazo (generación en curso, página anterior sin aceptar, hint vacío, aviso de número de frases, cuento completo): se devuelve el motivo.
 - **Prueba manual:** No aplica: no tiene interfaz propia; se verifica de forma manual en TASK-031 a TASK-033.
 
-### [ ] TASK-030 Eventos de generación de portada y página en el store WebSocket
+### [x] TASK-030 Eventos de generación de portada y página en el store WebSocket
 
 - **Cubre:** REQ-020, REQ-022, DEC-003
 - **Componente:** websocket-store | app/src/stores/websocket.ts
@@ -510,10 +510,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   - Llega un evento de retratos: se trata igual que antes.
 - **Prueba manual:** No aplica: no tiene interfaz propia; se verifica de forma manual en TASK-034.
 
-### [ ] TASK-031 Panel de páginas: vista y acciones básicas
+### [x] TASK-031 Panel de páginas: vista y acciones básicas
 
 - **Cubre:** REQ-002, REQ-010, REQ-011, REQ-013, REQ-019, REQ-021, REQ-022, REQ-040, DEC-012
-- **Componente:** story-pages-panel | por definir (analista técnico)
+- **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
 - **Depende de:** TASK-029
 - **Alcance:** Vista de la portada (título y escena) y de las páginas (texto y escena) de un cuento con escaleta, con su estado, la imagen solo en la versión aceptada, la acción de generar portada o la página siguiente cuando corresponde, aceptar y pedir un cambio con hint; sin ningún campo de edición manual del texto o de la escena.
 - **Hecho cuando:** se cumplen los criterios de aceptación primero a cuarto, octavo y décimo de REQ-022, el de REQ-019 y el segundo de REQ-021.
@@ -532,10 +532,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   2. Aceptar la portada: aparece la acción de generar la página 1 y no empieza ninguna generación.
   3. Comprobar que no hay ningún campo para escribir en el texto o la escena.
 
-### [ ] TASK-032 Panel de páginas: histórico, avisos, vigente y regeneración sin hint
+### [x] TASK-032 Panel de páginas: histórico, avisos, vigente y regeneración sin hint
 
 - **Cubre:** REQ-022, REQ-026, REQ-027, REQ-028, REQ-029, REQ-036, REQ-039, REQ-040, DEC-001
-- **Componente:** story-pages-panel | por definir (analista técnico)
+- **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
 - **Depende de:** TASK-031
 - **Alcance:** Mostrar el histórico de una portada o página pendiente con el aviso de cada versión y la vigente destacada, la acción de marcar como vigente cualquier otra, y las acciones según el aviso de la vigente: aceptar si no tiene aviso de número de frases, y regenerar sin hint solo si lo tiene.
 - **Hecho cuando:** se cumplen los criterios de aceptación quinto, sexto y séptimo de REQ-022 y el segundo de REQ-029.
@@ -550,10 +550,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con una página con 3 versiones con aviso, marcar como vigente la primera: la página muestra su texto, su escena y su aviso.
   2. Con una vigente con aviso de número de frases: no aparece aceptar y sí regenerar sin hint.
 
-### [ ] TASK-033 Panel de páginas: reapertura, confirmación del descarte en cascada y descarte de propuestas
+### [x] TASK-033 Panel de páginas: reapertura, confirmación del descarte en cascada y descarte de propuestas
 
 - **Cubre:** REQ-015, REQ-017, REQ-022, REQ-030, REQ-031, REQ-038, REQ-040, DEC-012, ALT-012, ALT-013
-- **Componente:** story-pages-panel | por definir (analista técnico)
+- **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
 - **Depende de:** TASK-032
 - **Alcance:** En una portada o página reabierta, mostrar la versión aceptada (con su imagen si la tiene) separada del histórico de propuestas (sin imagen), ofrecer descartar las propuestas y, al aceptar una propuesta con páginas posteriores, pedir confirmación indicando cuántas páginas se eliminarán.
 - **Hecho cuando:** se cumplen los criterios de aceptación noveno de REQ-022, los de REQ-017, el primero y el cuarto de REQ-038 y el segundo de REQ-040.
@@ -569,10 +569,10 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   2. Confirmar: el cuento queda con las páginas 1 y 2 y se ofrece generar la página 3.
   3. Reabrir otra página y descartar las propuestas: vuelve a verse la versión aceptada.
 
-### [ ] TASK-034 Integración: recarga del panel por eventos de generación
+### [x] TASK-034 Integración: recarga del panel por eventos de generación
 
 - **Cubre:** REQ-014, REQ-020, REQ-022, REQ-025, DEC-003
-- **Componente:** websocket-store | app/src/stores/websocket.ts; story-pages-panel | por definir (analista técnico)
+- **Componente:** websocket-store | app/src/stores/websocket.ts; story-pages-panel | app/src/components/StoryPagesPanel.vue
 - **Depende de:** TASK-030, TASK-033
 - **Alcance:** Hacer que `story-pages-panel` recargue la portada o la página afectada al recibir de `websocket-store` un evento de versión presentada, muestre el motivo del hint rechazado y el mensaje de fallo, indique la generación en curso tras el evento de inicio y recargue el estado al reconectar el WebSocket.
 - **Hecho cuando:** el resultado de cada generación aparece en el panel sin recargar la vista, el rechazo y el fallo se muestran con su mensaje y, tras una reconexión, el panel refleja el estado del servidor.
@@ -587,7 +587,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   2. Detener Ollama y pedir una página: aparece un mensaje de error y se puede volver a pedir.
   3. Reiniciar el servidor durante una generación: al reconectar, el panel muestra el estado real y permite volver a pedir la operación.
 
-### [ ] TASK-035 Modal del cuento: pestaña de páginas según escaleta
+### [x] TASK-035 Modal del cuento: pestaña de páginas según escaleta
 
 - **Cubre:** REQ-022, REQ-023, DEC-007
 - **Componente:** story-modal | app/src/components/StoryModal.vue

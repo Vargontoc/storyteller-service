@@ -94,6 +94,6 @@ Para cubrir las pruebas exigidas por las tareas, se incorporará soporte de prue
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: correcta. Origen: confirmación del usuario en la sesión del desarrollador-router tras TASK-034 ("success, siguiente tarea"). Alcance: `npm run test -- --run` y `npm run build` desde `app/` tras TASK-034 (incluye TASK-029 a TASK-033).
 - Integración: pendiente
-- Validación manual: pendiente
+- Validación manual: pendiente. Las pruebas manuales de TASK-031, TASK-032, TASK-033 y TASK-034 se aplazan a TASK-035 (el panel aún no es accesible desde el modal para cuentos con escaleta). TASK-029 y TASK-030 no aplican de forma aislada (se cubren en TASK-031 a TASK-034); el resto, pendiente.

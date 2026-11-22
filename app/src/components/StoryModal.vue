@@ -73,9 +73,11 @@
                 ></actors-content>
               </div>
               <div v-else-if="activeTab === 'paginas'">
+                <!-- Cuento con escaleta: el panel nuevo muestra portada y páginas -->
+                <story-pages-panel v-if="storyId && hasOutline" :key="`outline-${contentKey}`" :story-id="storyId" />
                 <!-- review no existe todavía para páginas en backend: @review queda sin usar en pages-content hasta que exista -->
-                <pages-content v-if="storyId"
-                  :key="contentKey"
+                <pages-content v-else-if="storyId"
+                  :key="`legacy-${contentKey}`"
                   :story-id="storyId"
                   :is-cover="false"
                   @review="showReview"
@@ -103,6 +105,7 @@ import {  getPendingStoryReview, type ReviewType, type StoryReview, type Revisio
 import { getStory, getStoryPages, type PageSummary, type StorySummary } from '../api/storyteller'
 import { getStoryScript, type StoryScript } from '../api/storyScript'
 import StoryScriptPanel from './StoryScriptPanel.vue'
+import StoryPagesPanel from './StoryPagesPanel.vue'
 import { useToastStore } from '../stores/toast'
 import { useWebsocketStore } from '../stores/websocket'
 import ActorsContent from './content/ActorsContent.vue'
@@ -160,8 +163,13 @@ const visibleTabs = computed<{ id: TabId; label: string }[]>(() => {
   result.push({ id: 'personajes', label: 'Personajes' })
   // Con el guion pendiente no hay acceso operativo a portada ni páginas (el servidor sigue validando).
   if (!scriptPending.value) {
-    if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
-    if (hasRegularPage.value) result.push({ id: 'paginas', label: 'Páginas' })
+    if (hasOutline.value) {
+      // Con escaleta y guion aprobado: una sola pestaña; el panel muestra portada y páginas.
+      result.push({ id: 'paginas', label: 'Páginas' })
+    } else {
+      if (hasCoverPage.value) result.push({ id: 'portada', label: 'Portada' })
+      if (hasRegularPage.value) result.push({ id: 'paginas', label: 'Páginas' })
+    }
   }
   return result
 })

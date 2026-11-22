@@ -56,8 +56,9 @@ export interface PageSummary {
 
 export function getStoryPages(storyId: number) {
   return httpClient
-    .get<ApiEnvelope<PageSummary[]>>(`/api/v1/storyteller/${storyId}/pages`)
-    .then((envelope) => envelope.data)
+    .get<ApiEnvelope<PageSummary[] | unknown>>(`/api/v1/storyteller/${storyId}/pages`)
+    // Un cuento con escaleta devuelve un objeto (StoryPagesView, ver storyPages.ts): no es la lista legacy.
+    .then((envelope): PageSummary[] => (Array.isArray(envelope.data) ? envelope.data : []))
 }
 
 export function getStorytellerAsset(path: string) {

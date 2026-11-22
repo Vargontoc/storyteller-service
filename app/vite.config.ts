@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { defineConfig, loadEnv } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
@@ -8,6 +9,10 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [vue()],
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.spec.ts'],
+    },
     server: {
       port,
       strictPort: true,
