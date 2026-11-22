@@ -1,0 +1,22 @@
+# Origen: specs/agent-writer (REQ-011, REQ-021, REQ-037, REQ-041)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de aceptar la portada o una página pendiente (PageAccepted).
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  pageId:
+    type: integer
+    format: int64
+  pageNumber:
+    type: integer
+    description: Número de página (0 = portada)
+  status:
+    $ref: "./enums/page-status.yaml"
+required:
+  - storyId
+  - pageId
+  - pageNumber
+  - status

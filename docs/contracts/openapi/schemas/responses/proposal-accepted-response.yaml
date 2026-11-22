@@ -1,0 +1,10 @@
+# Origen: specs/agent-writer (REQ-016, REQ-017)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../proposal-accepted.yaml"
+    required:
+      - data

@@ -1,0 +1,21 @@
+# Origen: specs/agent-writer (REQ-005, REQ-022, REQ-040, DEC-010, DEC-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: |
+  Contenido aceptado de una portada o página (AcceptedContent). En la portada text es nulo (el título viaja en PageDetail.title).
+  Solo el contenido aceptado puede tener imagen importada (hasImage=true), obtenible por GET /storyteller/{storyId}/pages/{id}/image.
+additionalProperties: false
+properties:
+  text:
+    type: string
+    nullable: true
+    description: Texto narrativo aceptado (nulo en la portada)
+  scene:
+    type: string
+    nullable: true
+    description: Descripción de escena aceptada
+  hasImage:
+    type: boolean
+    description: Indica si el contenido aceptado tiene una imagen importada asociada
+required:
+  - hasImage

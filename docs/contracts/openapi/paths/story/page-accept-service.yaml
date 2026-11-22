@@ -1,0 +1,48 @@
+# Origen: specs/agent-writer (REQ-011, REQ-021, REQ-027, REQ-028, REQ-033, REQ-037, REQ-041, ALT-004, ALT-009)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: acceptStoryPage
+  summary: Acepta la versión vigente de la portada o de una página pendiente
+  description: |
+    Promueve la versión vigente de la portada (página 0) o de una página pendiente a contenido aceptado sin imagen y elimina el resto
+    del histórico. No inicia ninguna generación siguiente. Si es la última página interior de la escaleta, el cuento pasa a PAGES_ACCEPTED
+    (REQ-021). Admite versiones con aviso solo de exceso de palabras (TOO_MANY_WORDS), pero se rechaza si la vigente tiene aviso de
+    número de frases (SENTENCE_COUNT o BOTH) o si hay una generación en curso de ese cuento (REQ-033).
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      description: Identificador de la portada o página (StoryPage.id)
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Portada o página aceptada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/page-accepted-response.yaml"
+    "404":
+      description: La página no existe o no pertenece al cuento
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        La página no está en estado PENDING, no tiene versión vigente, su versión vigente tiene aviso de número de frases (REQ-028),
+        o hay una generación en curso de ese cuento (REQ-033)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

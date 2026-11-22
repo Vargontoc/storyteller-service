@@ -1,0 +1,56 @@
+# Origen: specs/agent-writer (REQ-005, REQ-011, REQ-021, REQ-022, REQ-038, REQ-040, DEC-001, DEC-010, DEC-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: |
+  Detalle de la portada (page = 0) o de una página de un cuento con escaleta devuelto en la consulta de páginas (PageDetail).
+  Mientras está PENDING, accepted es nulo y versions contiene el histórico (proposals va vacío).
+  Cuando está ACCEPTED, accepted contiene el contenido aceptado (con hasImage), versions va vacío y,
+  si ha sido reabierta con hint, proposals contiene el histórico de propuestas pendientes de la reapertura.
+  En la portada, title trae el título del guion y el texto narrativo no existe.
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador de la página
+  page:
+    type: integer
+    description: Número de página; 0 identifica la portada
+  status:
+    $ref: "./enums/page-status.yaml"
+  beatId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador del beat asociado de la escaleta (nulo en la portada)
+  title:
+    type: string
+    nullable: true
+    description: Título del cuento (solo informado en la portada, page = 0; nulo en páginas interiores)
+  accepted:
+    allOf:
+      - $ref: "./accepted-content.yaml"
+    nullable: true
+    description: Contenido aceptado e indicación de imagen importada; nulo mientras la página está PENDING
+  versions:
+    type: array
+    description: Histórico de versiones mientras está PENDING (vacío si está ACCEPTED)
+    items:
+      $ref: "./page-version.yaml"
+  proposals:
+    type: array
+    description: Histórico de propuestas pendientes si la portada o página ACCEPTED ha sido reabierta (vacío en caso contrario)
+    items:
+      $ref: "./page-version.yaml"
+  actions:
+    type: array
+    description: Acciones disponibles calculadas por el servidor (vacío si hay generación en curso del cuento)
+    items:
+      $ref: "./enums/page-action.yaml"
+required:
+  - id
+  - page
+  - status
+  - versions
+  - proposals
+  - actions

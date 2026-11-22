@@ -1,0 +1,22 @@
+# Origen: specs/agent-writer (REQ-026, REQ-028, REQ-036)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de marcar como vigente una versión del histórico o de las propuestas de una reapertura (VersionSelected).
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  pageId:
+    type: integer
+    format: int64
+  versionId:
+    type: integer
+    format: int64
+  warning:
+    $ref: "./enums/page-length-warning.yaml"
+required:
+  - storyId
+  - pageId
+  - versionId
+  - warning

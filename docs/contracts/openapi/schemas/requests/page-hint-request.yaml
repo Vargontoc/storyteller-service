@@ -1,0 +1,11 @@
+# Origen: specs/agent-writer (REQ-012, REQ-013, REQ-015)
+# Estado del contrato: contrastado con el código
+type: object
+description: Solicitud de cambio con hint sobre la portada o una página (PageHintRequestDto). Si el hint está vacío o solo tiene espacios, el servidor rechaza con 400.
+additionalProperties: false
+properties:
+  hint:
+    type: string
+    description: Indicación de cambio para el escritor (obligatoria, no vacía)
+required:
+  - hint

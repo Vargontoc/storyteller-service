@@ -1,0 +1,19 @@
+# Origen: specs/agent-writer (REQ-019, REQ-022, REQ-028, REQ-029, REQ-030, REQ-036)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Acción disponible sobre la portada o una página de un cuento con escaleta, calculada por el servidor según estado, avisos y generación en curso.
+  No existe ninguna acción de edición manual del texto ni de la escena (REQ-019).
+  - ACCEPT: aceptar la versión vigente de una página pendiente.
+  - HINT: pedir un cambio con hint (también reabre una portada o página aceptada).
+  - REGENERATE: regenerar sin hint cuando la versión vigente avisa de número de frases.
+  - SELECT_VERSION: elegir otra versión del histórico o de las propuestas como vigente.
+  - ACCEPT_PROPOSAL: aceptar la propuesta vigente de una portada o página aceptada reabierta.
+  - DISCARD_PROPOSALS: descartar todas las propuestas de una portada o página aceptada reabierta.
+enum:
+  - ACCEPT
+  - HINT
+  - REGENERATE
+  - SELECT_VERSION
+  - ACCEPT_PROPOSAL
+  - DISCARD_PROPOSALS

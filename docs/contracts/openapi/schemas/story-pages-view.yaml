@@ -1,0 +1,30 @@
+# Origen: specs/agent-writer (REQ-021, REQ-022, REQ-032, DEC-003)
+# Estado del contrato: contrastado con el código
+type: object
+description: |
+  Vista completa de portada y páginas de un cuento con escaleta (StoryPagesView) devuelta por GET /storyteller/{storyId}/pages.
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+    description: Identificador del cuento
+  status:
+    $ref: "./enums/story-status.yaml"
+  generating:
+    type: boolean
+    description: Indica si el cuento tiene una generación en curso (en cuyo caso nextPage es nulo y actions va vacío)
+  nextPage:
+    type: integer
+    nullable: true
+    description: Siguiente generación permitida ahora (0 = portada, N = página N) o nulo si hay algo pendiente, el cuento está completo, el guion no está aprobado o hay generación en curso
+  pages:
+    type: array
+    description: Portada y páginas existentes ordenadas por número de página
+    items:
+      $ref: "./page-detail.yaml"
+required:
+  - storyId
+  - status
+  - generating
+  - pages

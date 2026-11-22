@@ -1,0 +1,14 @@
+# Origen: specs/agent-writer (REQ-007, REQ-026, REQ-028, DEC-004, DEC-010, DEC-011)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Aviso de longitud del texto narrativo de una versión de página (la portada siempre lleva NONE).
+  - NONE: cumple el límite (1 a 4 frases y hasta 66 palabras).
+  - TOO_MANY_WORDS: supera 66 palabras con 1 a 4 frases (admite aceptación).
+  - SENTENCE_COUNT: menos de 1 o más de 4 frases (bloquea la aceptación y habilita regenerar sin hint).
+  - BOTH: incumple frases y palabras (bloquea la aceptación).
+enum:
+  - NONE
+  - TOO_MANY_WORDS
+  - SENTENCE_COUNT
+  - BOTH

@@ -1,0 +1,7 @@
+# Origen: specs/agent-writer (REQ-001, REQ-011, REQ-022, DEC-001)
+# Estado del contrato: contrastado con el código
+type: string
+description: Estado de la portada o de una página en un cuento con escaleta (nulo en cuentos antiguos sin escaleta)
+enum:
+  - PENDING
+  - ACCEPTED

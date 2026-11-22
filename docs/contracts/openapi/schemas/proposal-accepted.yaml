@@ -1,0 +1,32 @@
+# Origen: specs/agent-writer (REQ-016, REQ-017, REQ-018, REQ-031, REQ-041, ALT-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: |
+  Resultado de aceptar la propuesta vigente de una portada o página reabierta (ProposalAccepted).
+  Sin confirmar (confirm=false) y con páginas posteriores: requiresConfirmation=true, affectedPages indica cuántas
+  se eliminarían y no se aplica ningún cambio. Con confirmación (confirm=true) o sin páginas posteriores:
+  requiresConfirmation=false y affectedPages indica cuántas páginas posteriores se eliminaron (0 en la portada).
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  pageId:
+    type: integer
+    format: int64
+  pageNumber:
+    type: integer
+    description: Número de página (0 = portada)
+  status:
+    $ref: "./enums/page-status.yaml"
+  requiresConfirmation:
+    type: boolean
+  affectedPages:
+    type: integer
+required:
+  - storyId
+  - pageId
+  - pageNumber
+  - status
+  - requiresConfirmation
+  - affectedPages

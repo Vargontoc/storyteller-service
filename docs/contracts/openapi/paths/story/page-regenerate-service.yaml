@@ -1,0 +1,47 @@
+# Origen: specs/agent-writer (REQ-029, REQ-032, REQ-034, DEC-003, ALT-003, ALT-010)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: regenerateStoryPage
+  summary: Regenera sin hint una página pendiente bloqueada por número de frases
+  description: |
+    Solo permitido cuando la página está PENDING y su versión vigente tiene aviso de número de frases (SENTENCE_COUNT o BOTH).
+    Pide turno a generation-gate; al concederlo responde 202 con GenerationStarted. El resultado se añade al histórico como vigente
+    y llega por WebSocket en /storyteller (STARTED, VERSION_PRESENTED o FAILED).
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      description: Identificador de la página (StoryPage.id)
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "202":
+      description: Turno concedido y regeneración sin hint iniciada en segundo plano
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/generation-started-response.yaml"
+    "404":
+      description: El cuento o la página no existe, o la página no pertenece al cuento
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        La página no está PENDING, no tiene versión vigente, su versión vigente no tiene aviso de número de frases (REQ-029),
+        no tiene beat en la escaleta, o hay una generación en curso en la aplicación (REQ-032)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

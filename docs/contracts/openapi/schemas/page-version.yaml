@@ -1,0 +1,29 @@
+# Origen: specs/agent-writer (REQ-026, REQ-034, REQ-036, REQ-040, DEC-001, DEC-010, DEC-012)
+# Estado del contrato: contrastado con el código
+type: object
+description: |
+  Versión generada del histórico de una portada o página pendiente, o propuesta pendiente de una reapertura (PageVersionView).
+  En la portada, text es nulo y warning es siempre NONE. Nunca lleva imagen (DEC-012).
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    description: Identificador de la versión
+  text:
+    type: string
+    nullable: true
+    description: Texto narrativo de la versión (nulo en la portada)
+  scene:
+    type: string
+    nullable: true
+    description: Descripción de escena de la versión
+  warning:
+    $ref: "./enums/page-length-warning.yaml"
+  current:
+    type: boolean
+    description: Indica si es la versión vigente del histórico o de las propuestas
+required:
+  - id
+  - warning
+  - current

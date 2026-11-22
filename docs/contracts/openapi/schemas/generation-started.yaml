@@ -1,0 +1,16 @@
+# Origen: specs/agent-writer (REQ-001, REQ-003, REQ-012, REQ-029, DEC-003)
+# Estado del contrato: contrastado con el código
+type: object
+description: Respuesta REST de una generación asíncrona de portada o página aceptada por la puerta de generación (GenerationStarted). El resultado llega después por WebSocket en /storyteller.
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+    description: Identificador del cuento
+  pageNumber:
+    type: integer
+    description: Número de página en generación (0 = portada, >= 1 = página interior)
+required:
+  - storyId
+  - pageNumber

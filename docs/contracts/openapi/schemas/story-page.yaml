@@ -1,10 +1,12 @@
-# Origen: specs/agent-director (REQ-013, DEC-006)
+# Origen: specs/agent-director (REQ-013, DEC-006), specs/agent-writer (REQ-005, REQ-011, REQ-022, REQ-040, DEC-001, DEC-010, DEC-012)
 # Estado del contrato: contrastado con el código
 type: object
 description: |
-  Página de una historia (page = 0 identifica la portada). El beat aprobado de la escaleta es un contrato
-  interno entre el servidor y el escritor al generar la página: no es un campo de esta representación ni
-  es editable por el cliente (los beats se editan con PUT /generations/story/{id}/beat/{page})
+  Modelo de página de una historia (StoryPage, page = 0 identifica la portada) incluido en Story.pages y en las
+  operaciones heredadas de cuentos sin escaleta. Para la consulta de portada y páginas de cuentos con escaleta
+  (GET /storyteller/{storyId}/pages y /pages/{id}), el servidor devuelve story-pages-view.yaml y page-detail.yaml
+  con el contenido aceptado (hasImage), el histórico de versiones o propuestas (page-version.yaml) y las acciones disponibles.
+  El beat aprobado de la escaleta no es editable aquí (los beats se editan con PUT /generations/story/{id}/beat/{page}).
 additionalProperties: false
 properties:
   id:
@@ -21,9 +23,49 @@ properties:
     nullable: true
   text:
     type: string
+    nullable: true
+    description: Texto narrativo aceptado (nulo en la portada y en páginas pendientes)
   scene:
     type: string
+    nullable: true
     description: Prompt de escena usado para generar la imagen de la página
+  composition:
+    type: object
+    nullable: true
+    description: Composición de escena aceptada (SceneComposition)
+    additionalProperties: false
+    properties:
+      scene:
+        type: string
+        nullable: true
+      actors:
+        type: array
+        nullable: true
+        items:
+          type: object
+          additionalProperties: false
+          properties:
+            name:
+              type: string
+            action:
+              type: string
+      background:
+        type: string
+        nullable: true
+  pageStatus:
+    allOf:
+      - $ref: "./enums/page-status.yaml"
+    nullable: true
+    description: Estado de la página en cuentos con escaleta (PENDING o ACCEPTED); nulo en cuentos antiguos
+  beatId:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador del beat de la escaleta vinculado a la página; nulo en portada y cuentos antiguos
+  importedImage:
+    type: string
+    nullable: true
+    description: Ruta interna de la imagen importada asociada al contenido aceptado; nulo si no tiene o está pendiente
   imageAsset:
     type: string
     nullable: true

@@ -1,0 +1,10 @@
+# Origen: specs/agent-writer (DEC-003)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../generation-started.yaml"
+    required:
+      - data

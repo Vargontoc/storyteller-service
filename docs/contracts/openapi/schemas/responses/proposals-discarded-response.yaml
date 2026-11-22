@@ -1,0 +1,10 @@
+# Origen: specs/agent-writer (REQ-030)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../proposals-discarded.yaml"
+    required:
+      - data

@@ -1,0 +1,52 @@
+# Origen: specs/agent-writer (REQ-026, REQ-028, REQ-033, REQ-036, REQ-038, ALT-004)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: selectStoryPageVersion
+  summary: Marca una versión del histórico o propuesta de reapertura como vigente
+  description: |
+    Operación síncrona que no llama al escritor: marca como vigente la versión indicada dentro del histórico de la portada o página
+    pendiente, o entre las propuestas de una portada o página aceptada reabierta (la versión aceptada no forma parte del histórico y no
+    puede seleccionarse). Se rechaza si hay una generación en curso del mismo cuento (REQ-033).
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      description: Identificador de la portada o página (StoryPage.id)
+      schema:
+        type: integer
+        format: int64
+    - name: versionId
+      in: path
+      required: true
+      description: Identificador de la versión o propuesta a marcar como vigente
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Versión marcada como vigente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/version-selected-response.yaml"
+    "404":
+      description: La página no existe, no pertenece al cuento, o la versión no pertenece a esa página (o corresponde al contenido aceptado)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: La página no admite selección de versión (cuento antiguo sin estado) o hay una generación en curso de ese cuento (REQ-033)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

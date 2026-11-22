@@ -1,0 +1,41 @@
+# Origen: specs/agent-writer (REQ-001, REQ-020, REQ-032, DEC-003, DEC-010, ALT-003)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: generateStoryCover
+  summary: Inicia la generación asíncrona de la escena de portada
+  description: |
+    Solicita generar la escena de portada de un cuento con escaleta y guion aprobado (SCRIPT_ACCEPTED) que aún no tiene portada.
+    Pide turno a generation-gate; al concederlo responde 202 con GenerationStarted (pageNumber = 0). El resultado llega después
+    por WebSocket en /storyteller (STARTED, VERSION_PRESENTED o FAILED). La portada usa el título del guion sin modificarlo,
+    no tiene texto narrativo ni imagen, y no pasa por la validación de longitud.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "202":
+      description: Turno concedido y generación de portada iniciada en segundo plano
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/generation-started-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        El cuento es anterior a la escaleta, ya tiene todas las páginas aceptadas (PAGES_ACCEPTED), el guion no está aprobado
+        (distinto de SCRIPT_ACCEPTED), ya existe portada para el cuento, o hay una generación en curso en la aplicación (REQ-032)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

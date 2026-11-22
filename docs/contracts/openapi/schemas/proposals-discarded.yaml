@@ -1,0 +1,18 @@
+# Origen: specs/agent-writer (REQ-030, REQ-031, ALT-013)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de descartar todas las propuestas de una portada o página aceptada reabierta (ProposalsDiscarded).
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+  pageId:
+    type: integer
+    format: int64
+  status:
+    $ref: "./enums/page-status.yaml"
+required:
+  - storyId
+  - pageId
+  - status
