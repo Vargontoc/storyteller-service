@@ -10,7 +10,9 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import es.vargontoc.storyteller.domain.enums.NarrationEventType;
 import es.vargontoc.storyteller.domain.enums.StoryPageEventType;
+import es.vargontoc.storyteller.domain.events.NarrationEvent;
 import es.vargontoc.storyteller.domain.events.PortraitGenerationEvent;
 import es.vargontoc.storyteller.domain.events.StoryPageGenerationEvent;
 import java.util.UUID;
@@ -62,6 +64,34 @@ class WebsocketAdapterTest {
         JsonNode rejected = mapper.readTree(message.getAllValues().get(1).getPayload());
         assertEquals("HINT_REJECTED", rejected.get("type").asText());
         assertEquals("Fuera del beat", rejected.get("reason").asText());
+        adapter.afterConnectionClosed(session, CloseStatus.NORMAL);
+    }
+
+    @Test
+    void broadcastsNarrationEventsToSubscribers() throws Exception {
+        WebsocketAdapter adapter = new WebsocketAdapter();
+        WebSocketSession session = mock(WebSocketSession.class);
+        when(session.getId()).thenReturn(UUID.randomUUID().toString());
+        adapter.afterConnectionEstablished(session);
+
+        adapter.sendNarrationNotification(new NarrationEvent(NarrationEventType.STARTED, 7L, null));
+        adapter.sendNarrationNotification(new NarrationEvent(NarrationEventType.COMPLETED, 7L, "Abuela"));
+        adapter.sendNarrationNotification(new NarrationEvent(NarrationEventType.FAILED, 7L, null));
+
+        ArgumentCaptor<TextMessage> message = ArgumentCaptor.forClass(TextMessage.class);
+        verify(session, times(3)).sendMessage(message.capture());
+        JsonNode started = mapper.readTree(message.getAllValues().get(0).getPayload());
+        assertEquals("STARTED", started.get("type").asText());
+        assertEquals(7L, started.get("storyId").asLong());
+        assertFalse(started.has("voiceName"));
+        JsonNode completed = mapper.readTree(message.getAllValues().get(1).getPayload());
+        assertEquals("COMPLETED", completed.get("type").asText());
+        assertEquals(7L, completed.get("storyId").asLong());
+        assertEquals("Abuela", completed.get("voiceName").asText());
+        JsonNode failed = mapper.readTree(message.getAllValues().get(2).getPayload());
+        assertEquals("FAILED", failed.get("type").asText());
+        assertEquals(7L, failed.get("storyId").asLong());
+        assertFalse(failed.has("voiceName"));
         adapter.afterConnectionClosed(session, CloseStatus.NORMAL);
     }
 }

@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -59,7 +60,7 @@ class StoryPageServiceDiscardProposalsTest {
         gate = mock(GenerationGatePort.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), mock(StoryRepository.class), mock(StoryOutlineRepository.class),
-            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run);
+            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
         cover = page(COVER_ID, 0, PageStatus.ACCEPTED);
         cover.setImportedImage("portada.png");
         page2 = page(PAGE2_ID, 2, PageStatus.ACCEPTED);

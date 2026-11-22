@@ -35,7 +35,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Si el modelo no existe en Ollama al arrancar, se registra con el Modelfile actualizado. Si ya existe, no se vuelve a registrar (comportamiento actual).
 - **Prueba manual:** No aplica: el efecto en el texto generado se comprueba en la prueba manual de TASK-003.
 
-### [ ] TASK-003 Instrucciones de página y portada con reglas de onomatopeyas
+### [x] TASK-003 Instrucciones de página y portada con reglas de onomatopeyas
 
 - **Cubre:** REQ-001, REQ-002, REQ-003, REQ-004, REQ-005, DEC-006
 - **Componente:** writer-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiWriterAgent.java
@@ -121,10 +121,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Tras eliminarlo, al recuperarlo se indica que no existe.
 - **Prueba manual:** No aplica: no tiene interfaz propia. Se ve en la prueba manual de TASK-030.
 
-### [ ] TASK-009 Voz del sistema desde la configuración
+### [x] TASK-009 Voz del sistema desde la configuración
 
 - **Cubre:** REQ-010, REQ-011, REQ-012, REQ-019, DEC-005, ALT-002
-- **Componente:** system-voice-provider | por definir (analista técnico)
+- **Componente:** system-voice-provider | api/src/main/java/es/vargontoc/storyteller/application/service/SystemVoiceProvider.java (propiedades `infrastructure/config/SystemVoiceProperties.java`, prefijo `app.system-voice` en `application.yaml`)
 - **Depende de:** TASK-006, TASK-007
 - **Alcance:** leer de la configuración de la instalación el nombre y el audio de referencia de la voz del sistema, sin un valor por defecto en el código, comprobar si están disponibles y válidos, y detectar al arrancar si el nombre coincide con el de una voz subida.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-012 y el proveedor indica el nombre, si la voz está disponible y, si no lo está, el motivo.
@@ -137,10 +137,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Arrancar la aplicación sin configurar la voz del sistema: arranca sin error.
 
-### [ ] TASK-010 Listado de la biblioteca y subida de voces
+### [x] TASK-010 Listado de la biblioteca y subida de voces
 
 - **Cubre:** REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, DEC-001, DEC-005, ALT-001, ALT-002
-- **Componente:** voice-library-service | por definir (analista técnico)
+- **Componente:** voice-library-service | api/src/main/java/es/vargontoc/storyteller/application/service/VoiceLibraryService.java (puerto `application/ports/in/generator/VoiceLibraryUseCase.java`, comando `domain/request/UploadVoiceCommand.java`, respuestas `domain/response/VoiceLibrary.java` y `VoiceEntry.java`, causas `domain/enums/VoiceRejectionReason.java`, error `shared/exceptions/VoiceRejectedException.java`)
 - **Depende de:** TASK-005, TASK-006, TASK-007, TASK-008, TASK-009
 - **Alcance:** listar la voz del sistema (con su disponibilidad) y las voces subidas con nombre, idioma y marca de voz del sistema, y subir una voz validando nombre, idioma, permiso, unicidad del nombre, formato y duración.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-006 a REQ-012 en el servidor. Las subidas rechazadas no guardan ni la voz ni su audio.
@@ -158,10 +158,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - En todos los rechazos, el listado no cambia y no queda ningún audio guardado.
 - **Prueba manual:** No aplica: se prueba desde la vista en TASK-030.
 
-### [ ] TASK-011 Borrado de voces y voces elegibles para narrar
+### [x] TASK-011 Borrado de voces y voces elegibles para narrar
 
 - **Cubre:** REQ-013, REQ-014, REQ-015, REQ-016, REQ-019, REQ-020, DEC-001, DEC-005, ALT-002, ALT-010
-- **Componente:** voice-library-service | por definir (analista técnico)
+- **Componente:** voice-library-service | api/src/main/java/es/vargontoc/storyteller/application/service/VoiceLibraryService.java (amplía TASK-010; puerto `application/ports/in/generator/VoiceLibraryUseCase.java`, motivos nuevos `SYSTEM_VOICE_NOT_DELETABLE` y `VOICE_NOT_FOUND` en `domain/enums/VoiceRejectionReason.java`, `VoiceRepository.findById`)
 - **Depende de:** TASK-010
 - **Alcance:** borrar una voz subida (su registro y su audio de referencia), rechazar el borrado de la voz del sistema y devolver las voces elegibles para narrar (la voz del sistema si está disponible y las voces subidas en español), con su audio de referencia.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-013, REQ-014 y REQ-020 en el servidor, y una voz borrada ya no es elegible.
@@ -191,10 +191,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - La voz guardada es una copia del nombre y se sigue consultando aunque la voz subida ya no exista.
 - **Prueba manual:** No aplica: no tiene interfaz propia.
 
-### [ ] TASK-013 Modelfile y provisionador del narrador
+### [x] TASK-013 Modelfile y provisionador del narrador
 
 - **Cubre:** REQ-023, REQ-024, DEC-002
-- **Componente:** narrator-model-provisioner | por definir (analista técnico)
+- **Componente:** narrator-model-provisioner | api/src/main/java/es/vargontoc/storyteller/infrastructure/config/NarratorModelProvisioner.java (Modelfile `api/src/main/resources/prompts/narrator.modelfile`, propiedad `app.agents.audio-narrator`)
 - **Depende de:** TASK-001
 - **Alcance:** registrar en Ollama al arrancar, si no existe, el modelo del narrador con un Modelfile que se limita a dividir el texto aceptado en pocos fragmentos de frases completas y anotar su tono y énfasis, sin cambiar palabras ni atender al número de palabras. Se reutiliza el Modelfile `narrator` existente si TASK-001 lo decide así.
 - **Hecho cuando:** al arrancar sin el modelo, este queda registrado con esas instrucciones. Si ya existe, no se vuelve a registrar.
@@ -204,10 +204,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - El Modelfile indica que no se añaden, quitan, reordenan ni sustituyen palabras y que se devuelven fragmentos con expresividad por página.
 - **Prueba manual:** No aplica: el efecto se comprueba en la prueba manual de TASK-031.
 
-### [ ] TASK-014 Agente narrador
+### [x] TASK-014 Agente narrador
 
 - **Cubre:** REQ-023, REQ-024, REQ-025, DEC-002, ALT-006
-- **Componente:** narrator-agent | por definir (analista técnico)
+- **Componente:** narrator-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiNarratorAgent.java (puerto `application/ports/out/external/NarratorAgent.java`, modelos `domain/model/PageAudioScript.java` y `AudioFragment.java`)
 - **Depende de:** TASK-013
 - **Alcance:** enviar a Ollama el texto aceptado de todas las páginas interiores, en orden, y devolver un guion de audio por página con sus fragmentos y la expresividad de cada uno (exageración, cfg y temperatura). Se reutiliza el agente narrador existente si TASK-001 lo decide así.
 - **Hecho cuando:** ante una respuesta válida, el agente devuelve un guion por cada página interior con fragmentos y parámetros, y ante una respuesta no utilizable o un fallo indica un error.
@@ -236,10 +236,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Si falla una página de 8, se indica cuál.
 - **Prueba manual:** No aplica: el comportamiento es determinista y queda cubierto por las pruebas automáticas.
 
-### [ ] TASK-016 Adaptador de síntesis de Chatterbox
+### [x] TASK-016 Adaptador de síntesis de Chatterbox
 
 - **Cubre:** REQ-023, REQ-026, DEC-002, ALT-006
-- **Componente:** speech-synthesis-adapter | por definir (analista técnico)
+- **Componente:** speech-synthesis-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/ChatterboxSpeechSynthesisAdapter.java (puerto `application/ports/out/external/SpeechSynthesizer.java`, petición `domain/request/SpeechSynthesisRequest.java`)
 - **Depende de:** TASK-001
 - **Alcance:** pedir a Chatterbox Multilingual V3 el audio de un fragmento con idioma español, el audio de referencia de la voz y los parámetros de expresividad. Se reutiliza el adaptador existente si TASK-001 lo decide así, sin cambiar los cuentos antiguos.
 - **Hecho cuando:** el adaptador envía texto, idioma español, audio de referencia y parámetros, devuelve el audio sintetizado e indica un error si el motor falla.
@@ -263,10 +263,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - El evento de error se publica con el cuento.
 - **Prueba manual:** No aplica: se comprueba en la integración de TASK-018.
 
-### [ ] TASK-018 Integración: notificador de narración con websocket-adapter
+### [x] TASK-018 Integración: notificador de narración con websocket-adapter
 
 - **Cubre:** REQ-027, REQ-028, DEC-004
-- **Componente:** narration-notifier | por definir (analista técnico) y websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java
+- **Componente:** narration-notifier | api/src/main/java/es/vargontoc/storyteller/application/service/NarrationNotifier.java y websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java
 - **Depende de:** TASK-017
 - **Alcance:** difundir por el canal `/storyteller` los eventos de narración, junto con los actuales de retratos y páginas.
 - **Hecho cuando:** un cliente suscrito a `/storyteller` recibe los eventos de inicio, éxito y error de narración, y los demás eventos siguen llegando igual.
@@ -275,10 +275,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Los eventos de retratos y de páginas se siguen difundiendo sin cambios.
 - **Prueba manual:** No aplica: se comprueba en la prueba manual de TASK-031.
 
-### [ ] TASK-019 Estado de narración del cuento y borrado del audio a petición
+### [x] TASK-019 Estado de narración del cuento y borrado del audio a petición
 
 - **Cubre:** REQ-017, REQ-018, REQ-027, REQ-029, REQ-033, REQ-034, DEC-007
-- **Componente:** story-narration-service | por definir (analista técnico)
+- **Componente:** story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryNarrationService.java (puerto `application/ports/in/generator/StoryNarrationUseCase.java`, respuesta `domain/response/NarrationState.java`, motivo `domain/enums/NarrationDisabledReason.java`)
 - **Depende de:** TASK-012
 - **Alcance:** consultar el estado de narración de un cuento (si tiene escaleta, si narrar está habilitado y por qué no, si está narrándose, si tiene audio y con qué voz), calculado siempre a partir del estado actual de las páginas interiores, y ofrecer a `story-page-service` las consultas de narración en curso o audio y el borrado del audio y la voz.
 - **Hecho cuando:** se cumplen en el servidor los criterios de aceptación de REQ-018 y REQ-034, y el borrado a petición deja el cuento sin audio ni voz.
@@ -291,10 +291,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Tras pedir el borrado del audio, el cuento no tiene audio ni voz, y narrar sigue deshabilitado mientras falten páginas por aceptar y vuelve a habilitarse cuando todas lo están.
 - **Prueba manual:** No aplica: se prueba desde el panel en TASK-031.
 
-### [ ] TASK-020 Inicio de la narración y la renarración
+### [x] TASK-020 Inicio de la narración y la renarración
 
 - **Cubre:** REQ-016, REQ-017, REQ-018, REQ-020, REQ-021, REQ-022, REQ-027, REQ-031, REQ-032, DEC-003, DEC-004, ALT-003, ALT-004, ALT-005
-- **Componente:** story-narration-service | por definir (analista técnico)
+- **Componente:** story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryNarrationService.java; nuevos: NarrationExecutor (api/src/main/java/es/vargontoc/storyteller/application/ports/out/NarrationExecutor.java), PendingNarrationExecutor (api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/PendingNarrationExecutor.java, provisional hasta TASK-021), NarrationRejectedException (api/src/main/java/es/vargontoc/storyteller/shared/exceptions/NarrationRejectedException.java), NarrationRejectionReason (api/src/main/java/es/vargontoc/storyteller/domain/enums/NarrationRejectionReason.java)
 - **Depende de:** TASK-011, TASK-012, TASK-017, TASK-019
 - **Alcance:** al confirmar, comprobar escaleta, páginas interiores aceptadas, que no se está narrando y que la voz es elegible. Después, pedir el turno a `generation-gate`, borrar el audio y la voz anteriores, marcar el cuento como narrándose, tomar el audio de referencia de la voz, notificar el inicio y responder que la narración ha empezado.
 - **Hecho cuando:** se cumplen en el servidor los criterios de aceptación de REQ-021 (primer criterio) y REQ-022, y cada rechazo deja el audio sin cambios.
@@ -308,10 +308,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Voz borrada o en un idioma que no es el español: se rechaza con el aviso de voz no disponible y no se pide el turno (ALT-005).
 - **Prueba manual:** No aplica: se prueba desde el panel en TASK-031.
 
-### [ ] TASK-021 Ejecución de la narración en segundo plano
+### [x] TASK-021 Ejecución de la narración en segundo plano
 
 - **Cubre:** REQ-021, REQ-023, REQ-024, REQ-025, REQ-026, REQ-028, REQ-029, REQ-032, DEC-002, DEC-003, DEC-004, ALT-006, ALT-010
-- **Componente:** story-narration-service | por definir (analista técnico)
+- **Componente:** story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/BackgroundNarrationExecutor.java (implementa `NarrationExecutor`; sustituye y borra `PendingNarrationExecutor`)
 - **Depende de:** TASK-014, TASK-015, TASK-016, TASK-020
 - **Alcance:** en segundo plano, enviar al narrador el texto aceptado de todas las páginas interiores, validar el guion, sintetizar cada página por fragmentos en español con la voz elegida y unirlos en un audio por página. Solo cuando todas las páginas tienen audio, publicar los audios y la voz en una sola operación, descartar el guion, notificar el éxito y liberar el turno. Ante un fallo, dejar el cuento sin audio, notificar el error y liberar el turno.
 - **Hecho cuando:** se cumplen en el servidor los criterios de aceptación de REQ-024 (segundo criterio), REQ-026, REQ-028 y REQ-029, el segundo criterio de REQ-021 y el segundo de REQ-032, y el texto aceptado de las páginas no cambia.
@@ -329,10 +329,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - No hay reintento automático tras un error.
 - **Prueba manual:** No aplica: se prueba de extremo a extremo en TASK-031.
 
-### [ ] TASK-022 Descarga del audio de una página interior
+### [x] TASK-022 Descarga del audio de una página interior
 
 - **Cubre:** REQ-015, REQ-030
-- **Componente:** story-narration-service | por definir (analista técnico)
+- **Componente:** story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryNarrationService.java (operación `getPageAudio` en el puerto `application/ports/in/generator/StoryNarrationUseCase.java`)
 - **Depende de:** TASK-012
 - **Alcance:** devolver el audio narrado de una página interior concreta de un cuento con audio.
 - **Hecho cuando:** se obtiene solo el audio de la página pedida, y una página sin audio o la portada dan una respuesta de no encontrado.
@@ -342,10 +342,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Tras borrar la voz subida con la que se narró, el audio de cada página se sigue obteniendo.
 - **Prueba manual:** No aplica: se prueba desde el reproductor en TASK-033.
 
-### [ ] TASK-023 Reconciliación de narraciones al arrancar
+### [x] TASK-023 Reconciliación de narraciones al arrancar
 
 - **Cubre:** REQ-021, REQ-027, REQ-028, DEC-004, ALT-007
-- **Componente:** narration-reconciliation-service | por definir (analista técnico)
+- **Componente:** narration-reconciliation-service | api/src/main/java/es/vargontoc/storyteller/application/service/NarrationReconciliationService.java (disparo `infrastructure/config/NarrationReconciliationRunner.java`)
 - **Depende de:** TASK-012, TASK-017
 - **Alcance:** al arrancar, tratar como fallidas las narraciones que quedaron en curso, eliminar su audio parcial y notificar el error.
 - **Hecho cuando:** tras un arranque con una narración en curso, el cuento queda sin audio, con error y con narrar habilitado, y el turno está libre.
@@ -357,7 +357,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   1. Iniciar la narración de un cuento y reiniciar el servidor antes de que termine.
   2. Abrir el cuento: no hay indicador de narración en curso, se ve el aviso de error, ninguna página tiene audio y narrar está habilitado.
 
-### [ ] TASK-024 Bloqueo de páginas durante la narración y borrado del audio al reabrir
+### [x] TASK-024 Bloqueo de páginas durante la narración y borrado del audio al reabrir
 
 - **Cubre:** REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -373,7 +373,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Reabrir una página de un cuento sin audio se comporta como hasta ahora.
 - **Prueba manual:** No aplica: se prueba desde la vista en TASK-034.
 
-### [ ] TASK-025 Aviso de borrado de audio al invalidar páginas por un beat
+### [x] TASK-025 Aviso de borrado de audio al invalidar páginas por un beat
 
 - **Cubre:** REQ-033, DEC-007, ALT-008, ALT-009
 - **Componente:** beat-editor | api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java

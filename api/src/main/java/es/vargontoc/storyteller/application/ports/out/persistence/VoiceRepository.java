@@ -18,6 +18,8 @@ public interface VoiceRepository {
 
     Optional<Voice> findByName(String name);
 
+    Optional<Voice> findById(Long id);
+
     /** Borra la voz; no toca ninguna narracion. */
     void delete(Long id);
 }

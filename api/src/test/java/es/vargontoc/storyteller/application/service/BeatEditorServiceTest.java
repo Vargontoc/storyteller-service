@@ -24,6 +24,9 @@ import org.mockito.Mockito;
 
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
+import es.vargontoc.storyteller.domain.enums.NarrationRejectionReason;
+import es.vargontoc.storyteller.shared.exceptions.NarrationRejectedException;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
@@ -51,6 +54,7 @@ class BeatEditorServiceTest {
     private StoryPageService pages;
     private DirectorAgent director;
     private GenerationGate gate;
+    private StoryNarrationUseCase narration;
     private BeatEditorService service;
 
     private final StoryOutline outline = new StoryOutline(
@@ -64,7 +68,8 @@ class BeatEditorServiceTest {
         pages = mock(StoryPageService.class);
         director = mock(DirectorAgent.class);
         gate = new GenerationGate();
-        service = new BeatEditorService(stories, outlines, pages, director, gate);
+        narration = mock(StoryNarrationUseCase.class);
+        service = new BeatEditorService(stories, outlines, pages, director, gate, narration);
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(director.validateBeat(any())).thenReturn(new DirectorBeatVerdict(true, null));
     }
@@ -125,6 +130,63 @@ class BeatEditorServiceTest {
         order.verify(pages).deleteInvalidatedPages(STORY);
         order.verify(outlines).save(Mockito.eq(STORY), any());
         order.verify(stories).updateStatus(STORY, StoryStatus.SCRIPT_PENDING);
+    }
+
+    @Test
+    void warningIndicatesAudioDeletionOnlyWhenStoryHasAudio() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 4));
+        when(narration.hasAudio(STORY)).thenReturn(true);
+
+        BeatEditResult withAudio = service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), null));
+
+        assertEquals(BeatEditStatus.CONFIRMATION_REQUIRED, withAudio.status());
+        assertEquals(4, withAudio.invalidatedPages());
+        assertTrue(withAudio.audioWillBeDeleted());
+
+        when(narration.hasAudio(STORY)).thenReturn(false);
+
+        BeatEditResult withoutAudio = service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), null));
+
+        assertEquals(BeatEditStatus.CONFIRMATION_REQUIRED, withoutAudio.status());
+        assertFalse(withoutAudio.audioWillBeDeleted());
+    }
+
+    @Test
+    void confirmingWithAudioDeletesThroughPageServiceOnlyOnce() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 4));
+        when(narration.hasAudio(STORY)).thenReturn(true);
+        when(pages.deleteInvalidatedPages(STORY)).thenReturn(4);
+
+        BeatEditResult result = service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), true));
+
+        assertEquals(BeatEditStatus.APPLIED, result.status());
+        verify(pages).deleteInvalidatedPages(STORY); // borra páginas, audio y voz en la misma transacción
+        verify(narration, never()).deleteAudio(anyLong());
+    }
+
+    @Test
+    void editWhileNarratingIsRejectedBeforeChangingAnything() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 4));
+        when(narration.isNarrating(STORY)).thenReturn(true);
+
+        NarrationRejectedException ex = assertThrows(NarrationRejectedException.class,
+            () -> service.edit(new BeatEditCommand(STORY, 3, beat("Luna se queda"), true)));
+
+        assertEquals(NarrationRejectionReason.IN_PROGRESS, ex.getReason());
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+        verifyNoInteractions(director, pages);
+        verify(outlines, never()).save(anyLong(), any());
+        verify(stories, never()).updateStatus(anyLong(), any());
+        assertTrue(gate.tryAcquire(GenerationType.WRITER, STORY)); // no dejó el turno ocupado
+    }
+
+    @Test
+    void editWhileNarratingWithoutGeneratedPagesIsNotRejected() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        when(narration.isNarrating(STORY)).thenReturn(true);
+
+        assertEquals(BeatEditStatus.APPLIED,
+            service.edit(new BeatEditCommand(STORY, 1, beat("Luna sale de casa"), null)).status());
     }
 
     @Test

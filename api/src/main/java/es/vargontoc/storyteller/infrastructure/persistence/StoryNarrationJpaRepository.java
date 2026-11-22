@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface StoryNarrationJpaRepository extends JpaRepository<StoryNarrationJpaEntity, Long> {
 
     Optional<StoryNarrationJpaEntity> findByStoryId(Long storyId);
+
+    java.util.List<StoryNarrationJpaEntity> findByStatus(es.vargontoc.storyteller.domain.enums.NarrationStatus status);
 }

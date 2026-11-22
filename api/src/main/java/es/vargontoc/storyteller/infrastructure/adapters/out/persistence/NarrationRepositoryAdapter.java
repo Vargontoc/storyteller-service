@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.persistence;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -45,6 +46,12 @@ public class NarrationRepositoryAdapter implements NarrationRepository {
     @Transactional(readOnly = true)
     public Optional<StoryNarration> find(Long storyId) {
         return narrations.findByStoryId(storyId).map(mapper::toModel);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<StoryNarration> findInProgress() {
+        return narrations.findByStatus(NarrationStatus.IN_PROGRESS).stream().map(mapper::toModel).toList();
     }
 
     @Override

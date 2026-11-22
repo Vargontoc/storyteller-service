@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -127,7 +128,7 @@ class PortraitTurnTest {
                 new SceneComposition("Luna en el claro", List.of(), "claro")));
         return new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
                 mock(StoryPageReviewRepository.class), stories, outlines, gate, writer,
-                mock(StoryPageVersionRepository.class), mock(StoryPageNotifier.class), Runnable::run);
+                mock(StoryPageVersionRepository.class), mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
     }
 
     /** Cuento con guion aprobado; con portada aceptada solo falta la página 1, sin ella falta la portada. */

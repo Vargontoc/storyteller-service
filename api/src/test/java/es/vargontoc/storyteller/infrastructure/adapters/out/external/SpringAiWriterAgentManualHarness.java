@@ -24,7 +24,9 @@ import es.vargontoc.storyteller.domain.response.WriterResult;
 @SpringBootTest(properties = {
         "app.agents.character-provisioning.enabled=false",
         "app.agents.director-provisioning.enabled=false",
-        "app.portraits.reconciliation.enabled=false"})
+        "app.agents.audio-narrator-provisioning.enabled=false",
+        "app.portraits.reconciliation.enabled=false",
+        "app.narration.reconciliation.enabled=false"})
 class SpringAiWriterAgentManualHarness {
 
     @Autowired

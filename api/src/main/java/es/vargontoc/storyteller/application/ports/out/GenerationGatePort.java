@@ -6,7 +6,7 @@ package es.vargontoc.storyteller.application.ports.out;
 public interface GenerationGatePort {
 
     enum GenerationType {
-        WRITER, DIRECTOR, CHARACTER_AGENT, PORTRAITS
+        WRITER, DIRECTOR, CHARACTER_AGENT, PORTRAITS, NARRATION
     }
 
     /** Pide el turno. Devuelve false si ya hay otra generación en curso. storyId puede ser null. */

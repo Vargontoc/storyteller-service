@@ -27,6 +27,17 @@ public class AgentsConfig {
     @Bean(name = Constants.BeanNames.AGENT_CHARACTER_MODEL)
     public String characterModel(@Value("${app.agents.character}") String value) { return value;}
 
+    @Bean(name = Constants.BeanNames.AGENT_AUDIO_NARRATOR_MODEL)
+    public String audioNarratorModel(@Value("${app.agents.audio-narrator}") String value) { return value;}
+
+    @Bean(name = Constants.BeanNames.AGENT_AUDIO_NARRATOR)
+    public ChatClient audioNarratorAgent(OllamaChatModel ollama,
+            @Qualifier(Constants.BeanNames.AGENT_AUDIO_NARRATOR_MODEL) String model) {
+        return ChatClient.builder(ollama)
+            .defaultAdvisors(new SimpleLoggerAdvisor())
+            .defaultOptions(ChatOptions.builder().model(model))
+            .build();
+    }
 
 
     @Bean(name = Constants.BeanNames.AGENT_DIRECTOR)

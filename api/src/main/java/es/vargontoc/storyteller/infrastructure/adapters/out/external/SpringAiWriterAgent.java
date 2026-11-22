@@ -27,6 +27,14 @@ import es.vargontoc.storyteller.shared.exceptions.AppException;
 @Component
 public class SpringAiWriterAgent implements WriterAgent {
 
+    static final String PAGE_ONOMATOPOEIA_RULES = """
+            ONOMATOPEYAS DE ESTA PÁGINA:
+            - Como máximo una onomatopeya.
+            - Solo si el beat de esta página tiene un sonido natural en la escena; si el beat es silencioso, no incluyas ninguna.
+            - Usa la forma estándar y pronunciable del español («guau», «pum»), sin letras repetidas alargadas ni símbolos.
+            """;
+    static final String COVER_ONOMATOPOEIA_RULE = "ONOMATOPEYAS: no incluyas ninguna onomatopeya.\n";
+
     private final OllamaPort ollama;
     private final String model;
     private final ChatClient client;
@@ -42,7 +50,7 @@ public class SpringAiWriterAgent implements WriterAgent {
 
     @Override
     public WriterResult writeCover(WriterContext context) {
-        String message = "MODO: ESCENA_PORTADA\n" + describeBook(context);
+        String message = "MODO: ESCENA_PORTADA\n" + describeBook(context) + COVER_ONOMATOPOEIA_RULE;
         WriterResult result = call(message, WriterResult.class);
         if (!hasScene(result == null ? null : result.scene())) {
             throw invalidResponse();
@@ -52,7 +60,7 @@ public class SpringAiWriterAgent implements WriterAgent {
 
     @Override
     public WriterResult writePage(WriterContext context) {
-        String message = "MODO: ESCRIBIR_PAGINA\n" + describeBook(context);
+        String message = "MODO: ESCRIBIR_PAGINA\n" + describeBook(context) + PAGE_ONOMATOPOEIA_RULES;
         WriterResult result = call(message, WriterResult.class);
         if (result == null || isBlank(result.text()) || !hasScene(result.scene())) {
             throw invalidResponse();
@@ -65,7 +73,8 @@ public class SpringAiWriterAgent implements WriterAgent {
         String message = "MODO: NUEVA_VERSION\n" + describeBook(context)
                 + "Versión base:\n  texto: " + (base.text() == null ? "(portada, sin texto)" : base.text())
                 + "\n  escena: " + base.scene().scene()
-                + "\nHint del adulto: " + hint + "\n";
+                + "\nHint del adulto: " + hint + "\n"
+                + (context.isCover() ? COVER_ONOMATOPOEIA_RULE : PAGE_ONOMATOPOEIA_RULES);
         WriterHintResult result = call(message, WriterHintResult.class);
         if (result == null) {
             throw invalidResponse();

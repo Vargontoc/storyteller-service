@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -80,7 +81,7 @@ class StoryPageServicePageTest {
         writer = mock(WriterAgent.class);
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run);
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         // Ids de fila de story_beat distintos del número de página, como en la base de datos real
         when(outlines.findBeatId(STORY, 1)).thenReturn(Optional.of(501L));
@@ -357,7 +358,7 @@ class StoryPageServicePageTest {
         when(stories.getStory(STORY)).thenReturn(story);
         List<Runnable> tasks = new ArrayList<>();
         StoryPageService deferred = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, tasks::add);
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, tasks::add, mock(StoryNarrationUseCase.class));
 
         deferred.startPage(STORY, 1);
         story.getCharacters().get(0).setVisualDescription("editado después");
@@ -415,7 +416,7 @@ class StoryPageServicePageTest {
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, PageStatus.ACCEPTED));
         StoryPageService rejecting = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier,
-            task -> { throw new RuntimeException("cola llena"); });
+            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
 
         assertThrows(RuntimeException.class, () -> rejecting.startPage(STORY, 1));
 

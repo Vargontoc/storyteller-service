@@ -44,7 +44,14 @@ app:
         base-url: ${CHATTERBOX_URL:http://localhost:4123}
         timeout-seconds: 90
         default-voice-name: nubi-npc-voice
-        
+
+    # -- Voz del sistema (narración). Sin valor por defecto: si faltan, la app arranca y la voz queda no disponible.
+    #    APP_SYSTEM_VOICE_NAME: nombre visible de la voz
+    #    APP_SYSTEM_VOICE_SAMPLE_FILE: ruta absoluta de un audio WAV o MP3 de 5 a 30 segundos
+    system-voice:
+        name: ${APP_SYSTEM_VOICE_NAME:}
+        sample-file: ${APP_SYSTEM_VOICE_SAMPLE_FILE:}
+
     comfy:
         # -- General information
         base-url: ${COMFY_URL:http://localhost:8188}
@@ -102,6 +109,7 @@ app:
         director: "${APP_AGENT_DIRECTOR:storyteller-director}"
         scriptwriter: "${APP_AGENT_WRITER:storyteller-writer}"
         narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"
+        audio-narrator: "${APP_AGENT_AUDIO_NARRATOR:storyteller-audio-narrator}"
         character: "${APP_AGENT_CHARACTER:storyteller-character}"
         character-base-model: "${APP_AGENT_CHARACTER_BASE_MODEL:qwen2.5:14b-instruct}"
         character-system: "${APP_AGENT_CHARACTER_SYSTEM:Eres el agente de personajes de un generador de cuentos infantiles para niños de 3 a 4 años. Creas fichas coherentes y fáciles de ilustrar como plantilla de cuerpo completo sobre fondo transparente. Responde solo con el JSON solicitado.}"
@@ -111,6 +119,8 @@ app:
             enabled: "${APP_AGENT_DIRECTOR_PROVISIONING_ENABLED:true}"
         writer-provisioning:
             enabled: "${APP_AGENT_WRITER_PROVISIONING_ENABLED:true}"
+        audio-narrator-provisioning:
+            enabled: "${APP_AGENT_AUDIO_NARRATOR_PROVISIONING_ENABLED:true}"
         character-rules:
             audience: "niños y niñas de 3 a 4 años"
             allowed-species: "animales fáciles de dibujar y personajes humanos infantiles"

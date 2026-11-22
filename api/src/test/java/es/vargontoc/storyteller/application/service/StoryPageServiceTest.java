@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -90,7 +91,7 @@ class StoryPageServiceTest {
         notifier = mock(StoryPageNotifier.class);
         // Ejecutor síncrono: la tarea asíncrona corre dentro de la propia llamada
         service = new StoryPageService(ollama, "writer", client, pages, reviews, stories, outlines, gate,
-            writer, versions, notifier, Runnable::run);
+            writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
         when(ollama.isAvailable("writer")).thenReturn(true);
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(pages.create(any(), anyLong(), anyInt())).thenReturn(new StoryPage());
@@ -255,7 +256,7 @@ class StoryPageServiceTest {
     @Test
     void coverReleasesTheGateWhenTheTaskCannotBeScheduled() {
         StoryPageService rejecting = new StoryPageService(ollama, "writer", client, pages, reviews, stories, outlines,
-            gate, writer, versions, notifier, task -> { throw new RuntimeException("cola llena"); });
+            gate, writer, versions, notifier, task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
 
         assertThrows(RuntimeException.class, () -> rejecting.startCover(STORY));

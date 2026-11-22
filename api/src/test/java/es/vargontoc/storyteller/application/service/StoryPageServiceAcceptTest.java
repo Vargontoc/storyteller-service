@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -57,7 +58,7 @@ class StoryPageServiceAcceptTest {
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), mock(StoryRepository.class), mock(StoryOutlineRepository.class),
-            gate, writer, versions, notifier, Runnable::run);
+            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
     }
 
     private StoryPage pendingPage(Long storyId, int number) {

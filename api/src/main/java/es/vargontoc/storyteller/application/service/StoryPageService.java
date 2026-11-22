@@ -22,6 +22,7 @@ import es.vargontoc.storyteller.application.ports.in.generator.CoverGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.PageAcceptance;
 import es.vargontoc.storyteller.application.ports.in.generator.PageGeneration;
 import es.vargontoc.storyteller.domain.service.PageLengthValidator;
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
@@ -35,6 +36,7 @@ import es.vargontoc.storyteller.application.ports.out.persistence.StoryPageRevie
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageReviewCommand;
+import es.vargontoc.storyteller.domain.enums.NarrationRejectionReason;
 import es.vargontoc.storyteller.domain.enums.PageLengthWarning;
 import es.vargontoc.storyteller.domain.enums.PageStatus;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
@@ -60,6 +62,7 @@ import es.vargontoc.storyteller.domain.response.StoryPageReviewAgentResult;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
 import es.vargontoc.storyteller.shared.Constants;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
+import es.vargontoc.storyteller.shared.exceptions.NarrationRejectedException;
 import jakarta.transaction.Transactional;
 
 @Service
@@ -100,6 +103,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
     private final StoryPageVersionRepository versions;
     private final StoryPageNotifier notifier;
     private final TaskExecutor executor;
+    private final StoryNarrationUseCase narration;
 
     public StoryPageService(OllamaPort ollama,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
@@ -112,7 +116,9 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         WriterAgent writer,
         StoryPageVersionRepository versions,
         StoryPageNotifier notifier,
-        TaskExecutor executor) {
+        TaskExecutor executor,
+        StoryNarrationUseCase narration) {
+            this.narration = narration;
             this.writer = writer;
             this.versions = versions;
             this.notifier = notifier;
@@ -246,6 +252,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
         if(page.getPageStatus() != PageStatus.PENDING && page.getPageStatus() != PageStatus.ACCEPTED)
             throw new AppException("Solo se puede elegir versión en la portada o en una página pendiente o reabierta", HttpStatus.CONFLICT);
+        rejectIfNarrating(storyId, page);
         if(gate.isGeneratingStory(storyId))
             throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
 
@@ -254,6 +261,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             .filter(v -> versionId != null && versionId.equals(v.getId())).findFirst()
             .orElseThrow(() -> new AppException("La versión " + versionId + " no es una versión elegible de la página " + pageId, HttpStatus.NOT_FOUND));
         versions.setCurrent(pageId, chosen.getId());
+        deleteAudioIfAny(storyId, page);
         return new VersionSelected(storyId, pageId, chosen.getId(), chosen.getWarning());
     }
 
@@ -290,6 +298,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
         if(page.getPageStatus() != PageStatus.ACCEPTED)
             throw new AppException("Solo se puede aceptar una propuesta de la portada o de una página aceptada reabierta", HttpStatus.CONFLICT);
+        rejectIfNarrating(storyId, page);
         if(gate.isGeneratingStory(storyId))
             throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
 
@@ -318,6 +327,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             if(story.getStatus() == StoryStatus.PAGES_ACCEPTED)
                 storyRepository.updateStatus(storyId, StoryStatus.SCRIPT_ACCEPTED);
         }
+        deleteAudioIfAny(storyId, page);
         return new ProposalAccepted(storyId, pageId, number, accepted.getPageStatus(), false, affected);
     }
 
@@ -336,6 +346,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
         if(page.getPageStatus() != PageStatus.PENDING && page.getPageStatus() != PageStatus.ACCEPTED)
             throw new AppException("Solo se puede pedir un cambio sobre la portada o una página pendiente o aceptada", HttpStatus.CONFLICT);
+        rejectIfNarrating(storyId, page);
 
         // Base: la vigente del histórico; en una aceptada sin propuestas (primer hint de la reapertura), su contenido aceptado
         List<PageVersion> history = versions.findByPage(page.getId());
@@ -364,7 +375,10 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             return new WriterResult(result.text(), result.scene());
         };
         Long realPageId = page.getId();
-        return launch(storyId, number, () -> addHintVersions(realPageId, cover, rewrite));
+        GenerationStarted started = launch(storyId, number, () -> addHintVersions(realPageId, cover, rewrite));
+        // Reabrir una página interior invalida el audio; solo si la solicitud ya se ha lanzado con éxito
+        deleteAudioIfAny(storyId, page);
+        return started;
     }
 
     /**
@@ -379,6 +393,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
         if(page.getPageStatus() != PageStatus.PENDING)
             throw new AppException("Solo se puede regenerar una página pendiente", HttpStatus.CONFLICT);
+        rejectIfNarrating(storyId, page);
 
         PageVersion current = versions.findByPage(page.getId()).stream()
             .filter(PageVersion::isCurrent).findFirst()
@@ -390,7 +405,9 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         int number = page.getPage();
         WriterContext context = hintPageContext(storyRepository.getStory(storyId), number);
         Long realPageId = page.getId();
-        return launch(storyId, number, () -> addHintVersions(realPageId, false, () -> writer.writePage(context)));
+        GenerationStarted started = launch(storyId, number, () -> addHintVersions(realPageId, false, () -> writer.writePage(context)));
+        deleteAudioIfAny(storyId, page);
+        return started;
     }
 
     private WriterContext hintPageContext(Story story, int number) {
@@ -630,7 +647,30 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
 
     /** Retira todas las páginas del cuento (portada incluida) por una edición de beat y devuelve cuántas se retiraron. */
     public int deleteInvalidatedPages(Long storyId) {
-        return repository.deleteByStory(storyId);
+        if(narration.isNarrating(storyId))
+            throw narrationInProgress();
+        int removed = repository.deleteByStory(storyId);
+        // El audio se borra solo tras retirar las páginas, en la misma transacción
+        if(narration.hasAudio(storyId))
+            narration.deleteAudio(storyId);
+        return removed;
+    }
+
+    /** Las páginas interiores no se reabren, cambian ni eliminan mientras el cuento se narra; la portada no cuenta. */
+    private void rejectIfNarrating(Long storyId, StoryPage page) {
+        if(page.getPage() > 0 && narration.isNarrating(storyId))
+            throw narrationInProgress();
+    }
+
+    /** Tras mutar una página interior con éxito se borran el audio y la voz del cuento, si los tiene. */
+    private void deleteAudioIfAny(Long storyId, StoryPage page) {
+        if(page.getPage() > 0 && narration.hasAudio(storyId))
+            narration.deleteAudio(storyId);
+    }
+
+    private static NarrationRejectedException narrationInProgress() {
+        return new NarrationRejectedException(NarrationRejectionReason.IN_PROGRESS,
+            "El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas");
     }
 
     /** Beat aprobado de la página interior N (página 1 = primer beat), con sus cinco campos. */

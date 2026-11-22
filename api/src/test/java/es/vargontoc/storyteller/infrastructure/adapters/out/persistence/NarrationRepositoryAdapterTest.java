@@ -52,6 +52,8 @@ class NarrationRepositoryAdapterTest {
         when(stories.findById(STORY_ID)).thenReturn(Optional.of(story));
 
         when(narrations.findByStoryId(anyLong())).thenAnswer(call -> Optional.ofNullable(rows.get(call.getArgument(0))));
+        when(narrations.findByStatus(any(NarrationStatus.class))).thenAnswer(call -> rows.values().stream()
+                .filter(n -> n.getStatus() == call.getArgument(0)).toList());
         when(narrations.saveAndFlush(any(StoryNarrationJpaEntity.class))).thenAnswer(call -> {
             if (failOnSave)
                 throw new IllegalStateException("fallo al guardar");
@@ -94,6 +96,15 @@ class NarrationRepositoryAdapterTest {
         assertEquals(NarrationStatus.IN_PROGRESS, narration.getStatus());
         assertFalse(narration.hasAudio());
         assertNull(narration.getVoiceName());
+    }
+
+    @Test
+    void findInProgressListsOnlyNarrationsInProgress() {
+        adapter.markInProgress(STORY_ID);
+        assertEquals(List.of(STORY_ID), adapter.findInProgress().stream().map(n -> n.getStoryId()).toList());
+
+        adapter.publish(STORY_ID, "Abuela", eightPages());
+        assertTrue(adapter.findInProgress().isEmpty());
     }
 
     @Test

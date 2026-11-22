@@ -46,6 +46,9 @@ class VoiceRepositoryAdapterTest {
         when(repository.findByName(anyString())).thenAnswer(call -> store.stream()
             .filter(v -> v.getName().equals(call.getArgument(0)))
             .findFirst());
+        when(repository.findById(anyLong())).thenAnswer(call -> store.stream()
+            .filter(v -> v.getId().equals(call.getArgument(0)))
+            .findFirst());
         doAnswer(call -> {
             store.removeIf(v -> v.getId().equals(call.getArgument(0)));
             return null;
@@ -81,6 +84,14 @@ class VoiceRepositoryAdapterTest {
 
         assertEquals("Abuela", adapter.findByName("Abuela").orElseThrow().getName());
         assertTrue(adapter.findByName("Nadie").isEmpty());
+    }
+
+    @Test
+    void findByIdReturnsTheVoiceOrNothing() {
+        Long id = adapter.save(new Voice("Abuela", "es", true)).getId();
+
+        assertEquals("Abuela", adapter.findById(id).orElseThrow().getName());
+        assertTrue(adapter.findById(99L).isEmpty());
     }
 
     @Test

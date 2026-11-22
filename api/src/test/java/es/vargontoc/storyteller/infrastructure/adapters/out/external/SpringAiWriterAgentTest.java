@@ -78,6 +78,42 @@ class SpringAiWriterAgentTest {
     }
 
     @Test
+    void pageRequestIncludesOnomatopoeiaRulesLinkedToTheBeat() {
+        when(response.entity(WriterResult.class)).thenReturn(new WriterResult("Luna ve un conejo.", scene("Luna")));
+
+        agent.writePage(pageContext());
+
+        String message = sentMessage();
+        assertTrue(message.contains("Luna encuentra al conejo"));
+        assertTrue(message.contains("Como máximo una onomatopeya"));
+        assertTrue(message.contains("sonido natural"));
+        assertTrue(message.contains("beat de esta página"));
+        assertTrue(message.contains("forma estándar y pronunciable"));
+        assertTrue(message.contains("sin letras repetidas alargadas ni símbolos"));
+    }
+
+    @Test
+    void coverRequestForbidsOnomatopoeia() {
+        when(response.entity(WriterResult.class)).thenReturn(new WriterResult(null, scene("Luna")));
+
+        agent.writeCover(WriterContext.cover("T", "S", "Luna"));
+
+        assertTrue(sentMessage().contains("no incluyas ninguna onomatopeya"));
+    }
+
+    @Test
+    void onomatopoeiaRulesDoNotChangeTheWordTarget() {
+        when(response.entity(WriterResult.class)).thenReturn(new WriterResult("Texto.", scene("Luna")));
+
+        agent.writePage(pageContext());
+
+        String message = sentMessage();
+        assertFalse(message.matches("(?s).*\\d+\\s+palabras.*"));
+        assertFalse(SpringAiWriterAgent.PAGE_ONOMATOPOEIA_RULES.toLowerCase().contains("palabras"));
+        assertFalse(SpringAiWriterAgent.COVER_ONOMATOPOEIA_RULE.toLowerCase().contains("palabras"));
+    }
+
+    @Test
     void acceptedHintSendsBaseAndHintAndReturnsNewContent() {
         when(response.entity(WriterHintResult.class)).thenReturn(
                 new WriterHintResult(true, null, "Luna ve un conejo contento.", scene("Conejo sonriendo")));

@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.ports.out.persistence;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -12,6 +13,9 @@ public interface NarrationRepository {
     StoryNarration markInProgress(Long storyId);
 
     Optional<StoryNarration> find(Long storyId);
+
+    /** Narraciones que figuran en curso (las que un reinicio dejo a medias). */
+    List<StoryNarration> findInProgress();
 
     /**
      * Publica de una sola vez los audios de las paginas interiores (clave: numero de pagina, >= 1) y el nombre

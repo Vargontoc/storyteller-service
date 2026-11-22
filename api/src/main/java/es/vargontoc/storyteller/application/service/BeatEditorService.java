@@ -7,6 +7,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import es.vargontoc.storyteller.application.ports.in.generator.BeatEditing;
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
+import es.vargontoc.storyteller.domain.enums.NarrationRejectionReason;
+import es.vargontoc.storyteller.shared.exceptions.NarrationRejectedException;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
@@ -40,9 +43,12 @@ public class BeatEditorService implements BeatEditing {
     private final StoryPageService pages;
     private final DirectorAgent director;
     private final GenerationGatePort gate;
+    private final StoryNarrationUseCase narration;
 
     public BeatEditorService(StoryRepository stories, StoryOutlineRepository outlines,
-            StoryPageService pages, DirectorAgent director, GenerationGatePort gate) {
+            StoryPageService pages, DirectorAgent director, GenerationGatePort gate,
+            StoryNarrationUseCase narration) {
+        this.narration = narration;
         this.stories = stories;
         this.outlines = outlines;
         this.pages = pages;
@@ -69,6 +75,11 @@ public class BeatEditorService implements BeatEditing {
         if (Boolean.FALSE.equals(cmd.confirmInvalidation()))
             return BeatEditResult.cancelled();
 
+        // Una edición que invalida páginas no se admite mientras el cuento se narra; se comprueba antes de mutar nada
+        if (story.getPages() != null && !story.getPages().isEmpty() && narration.isNarrating(cmd.storyId()))
+            throw new NarrationRejectedException(NarrationRejectionReason.IN_PROGRESS,
+                "El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas");
+
         // El turno cubre validar y aplicar: una generación del mismo cuento no puede colarse a mitad de la edición
         if (!gate.tryAcquire(GenerationType.DIRECTOR, cmd.storyId()))
             throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
@@ -90,8 +101,9 @@ public class BeatEditorService implements BeatEditing {
         // Antes de aplicar: si hay páginas generadas, aviso con contador y confirmación
         int generated = story.getPages() == null ? 0 : story.getPages().size();
         if (generated > 0 && !Boolean.TRUE.equals(cmd.confirmInvalidation()))
-            return BeatEditResult.confirmationRequired(generated);
+            return BeatEditResult.confirmationRequired(generated, narration.hasAudio(cmd.storyId()));
 
+        // deleteInvalidatedPages borra también el audio y la voz tras retirar las páginas, en esta transacción
         int removed = generated > 0 ? pages.deleteInvalidatedPages(cmd.storyId()) : 0;
         List<StoryBeat> beats = new ArrayList<>(outline.beats());
         beats.set(index, beat);

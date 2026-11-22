@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -87,7 +88,7 @@ class StoryPageServiceRegenerateTest {
         writer = mock(WriterAgent.class);
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run);
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(stories.getStory(STORY)).thenReturn(story());
         when(pages.getPage(PAGE_ID)).thenReturn(page(PAGE_ID, 2, PageStatus.PENDING));
@@ -242,7 +243,7 @@ class StoryPageServiceRegenerateTest {
     void gateIsReleasedWhenTheTaskCannotBeScheduled() {
         StoryPageService rejecting = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier,
-            task -> { throw new RuntimeException("cola llena"); });
+            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
 
         assertThrows(RuntimeException.class, () -> rejecting.startRegenerate(STORY, PAGE_ID));
 

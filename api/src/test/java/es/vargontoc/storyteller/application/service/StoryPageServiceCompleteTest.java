@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
@@ -66,7 +67,7 @@ class StoryPageServiceCompleteTest {
         writer = mock(WriterAgent.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions,
-            mock(StoryPageNotifier.class), Runnable::run);
+            mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
         // Guion de 8 beats
         List<StoryBeat> beats = new ArrayList<>();
         for (int i = 1; i <= 8; i++)

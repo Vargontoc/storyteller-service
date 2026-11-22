@@ -8,7 +8,9 @@ public class Constants {
         public static final String AGENT_SCRIPTWRITER_MODEL = "scriptwriter-model";
         public static final String AGENT_NARRATOR_MODEL = "narrator-model";
         public static final String AGENT_CHARACTER_MODEL = "character-model";
+        public static final String AGENT_AUDIO_NARRATOR_MODEL = "audio-narrator-model";
 
+        public static final String AGENT_AUDIO_NARRATOR = "audio-narrator-agent";
         public static final String AGENT_DIRECTOR = "director-agent";
         public static final String AGENT_SCRIPTWRITER = "scriptwriter-agent";
         public static final String AGENT_NARRATOR = "narrator-agent";

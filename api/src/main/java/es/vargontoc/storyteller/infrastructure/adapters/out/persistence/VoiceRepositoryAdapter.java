@@ -39,6 +39,11 @@ public class VoiceRepositoryAdapter implements VoiceRepository {
     }
 
     @Override
+    public Optional<Voice> findById(Long id) {
+        return repository.findById(id).map(mapper::toModel);
+    }
+
+    @Override
     @Transactional
     public void delete(Long id) {
         repository.deleteById(id);

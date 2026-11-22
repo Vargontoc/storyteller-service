@@ -57,7 +57,6 @@ public class WebsocketAdapter extends TextWebSocketHandler implements WebsocketU
         broadcast(event);
     }
 
-    // Implementacion minima para compilar; TASK-018 la verifica con pruebas de websocket.
     @Override
     public void sendNarrationNotification(NarrationEvent event) {
         broadcast(event);
