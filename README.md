@@ -2,15 +2,30 @@
 
 ## Description
 
-Este proyecto es una aplicación web para generar cuentos mediante agentes de IA para niños de 3 a 4 años.
+Este proyecto es una aplicación web para generar cuentos infantiles ilustrados y narrados para niños de 3 a 4 años mediante agentes de IA locales (Ollama), generación de imágenes (ComfyUI) y narración de audio (Chatterbox). El adulto elige un tema del catálogo y un protagonista reutilizable, revisa cada etapa (personajes, guion con escaleta, portada y páginas) y acepta antes de continuar.
 
 ## Features
 
-* **Generación de cuentos** : generacion de un cuento de manera secuencial y en tiempo real.
-* **Catálogo de temas** : catálogo estático de aventuras, rutinas, animales, naturaleza, familia y amigos y juegos para niños de 3 a 4 años, sin moraleja; cada cuento conserva el tema con el que nació.
-* **Gestión de cuentos** : gestión de los cuentos generados permitiendo al usuario revisar guión, descripción de personaejes y las escenas con previo aceptación del agente.
-* **Generación de Imágenes** : generacion de imágenes mediante servicio externo para los personajes y cada una de las escenas.
-* **Generación de Audios** : generacion de audios mediante servicio externo para la narración cada una de las escenas.
+* **Catálogo de protagonistas reutilizables**: alta automática o manual desde una frase libre, ficha narrativa y visual, edición conversacional (con fork automático si el personaje ya se usa en cuentos), renombrado y generación asíncrona de 4 retratos candidatos sobre fondo transparente en ComfyUI con progreso por WebSocket.
+* **Catálogo de temas**: catálogo estático en el frontend (`Aventuras`, `Rutinas`, `Animales`, `Naturaleza`, `Familia y amigos` y `Juegos`) orientado a 3-4 años y sin moraleja.
+* **Guion con escaleta beat a beat**: el agente director genera título, sinopsis, reparto episódico ligero y una escaleta con un beat por página interior; el adulto puede revisarlo con un hint global o editar beats individuales antes de aprobar el guion.
+* **Escritura secuencial por etapas**: con el guion aprobado, el agente escritor genera portada y páginas interiores de forma asíncrona (con eventos en tiempo real por WebSocket), admitiendo versiones, hints de revisión, avisos de longitud y aceptación paso a paso.
+* **Generación de imágenes y audios**: generación mediante servicios externos para los retratos de personaje, escenas e imágenes importadas por página, así como audio narrado con Chatterbox.
+
+## Arquitectura y documentación
+
+El repositorio está organizado en tres módulos:
+
+* `api/` (`storyteller-server`): Backend en Java 21 y Spring Boot 4.1.0 (Spring AI 2.0.0, arquitectura hexagonal, PostgreSQL con `pgvector`, Liquibase, API REST `/api/v1` y WebSocket `/storyteller`).
+* `app/` (`storyteller-app`): Aplicación web SPA en Vue 3, Vite, TypeScript y Pinia.
+* `agents/`: Modelfiles de referencia y script `load_model.ps1` para Ollama.
+
+Documentación de referencia:
+
+* [Contexto del proyecto](.sdd/project.md)
+* [Mapa de arquitectura](.sdd/architecture.md)
+* [Contrato OpenAPI (`/api/v1`)](docs/contracts/openapi/openapi.yaml)
+* [Contrato WebSocket (`/storyteller`)](docs/contracts/websocket/websocket.md)
 
 ## Prerequisites
 
@@ -129,58 +144,49 @@ Crear el contenedor con el siguiente formato de servicio:
 
 ## Agents
 
-Capa de agentes donde reside la configuración de los distintos agentes encargados de la generación de los cuentos.
+Capa de agentes en Ollama encargados de las distintas fases de generación y revisión.
 
 ### Requisitos
 
-* Contendor de [Ollama](#contenedor-ollama) levantado.
+* Contenedor de [Ollama](#contenedor-ollama) levantado con el modelo base `qwen2.5:14b-instruct` (y `mxbai-embed-large` para embeddings).
 
-#### Agente director
+### Aprovisionamiento automático desde el backend (`api/`)
 
-Agente generativo que genera el guión, personajes del cuento y tambien evalua la revisión del usuario
+Al arrancar `api/`, los provisioners comprueban si cada modelo existe en Ollama y, si falta, lo crean automáticamente desde `qwen2.5:14b-instruct` (salvo que se desactive por variable de entorno):
 
-Para instalarlo en ollama
+* **Agente de personajes (`storyteller-character`)**: aprovisionado por `CharacterModelProvisioner` (`APP_AGENT_CHARACTER_PROVISIONING_ENABLED`, por defecto `true`), usando `APP_AGENT_CHARACTER_BASE_MODEL` (`qwen2.5:14b-instruct`) y las plantillas `api/src/main/resources/prompts/character_generate.st` y `character_review.st`.
+* **Agente director (`storyteller-director`)**: aprovisionado por `DirectorModelProvisioner` (`APP_AGENT_DIRECTOR_PROVISIONING_ENABLED`, por defecto `true`) desde `api/src/main/resources/prompts/director.modelfile`. Genera el guion (título, sinopsis, reparto episódico y escaleta de beats), revisa la escaleta por hint global y valida ediciones directas de beats.
+* **Agente escritor (`storyteller-writer`)**: aprovisionado por `WriterModelProvisioner` (`APP_AGENT_WRITER_PROVISIONING_ENABLED`, por defecto `true`) desde `api/src/main/resources/prompts/writer.modelfile`. Genera la escena de portada y el texto y escena de cada página siguiendo el beat aprobado.
 
-```bash
-cd agents
-load_model.ps1 "storyteller-director" ".\director-story-agent"
-```
+### Carga manual en Ollama (`agents/`)
 
-#### Agente writer
-
-Agente generativo que genera las distintas paginas con su escena y texto
-
-Para instalarlo en ollama
-
-```bash
-cd agents
-load_model.ps1 "storyteller-writer" ".\writer-story-agent"
-```
+Para el agente narrador (o para cargar manualmente los Modelfiles de `agents/`):
 
 #### Agente narrador
 
-Agente generativo que recibe el cuento completo y establece un ritmo narrativo
-
-Para instalarlo en ollama
+Agente generativo que recibe el cuento completo y establece un ritmo narrativo.
 
 ```bash
 cd agents
-load_model.ps1 "storyteller-narrator" ".\narrator-story-agent"
+./load_model.ps1 "storyteller-narrator" ".\narrator-story-agent"
 ```
 
+También permanecen en `agents/` los Modelfiles de referencia `director-story-agent` y `writer-story-agent`, cargables de la misma forma con `load_model.ps1` si se desactiva el aprovisionamiento automático del backend.
 
 ## API
 
-Capa backend (Spring Boot) donde reside la lógica de negocio y la comunicación con los agentes de IA para la generación de cuentos. Crear `api/.env` (ver `api/.env.example` para la configuracion de las distintas variables, aplicar los cambios convenientes).
+Capa backend (Java 21 / Spring Boot 4.1.0 / Spring AI 2.0.0) donde reside la lógica de negocio, la orquestación de agentes, la persistencia y la API REST/WebSocket. Crear `api/.env` a partir de `api/.env.example` y ajustar las variables necesarias (`SERVER_PORT`, `SPRING_DATASOURCE_URL`, `SPRING_AI_OLLAMA_BASE_URL`, `APP_CORS_*`, `CHATTERBOX_URL`, `COMFY_URL`, `APP_AGENT_*`).
+
+> Nota de configuración: en `api/src/main/resources/application.yaml`, `CHATTERBOX_URL` toma por defecto `http://localhost:4123` (ajústalo a `http://localhost:5123` en `api/.env` si usas el mapeo `5123:5123` de Chatterbox), y las credenciales por defecto del datasource son `postgres` / `postgres`.
 
 ### Requisitos
 
-* Java (Spring Boot)
-* PostgreSQL con la extensión `pgvector` (usada como vector store para embeddings)
-* Los contenedores de [ComfyUI](#contenedor-para-comfyui), [Chatterbox](#contenedor-para-chatterbox) y [Ollama](#contenedor-ollama) levantados
-
+* Java 21 y Maven (en `api/pom.xml` se referencia el repositorio GitHub Packages de `es.vargontoc.framework` y por defecto la dependencia `jave-nativebin-win64` para Windows).
+* PostgreSQL con la extensión `pgvector` (migraciones gestionadas con Liquibase y vector store inicializado al arrancar).
+* Los contenedores de [ComfyUI](#contenedor-para-comfyui), [Chatterbox](#contenedor-para-chatterbox) y [Ollama](#contenedor-ollama) levantados.
 
 ### Run
+
 Para levantarla:
 
 ```bash
@@ -188,10 +194,11 @@ cd api
 mvn spring-boot:run
 ```
 
+La API REST queda expuesta bajo `/api/v1` (con documentación OpenAPI vía `springdoc-openapi-starter-webmvc-ui`) y los eventos en tiempo real bajo el endpoint WebSocket `/storyteller`.
 
 ## App
 
-Aplicación web (Vue 3 + Vite + Pinia) donde reside la lógica de la aplicación visual. Crear `app/.env` (ver `app/.env.example` para la configuración de las distintas variables, aplicar los cambios convenientes).
+Aplicación web (Vue 3 + Vite + TypeScript + Pinia) donde reside la interfaz de usuario. Crear `app/.env` a partir de `app/.env.example` y configurar `VITE_API_BASE_URL`, `VITE_API_TIMEOUT_MS` y `APP_PORT` (por defecto `80` con `strictPort: true` en `app/vite.config.ts`).
 
 ### Requisitos
 
@@ -207,3 +214,5 @@ cd app
 npm install
 npm run dev
 ```
+
+Otros scripts disponibles en `app/package.json`: `npm run build` y `npm run test`.
