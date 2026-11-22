@@ -250,7 +250,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con un escritor de prueba que devuelva textos de más de 66 palabras, pedir una página: al terminar aparecen 3 versiones con aviso de exceso de palabras y la tercera vigente.
 
-### [ ] TASK-015 Pedir un cambio con hint sobre una portada o página pendiente
+### [x] TASK-015 Pedir un cambio con hint sobre una portada o página pendiente
 
 - **Cubre:** REQ-012, REQ-013, REQ-014, REQ-020, REQ-025, REQ-034, REQ-035, REQ-039, DEC-001, DEC-006, DEC-009, ALT-005, ALT-006, ALT-011
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -273,7 +273,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Enviar por la API un hint sobre una página pendiente: al terminar, el histórico tiene una versión más y es la vigente.
   2. Enviar el hint "que aparezca el lobo" sobre una página cuyo beat no incluye al lobo: llega el rechazo con motivo y la página no cambia.
 
-### [ ] TASK-016 Regenerar sin hint una página bloqueada por número de frases
+### [x] TASK-016 Regenerar sin hint una página bloqueada por número de frases
 
 - **Cubre:** REQ-029, REQ-025, REQ-026, REQ-034, DEC-006, ALT-010
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -290,7 +290,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Con una página cuya vigente tiene aviso de número de frases, regenerarla sin hint por la API: aparece una versión nueva vigente en el histórico.
 
-### [ ] TASK-017 Marcar una versión como vigente
+### [x] TASK-017 Marcar una versión como vigente
 
 - **Cubre:** REQ-026, REQ-028, REQ-033, REQ-036, REQ-038, DEC-001, DEC-002, ALT-004
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -307,7 +307,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Marcar como vigente por la API la primera de tres versiones y consultar la página: muestra el contenido de la primera.
 
-### [ ] TASK-018 Reabrir con hint la portada o una página aceptada
+### [x] TASK-018 Reabrir con hint la portada o una página aceptada
 
 - **Cubre:** REQ-015, REQ-025, REQ-031, REQ-038, REQ-040, DEC-001, DEC-012
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -324,7 +324,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Enviar por la API un hint sobre una página aceptada: la página muestra la versión aceptada y aparte una propuesta pendiente.
 
-### [ ] TASK-019 Aceptar una propuesta de reapertura con descarte en cascada
+### [x] TASK-019 Aceptar una propuesta de reapertura con descarte en cascada
 
 - **Cubre:** REQ-016, REQ-017, REQ-018, REQ-031, REQ-033, REQ-038, REQ-041, DEC-012, ALT-004, ALT-012
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -344,7 +344,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
   1. Con las páginas 1 a 4 aceptadas, reabrir la página 2 y aceptar la propuesta por la API sin confirmación: se informa de 2 páginas a eliminar.
   2. Repetir con confirmación: el cuento queda con las páginas 1 y 2, y no se inicia ninguna generación.
 
-### [ ] TASK-020 Descartar las propuestas de una reapertura
+### [x] TASK-020 Descartar las propuestas de una reapertura
 
 - **Cubre:** REQ-030, REQ-031, REQ-033, DEC-001, DEC-012, ALT-004, ALT-013
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -360,7 +360,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Reabrir una página con dos hints y descartar las propuestas por la API: la página muestra su versión aceptada y no tiene histórico.
 
-### [ ] TASK-021 Cuento con todas las páginas aceptadas
+### [x] TASK-021 Cuento con todas las páginas aceptadas
 
 - **Cubre:** REQ-021, ALT-014
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -375,7 +375,7 @@ El trabajo empieza por las piezas base del servidor: la puerta de generación, e
 - **Prueba manual:**
   1. Aceptar la última página de un cuento y consultarlo: su estado indica que está listo para la etapa de audio.
 
-### [ ] TASK-022 Consulta de portada y páginas con acciones e imagen de la versión aceptada
+### [x] TASK-022 Consulta de portada y páginas con acciones e imagen de la versión aceptada
 
 - **Cubre:** REQ-019, REQ-022, REQ-029, REQ-038, REQ-040, DEC-003, DEC-012
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java

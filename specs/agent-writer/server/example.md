@@ -227,3 +227,177 @@ createPage(storyId, number, () -> writer.writePage(context));
 // 5 frases, 70 palabras, 70 palabras        -> avisos SENTENCE_COUNT, TOO_MANY_WORDS, TOO_MANY_WORDS
 // segunda llamada con error                 -> sin versiones, sin página, FAILED
 ```
+
+## Cambio con hint sobre la portada o una página pendiente (PageGeneration)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`startHint`; puerto en `application/ports/in/generator/PageGeneration.java`, cuerpo en `infrastructure/adapters/in/rest/dto/PageHintRequestDto.java`, endpoint en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** `POST /api/v1/storyteller/{storyId}/pages/{id}/hint` con `{"hint": "..."}`; `{id}` es el id de la página (el de `accept`), no su número. Sobre la portada o una página pendiente o aceptada de un cuento con escaleta (una aceptada se reabre, ver la sección siguiente). Un hint vacío o solo con espacios, o una página que no es del cuento, se rechazan antes de pedir turno (400 "El hint es obligatorio" / 404). Después pide el turno `WRITER` y responde `202` con `GenerationStarted(storyId, número de página)`; con la puerta ocupada, 409 "Hay una generación en curso". La versión vigente del histórico es la base que recibe `WriterAgent.rewrite` junto con el hint y el mismo contexto que la generación inicial (la portada usa el contexto de portada). Si el escritor acepta, la página pasa por el bucle de longitud (hasta 3 generaciones) y las versiones resultantes se añaden al histórico de la página real con la última como vigente; la portada guarda una sola versión sin aviso. Los hints sucesivos usan la vigente de cada momento como base y el histórico no tiene límite (10 hints sobre una versión dan 11). Si el escritor rechaza el hint se publica `HINT_REJECTED` con `reason` y no se crea ninguna versión ni se regenera; si falla (también en un intento intermedio del bucle) se publica `FAILED` y el histórico y la vigente no cambian. El turno se libera siempre antes de anunciar el resultado.
+
+```java
+GenerationStarted started = pageGeneration.startHint(storyId, pageId, "que el conejo esté contento");
+
+// Por WebSocket (/storyteller):
+// {"type":"STARTED","storyId":7,"pageNumber":3}
+// {"type":"VERSION_PRESENTED","storyId":7,"pageNumber":3}   // una versión más (vigente) en el histórico
+// {"type":"HINT_REJECTED","storyId":7,"pageNumber":3,"reason":"El lobo no aparece en este beat"}
+// {"type":"FAILED","storyId":7,"pageNumber":3}
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/storyteller/7/pages/40/hint \
+  -H "Content-Type: application/json" -d '{"hint":"que el conejo esté contento"}'
+# 202 {"success":true,"data":{"storyId":7,"pageNumber":3}}
+# Hint vacío -> 400 "El hint es obligatorio"; puerta ocupada -> 409 "Hay una generación en curso"
+```
+
+## Regenerar sin hint una página bloqueada por número de frases (PageGeneration)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`startRegenerate`; puerto en `application/ports/in/generator/PageGeneration.java`, endpoint en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** `POST /api/v1/storyteller/{storyId}/pages/{id}/regenerate`, sin cuerpo; `{id}` es el id de la página (el de `accept` y `hint`). Solo se habilita si la versión VIGENTE de una página pendiente tiene aviso de número de frases (`SENTENCE_COUNT` o `BOTH`); si no (sin aviso, solo exceso de palabras aunque otra versión del histórico avise de frases, portada, página aceptada) responde 409 sin pedir turno ni llamar al escritor, y 404 si la página no es del cuento. Con la puerta ocupada, 409 "Hay una generación en curso". Si procede, responde `202` con `GenerationStarted(storyId, número de página)` y en segundo plano pide la página al escritor con `writePage` y el mismo contexto de beat que la generación inicial, aplica el bucle de longitud (hasta 3 generaciones) y añade las versiones a la página real: se suman al histórico existente, igual que con hint, y la última queda vigente. Un fallo en cualquier generación no cambia nada y publica `FAILED`.
+
+```java
+GenerationStarted started = pageGeneration.startRegenerate(storyId, pageId);
+
+// Por WebSocket (/storyteller):
+// {"type":"STARTED","storyId":7,"pageNumber":3}
+// {"type":"VERSION_PRESENTED","storyId":7,"pageNumber":3}   // versión(es) nueva(s) en el histórico, la última vigente
+// {"type":"FAILED","storyId":7,"pageNumber":3}
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/storyteller/7/pages/40/regenerate
+# 202 {"success":true,"data":{"storyId":7,"pageNumber":3}}
+# Vigente sin aviso de frases -> 409; puerta ocupada -> 409 "Hay una generación en curso"
+```
+
+## Elegir una versión vigente (PageAcceptance)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`selectVersion`; puerto en `application/ports/in/generator/PageAcceptance.java`, respuesta en `domain/response/VersionSelected.java`, endpoint en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** `POST /api/v1/storyteller/{storyId}/pages/{id}/versions/{versionId}/select`, sin cuerpo; `{id}` es el id de la página y `{versionId}` el id real de la versión (`PageVersion.getId()`). Marca como vigente una versión del histórico de la portada o de una página pendiente y conserva todo el histórico. Es síncrono (no llama al modelo) y no pide turno: responde `200` con `VersionSelected(storyId, pageId, versionId, warning)`, donde `warning` es el aviso de la versión elegida (`NONE`, `TOO_MANY_WORDS`, `SENTENCE_COUNT` o `BOTH`). La página pasa a mostrar su texto, escena y aviso; si no tiene aviso de número de frases, se puede aceptar después, y la aceptación usa la versión elegida. Se rechaza con 409 si hay una generación en curso del mismo cuento (`gate.isGeneratingStory`; la de otro cuento o de retratos no bloquea) o si la página no está pendiente (una aceptada ya no es elegible), y con 404 si la página no es del cuento o la versión no pertenece a esa página. Si se rechaza, la vigente no cambia. En una página aceptada reabierta solo se eligen sus propuestas: la versión aceptada no está en el histórico, así que pedirla (su id de página u otro id ajeno) responde 404.
+
+```java
+VersionSelected selected = pageAcceptance.selectVersion(storyId, pageId, versionId);
+selected.warning();   // aviso de la versión elegida, el que verá el usuario
+
+// Si no avisa de número de frases, ya se puede aceptar con ella
+pageAcceptance.acceptPage(storyId, pageId);
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/storyteller/7/pages/40/versions/101/select
+# 200 {"success":true,"data":{"storyId":7,"pageId":40,"versionId":101,"warning":"TOO_MANY_WORDS"}}
+# Generación del cuento en curso -> 409; versión de otra página o aceptada (no está en el histórico) -> 404
+```
+
+## Reabrir con hint la portada o una página aceptada (PageGeneration)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`startHint` y `selectVersion`; mismo endpoint `POST /api/v1/storyteller/{storyId}/pages/{id}/hint`)
+**Para qué sirve:** `startHint` también admite la portada y las páginas `ACCEPTED`. El contenido aceptado (texto, escena e imagen importada) vive en la propia `StoryPage` y no se modifica ni entra en el histórico; las propuestas se guardan en el histórico de versiones de esa página real. Una página aceptada con propuestas es simplemente `ACCEPTED` con versiones en el histórico. Base del primer hint: el contenido aceptado (se construye en memoria, no se guarda); con propuestas existentes, la propuesta vigente. Las propuestas pasan por el bucle de longitud (hasta 3, con sus avisos), salvo la portada. Las páginas posteriores quedan intactas (el descarte en cascada es de la aceptación de la propuesta). Se mantienen el hint obligatorio (400), la puerta ocupada (409), `HINT_REJECTED` y `FAILED` sin cambios. `selectVersion` permite elegir entre propuestas de una aceptada; `acceptPage` sigue solo para pendientes (409 con una aceptada).
+
+```java
+// Páginas 1 a 4 aceptadas; hint sobre la 2 (id real de la fila)
+pageGeneration.startHint(storyId, page2Id, "que el conejo esté contento");
+// Propuesta vigente en el histórico de la 2; page2.getText() sigue siendo el texto aceptado;
+// las páginas 3 y 4 siguen aceptadas
+
+// Segundo hint: el escritor recibe la propuesta vigente como base
+pageGeneration.startHint(storyId, page2Id, "más corto");
+
+// Elegir entre propuestas (la versión aceptada no es elegible: 404)
+pageAcceptance.selectVersion(storyId, page2Id, proposalId);
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/storyteller/7/pages/41/hint \
+  -H "Content-Type: application/json" -d '{"hint":"que el conejo esté contento"}'
+# 202; WebSocket: STARTED y VERSION_PRESENTED con pageNumber 2
+# Consulta SQL: contenido aceptado en story_page y propuestas en story_page_version
+```
+
+## Descartar las propuestas de una reapertura (PageAcceptance)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`discardProposals`; puerto en `application/ports/in/generator/PageAcceptance.java`, respuesta en `domain/response/ProposalsDiscarded.java`, endpoint en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** `POST /api/v1/storyteller/{storyId}/pages/{id}/proposals/discard`, sin cuerpo (POST, como `accept` y `select`, que también actúan sobre una página). `{id}` es el id real de la portada o de la página aceptada reabierta. Borra solo su histórico de propuestas (`deleteByPage` de ESA página): el contenido aceptado, su imagen importada, las páginas posteriores y los históricos de otras páginas no se tocan. Es síncrono, no llama al modelo y no pide turno; responde `200` con `ProposalsDiscarded(storyId, pageId, status)` (`status` es `ACCEPTED`). Se rechaza con 409 si hay una generación en curso del mismo cuento, si la página no está aceptada o si no tiene propuestas, y con 404 si la página no es del cuento. Una propuesta con aviso de número de frases también se puede descartar.
+
+```java
+// Página 2 aceptada con dos propuestas (hints previos); id real de la fila
+ProposalsDiscarded done = pageAcceptance.discardProposals(storyId, page2Id);
+done.status();   // ACCEPTED: la página vuelve a mostrar solo su versión aceptada, con su imagen
+```
+
+```
+curl -X POST http://localhost:8080/api/v1/storyteller/7/pages/41/proposals/discard
+# 200 {"success":true,"data":{"storyId":7,"pageId":41,"status":"ACCEPTED"}}
+# Generación del cuento en curso, página no aceptada o sin propuestas -> 409; página de otro cuento -> 404
+```
+
+## Aceptar una propuesta de reapertura con descarte en cascada (PageAcceptance)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`acceptProposal`; puerto en `application/ports/in/generator/PageAcceptance.java`, respuesta en `domain/response/ProposalAccepted.java`, borrado en `StoryPageRepository.deleteAfter`, endpoint en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** `POST /api/v1/storyteller/{storyId}/pages/{id}/accept-proposal?confirm=true|false` (por defecto `false`), sin cuerpo. Es un endpoint aparte de `accept` porque `accept` es solo de páginas pendientes y este añade confirmación y contador. `{id}` es el id real de la portada o de la página aceptada reabierta K. El servicio es transaccional y calcula todo antes de mutar: comprueba página del cuento (404), estado aceptada, generación en curso, que haya propuestas y que la vigente no avise del número de frases (409), y cuenta las páginas con número mayor que K (la portada nunca tiene cascada). Sin confirmar y con posteriores no cambia nada y responde `200` con `requiresConfirmation=true` y `affectedPages`. Con `confirm=true`, o si no hay posteriores, K pasa a la propuesta vigente sin imagen importada, se borra su histórico y se eliminan las posteriores (con sus versiones por cascada de FK, revisiones y assets), sin iniciar ninguna generación; responde `200` con `requiresConfirmation=false` y el número de páginas eliminadas.
+
+```java
+// Páginas 1 a 4 aceptadas y una propuesta vigente para la 2 (id real de la fila)
+ProposalAccepted ask = pageAcceptance.acceptProposal(storyId, page2Id, false);
+ask.requiresConfirmation();   // true: no ha cambiado nada
+ask.affectedPages();          // 2 (las páginas 3 y 4)
+
+ProposalAccepted done = pageAcceptance.acceptProposal(storyId, page2Id, true);
+done.requiresConfirmation();  // false: la 2 es la propuesta, sin imagen ni histórico; 3 y 4 ya no existen
+// La siguiente página permitida es la 3 y se genera solo con generate
+```
+
+```
+curl -X POST "http://localhost:8080/api/v1/storyteller/7/pages/41/accept-proposal"
+# 200 {"success":true,"data":{"storyId":7,"pageId":41,"pageNumber":2,"status":"ACCEPTED","requiresConfirmation":true,"affectedPages":2}}
+curl -X POST "http://localhost:8080/api/v1/storyteller/7/pages/41/accept-proposal?confirm=true"
+# 200 {"success":true,"data":{"storyId":7,"pageId":41,"pageNumber":2,"status":"ACCEPTED","requiresConfirmation":false,"affectedPages":2}}
+# Generación en curso, página no aceptada, sin propuestas o vigente con aviso de frases -> 409; página de otro cuento -> 404
+```
+
+## Cuento completo y listo para audio (PageAcceptance, PageGeneration)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java` (`acceptPage`, `acceptProposal`, `startCover`, `startPage`; estado en `domain/enums/StoryStatus.java`)
+**Para qué sirve:** al aceptar con `acceptPage` la página cuyo número coincide con el total de beats de la escaleta (la portada no cuenta), el cuento pasa a `StoryStatus.PAGES_ACCEPTED` (listo para la etapa de audio). Aceptar cualquier otra página o la portada no cambia el estado. Con el cuento en `PAGES_ACCEPTED`, `startCover` y `startPage` (cualquier número, también mayor que la escaleta) responden `409 "El cuento ya tiene todas las páginas aceptadas"` sin pedir turno ni llamar al escritor. Si se reabre una página K y se acepta su propuesta con cascada (`acceptProposal` con `confirm=true` que borra posteriores), el cuento vuelve a `SCRIPT_ACCEPTED` y se pueden pedir de nuevo las páginas K+1 en adelante; si K es la última (no se borra nada) sigue completo. El estado se guarda como texto (`story.status` es `VARCHAR(20)`, sin CHECK), sin migración. Para el cliente de audio (TASK-038): el literal es `PAGES_ACCEPTED`.
+
+```java
+// Guion de 8 páginas con las 1 a 7 aceptadas; page8Id es la fila real de la página 8 pendiente
+pageAcceptance.acceptPage(storyId, page8Id);   // el cuento pasa a PAGES_ACCEPTED
+pageGeneration.startPage(storyId, 9);          // AppException 409: ya tiene todas las páginas aceptadas
+```
+
+```
+curl -X POST "http://localhost:8080/api/v1/storyteller/7/pages/48/accept"
+# 200 {"success":true,"data":{"storyId":7,"pageId":48,"pageNumber":8,"status":"ACCEPTED"}}
+curl -X POST "http://localhost:8080/api/v1/storyteller/7/pages/9/generate"
+# 409 "El cuento ya tiene todas las páginas aceptadas"
+# Consulta SQL: SELECT status FROM story WHERE id = 7;  -> PAGES_ACCEPTED
+```
+
+## Consulta de portada y páginas con acciones e imagen aceptada (PageQuery)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageQueryService.java` (puerto en `application/ports/in/persistence/PageQuery.java`, respuestas en `domain/response/StoryPagesView.java`, `PageDetail.java`, `AcceptedContent.java` y `PageVersionView.java`, acciones en `domain/enums/PageAction.java`, endpoints en `infrastructure/adapters/in/rest/web/StorytellerController.java`)
+**Para qué sirve:** solo lectura. `GET /api/v1/storyteller/{storyId}/pages` y `GET .../pages/{id}` devuelven, para un cuento con escaleta, el estado del cuento, si hay generación en curso del cuento (`gate.isGeneratingStory`), `nextPage` (lo que se puede generar ahora: 0 la portada, N la página N; `null` si hay algo pendiente, el cuento está completo `PAGES_ACCEPTED`, el guion no está aprobado o hay generación en curso) y, por página (la portada es la 0, con `title` y sin texto), su estado, `beatId`, el contenido aceptado (`accepted`: texto, escena y `hasImage`; `null` si está pendiente), las `versions` si está pendiente o las `proposals` si es una aceptada reabierta (versión con texto, escena, aviso y `current`; nunca imagen) y las `actions` que calcula el servidor: pendiente sin aviso de frases `ACCEPT` y `HINT`; con aviso de frases `HINT` y `REGENERATE`, sin `ACCEPT` (la regeneración depende solo de la vigente); `SELECT_VERSION` si hay más de una versión o propuesta; aceptada sin propuestas solo `HINT` (así se reabre); con propuestas además `ACCEPT_PROPOSAL` (si la vigente no avisa de frases) y `DISCARD_PROPOSALS`. Con generación en curso del cuento todas las acciones van vacías. Los cuentos antiguos conservan exactamente su respuesta de `PageSummary`. La imagen del contenido aceptado se descarga con `GET .../pages/{id}/image` (bytes; 404 si la página no es del cuento, no está aceptada o no tiene imagen). No existe ninguna operación para escribir texto o escena a mano. Es un servicio aparte de `StoryPageService` para no ampliar su constructor.
+
+```java
+Optional<StoryPagesView> view = pageQuery.findPages(storyId);   // vacío en un cuento antiguo
+PageDetail page = view.orElseThrow().pages().get(1);
+page.status();      // PENDING
+page.actions();     // [ACCEPT, HINT, SELECT_VERSION]
+byte[] image = pageQuery.getAcceptedImage(storyId, acceptedPageId);   // 404 si no tiene
+```
+
+```
+curl http://localhost:8080/api/v1/storyteller/7/pages
+# {"success":true,"data":{"storyId":7,"status":"SCRIPT_ACCEPTED","generating":false,"nextPage":null,"pages":[
+#   {"id":40,"page":0,"status":"ACCEPTED","beatId":null,"title":"El conejo blanco",
+#    "accepted":{"text":null,"scene":"Luna en el claro","hasImage":true},
+#    "versions":[],"proposals":[],"actions":["HINT"]},
+#   {"id":41,"page":1,"status":"PENDING","beatId":12,"title":null,"accepted":null,
+#    "versions":[{"id":101,"text":"Luna sale.","scene":"Luna en el claro","warning":"NONE","current":true}],
+#    "proposals":[],"actions":["ACCEPT","HINT"]}]}}
+curl http://localhost:8080/api/v1/storyteller/7/pages/40
+# {"success":true,"data":{"id":40,"page":0,...}}   (un solo PageDetail)
+curl -o portada.png http://localhost:8080/api/v1/storyteller/7/pages/40/image
+# 200 con la imagen; sin imagen o página de otro cuento -> 404
+```

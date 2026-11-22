@@ -118,6 +118,18 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     }
 
     @Override
+    public int deleteAfter(Long storyId, int page) {
+        List<Long> pageIds = repository.getPagesIdByStory(storyId, page);
+        if (pageIds.isEmpty())
+            return 0;
+        // story_page_version cae en cascada por FK; las revisiones antiguas y los assets se retiran aquí
+        pageReviewsRepository.deleteByPageIds(pageIds);
+        repository.deletePages(storyId, page);
+        storage.deletePageAssets(storyId, pageIds.getFirst(), pageIds.subList(1, pageIds.size()));
+        return pageIds.size();
+    }
+
+    @Override
     public StoryPage getPage(Long idPage) {
         StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow(() -> {
             throw new ResourceNotFoundException("No se entro pagina con id: " + idPage);

@@ -24,6 +24,9 @@ public interface StoryPageRepository {
     /** Elimina una sola página recién creada (sin revisiones ni versiones). */
     void delete(Long idPage);
 
+    /** Elimina las páginas del cuento con número mayor que {@code page} (con revisiones, versiones y assets) y devuelve cuántas. */
+    int deleteAfter(Long storyId, int page);
+
     StoryPage getPage(Long idPage);
 
     StoryPage update(Long idPage, StoryPageReview review);

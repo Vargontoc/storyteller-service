@@ -42,6 +42,9 @@ import es.vargontoc.storyteller.domain.model.Actor;
 import es.vargontoc.storyteller.domain.model.PageVersion;
 import es.vargontoc.storyteller.domain.request.WriterContext;
 import es.vargontoc.storyteller.domain.response.GenerationStarted;
+import es.vargontoc.storyteller.domain.response.ProposalAccepted;
+import es.vargontoc.storyteller.domain.response.ProposalsDiscarded;
+import es.vargontoc.storyteller.domain.response.VersionSelected;
 import es.vargontoc.storyteller.domain.response.WriterHintResult;
 import es.vargontoc.storyteller.domain.response.WriterResult;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
@@ -133,6 +136,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
 
     /** Cuentos con escaleta: exige el guion aprobado y pasa el beat de la página al escritor. */
     private StoryPage generateWithOutline(Story story) {
+        requireNotComplete(story);
         if(story.getStatus() != StoryStatus.SCRIPT_ACCEPTED)
             throw new AppException("Debe aprobarse el guion antes de generar la portada o las páginas", HttpStatus.CONFLICT);
         // La portada de un cuento con escaleta es asíncrona y tiene su propia operación
@@ -148,6 +152,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         Story story = storyRepository.getStory(storyId);
         if(!story.hasOutline())
             throw new AppException("Solo los cuentos con escaleta generan la portada con esta operación", HttpStatus.CONFLICT);
+        requireNotComplete(story);
         if(story.getStatus() != StoryStatus.SCRIPT_ACCEPTED)
             throw new AppException("Debe aprobarse el guion antes de generar la portada o las páginas", HttpStatus.CONFLICT);
         if(story.getPages().stream().anyMatch(p -> p.getPage() == 0))
@@ -167,6 +172,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         Story story = storyRepository.getStory(storyId);
         if(!story.hasOutline())
             throw new AppException("Solo los cuentos con escaleta generan la página con esta operación", HttpStatus.CONFLICT);
+        requireNotComplete(story);
         if(story.getStatus() != StoryStatus.SCRIPT_ACCEPTED)
             throw new AppException("Debe aprobarse el guion antes de generar la portada o las páginas", HttpStatus.CONFLICT);
 
@@ -216,11 +222,108 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
 
         StoryPage accepted = repository.accept(pageId, current.getText(), current.getScene());
         versions.deleteByPage(pageId);
+        // Última página de la escaleta: el cuento queda completo y listo para audio (la portada no cuenta)
+        if(page.getPage() > 0 && outlineRepository.find(storyId).map(o -> o.beats().size() == page.getPage()).orElse(false))
+            storyRepository.updateStatus(storyId, StoryStatus.PAGES_ACCEPTED);
         return accepted;
     }
 
+    /** Un cuento con todas las páginas aceptadas no admite generar más páginas (ALT-014). */
+    private void requireNotComplete(Story story) {
+        if(story.getStatus() == StoryStatus.PAGES_ACCEPTED)
+            throw new AppException("El cuento ya tiene todas las páginas aceptadas", HttpStatus.CONFLICT);
+    }
+
     /**
-     * Cambio con hint sobre la portada o una página pendiente: la versión vigente es la base y el resultado se añade al
+     * Elige como vigente una versión del histórico de la portada o de una página pendiente. Es síncrono y no pide
+     * turno: solo se rechaza si hay una generación del mismo cuento. La versión debe pertenecer a esa página.
+     * En una página aceptada reabierta solo se eligen entre sus propuestas (el contenido aceptado no está en el histórico).
+     */
+    @Override
+    public VersionSelected selectVersion(Long storyId, Long pageId, Long versionId) {
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.PENDING && page.getPageStatus() != PageStatus.ACCEPTED)
+            throw new AppException("Solo se puede elegir versión en la portada o en una página pendiente o reabierta", HttpStatus.CONFLICT);
+        if(gate.isGeneratingStory(storyId))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+
+        // El histórico solo contiene versiones de trabajo: el contenido aceptado de una reapertura no está en él y no se puede elegir
+        PageVersion chosen = versions.findByPage(pageId).stream()
+            .filter(v -> versionId != null && versionId.equals(v.getId())).findFirst()
+            .orElseThrow(() -> new AppException("La versión " + versionId + " no es una versión elegible de la página " + pageId, HttpStatus.NOT_FOUND));
+        versions.setCurrent(pageId, chosen.getId());
+        return new VersionSelected(storyId, pageId, chosen.getId(), chosen.getWarning());
+    }
+
+    /**
+     * Descarta las propuestas de una portada o página aceptada reabierta: borra solo el histórico de esa página real.
+     * El contenido aceptado, su imagen y las demás páginas no se tocan. Síncrono y sin turno de la puerta.
+     */
+    @Override
+    public ProposalsDiscarded discardProposals(Long storyId, Long pageId) {
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.ACCEPTED)
+            throw new AppException("Solo se pueden descartar las propuestas de una portada o página aceptada reabierta", HttpStatus.CONFLICT);
+        if(gate.isGeneratingStory(storyId))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+        if(versions.findByPage(pageId).isEmpty())
+            throw new AppException("La página no tiene propuestas que descartar", HttpStatus.CONFLICT);
+
+        versions.deleteByPage(pageId);
+        return new ProposalsDiscarded(storyId, pageId, page.getPageStatus());
+    }
+
+    /**
+     * Acepta la propuesta vigente de la portada o de una página aceptada reabierta K. La cascada (páginas posteriores a K,
+     * nunca en la portada) se calcula y todo se comprueba ANTES de mutar. Sin confirmación y con posteriores, solo informa
+     * del contador. Con confirmación (o sin posteriores): K pasa a la propuesta sin imagen, se borra su histórico y se eliminan
+     * las posteriores, todo en la transacción del servicio. No inicia ninguna generación.
+     */
+    @Override
+    public ProposalAccepted acceptProposal(Long storyId, Long pageId, boolean confirm) {
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.ACCEPTED)
+            throw new AppException("Solo se puede aceptar una propuesta de la portada o de una página aceptada reabierta", HttpStatus.CONFLICT);
+        if(gate.isGeneratingStory(storyId))
+            throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+
+        List<PageVersion> proposals = versions.findByPage(pageId);
+        if(proposals.isEmpty())
+            throw new AppException("La página no tiene propuestas que aceptar", HttpStatus.CONFLICT);
+        PageVersion current = proposals.stream().filter(PageVersion::isCurrent).findFirst()
+            .orElseThrow(() -> new AppException("La página no tiene versión vigente", HttpStatus.CONFLICT));
+        if(current.getWarning().hasSentenceWarning())
+            throw new AppException("La propuesta vigente no cumple el número de frases: elige otra propuesta válida, "
+                + "pide un cambio con hint o descarta las propuestas", HttpStatus.CONFLICT);
+
+        int number = page.getPage();
+        Story story = number == 0 ? null : storyRepository.getStory(storyId);
+        int affected = story == null ? 0 : (int) story.getPages().stream()
+            .filter(p -> p.getPage() > number).count();
+        if(affected > 0 && !confirm)
+            return new ProposalAccepted(storyId, pageId, number, page.getPageStatus(), true, affected);
+
+        // accept ya deja la página sin imagen importada y con el contenido de la propuesta
+        StoryPage accepted = repository.accept(pageId, current.getText(), current.getScene());
+        versions.deleteByPage(pageId);
+        if(affected > 0) {
+            repository.deleteAfter(storyId, number);
+            // Al borrarse páginas el cuento deja de estar completo: vuelve a guion aceptado (se pueden pedir de nuevo)
+            if(story.getStatus() == StoryStatus.PAGES_ACCEPTED)
+                storyRepository.updateStatus(storyId, StoryStatus.SCRIPT_ACCEPTED);
+        }
+        return new ProposalAccepted(storyId, pageId, number, accepted.getPageStatus(), false, affected);
+    }
+
+    /**
+     * Cambio con hint sobre la portada o una página pendiente o aceptada (reapertura): la versión vigente es la base
+     * (en la primera reapertura, el contenido aceptado, que no entra en el histórico ni cambia) y el resultado se añade al
      * histórico como vigente (la página pasa por el bucle de longitud; la portada, no). Si el escritor rechaza el hint
      * se anuncia el motivo y no cambia nada.
      */
@@ -231,12 +334,19 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         StoryPage page = repository.getPage(pageId);
         if(!storyId.equals(page.getStoryId()))
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
-        if(page.getPageStatus() != PageStatus.PENDING)
-            throw new AppException("Solo se puede pedir un cambio sobre la portada o una página pendiente", HttpStatus.CONFLICT);
+        if(page.getPageStatus() != PageStatus.PENDING && page.getPageStatus() != PageStatus.ACCEPTED)
+            throw new AppException("Solo se puede pedir un cambio sobre la portada o una página pendiente o aceptada", HttpStatus.CONFLICT);
 
-        PageVersion base = versions.findByPage(page.getId()).stream()
-            .filter(PageVersion::isCurrent).findFirst()
-            .orElseThrow(() -> new AppException("La página no tiene versión vigente", HttpStatus.CONFLICT));
+        // Base: la vigente del histórico; en una aceptada sin propuestas (primer hint de la reapertura), su contenido aceptado
+        List<PageVersion> history = versions.findByPage(page.getId());
+        WriterResult baseResult;
+        if(page.getPageStatus() == PageStatus.ACCEPTED && history.isEmpty()) {
+            baseResult = new WriterResult(page.getText(), page.getComposition());
+        } else {
+            PageVersion base = history.stream().filter(PageVersion::isCurrent).findFirst()
+                .orElseThrow(() -> new AppException("La página no tiene versión vigente", HttpStatus.CONFLICT));
+            baseResult = new WriterResult(base.getText(), base.getScene());
+        }
 
         // Contexto y base cerrados antes de pedir turno, igual que en la generación inicial
         Story story = storyRepository.getStory(storyId);
@@ -245,7 +355,6 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         WriterContext context = cover
             ? WriterContext.cover(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()))
             : hintPageContext(story, number);
-        WriterResult baseResult = new WriterResult(base.getText(), base.getScene());
         String cleanHint = hint.strip();
 
         Supplier<WriterResult> rewrite = () -> {
@@ -256,6 +365,32 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         };
         Long realPageId = page.getId();
         return launch(storyId, number, () -> addHintVersions(realPageId, cover, rewrite));
+    }
+
+    /**
+     * Regeneración sin hint de una página pendiente: solo si su versión vigente tiene aviso de número de frases
+     * (la portada nunca lo tiene). Pide la página al escritor desde su beat, aplica el bucle de longitud y añade
+     * el resultado al histórico existente como vigente. Se rechaza sin pedir turno ni llamar al escritor si no procede.
+     */
+    @Override
+    public GenerationStarted startRegenerate(Long storyId, Long pageId) {
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.PENDING)
+            throw new AppException("Solo se puede regenerar una página pendiente", HttpStatus.CONFLICT);
+
+        PageVersion current = versions.findByPage(page.getId()).stream()
+            .filter(PageVersion::isCurrent).findFirst()
+            .orElseThrow(() -> new AppException("La página no tiene versión vigente", HttpStatus.CONFLICT));
+        if(!current.getWarning().hasSentenceWarning())
+            throw new AppException("Solo se puede regenerar sin hint si la versión vigente no cumple el número de frases", HttpStatus.CONFLICT);
+
+        // Contexto cerrado antes de pedir turno, igual que en la generación inicial
+        int number = page.getPage();
+        WriterContext context = hintPageContext(storyRepository.getStory(storyId), number);
+        Long realPageId = page.getId();
+        return launch(storyId, number, () -> addHintVersions(realPageId, false, () -> writer.writePage(context)));
     }
 
     private WriterContext hintPageContext(Story story, int number) {

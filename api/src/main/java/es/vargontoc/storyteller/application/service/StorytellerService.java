@@ -142,7 +142,7 @@ public class StorytellerService implements StorytellerUseCase {
             entity.getId(),
             entity.getPage(),
             entity.getPage() == 0 ? entity.getStory().getTitle() : entity.getText(),
-            entity.getSceneComposition().scene(),
+            entity.getSceneComposition() == null ? null : entity.getSceneComposition().scene(),
             entity.getImageAsset(),
             entity.getAudioAsset());
     }
