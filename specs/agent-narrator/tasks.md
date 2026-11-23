@@ -419,7 +419,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 ### [ ] TASK-028 Integración: cliente de narración con el servidor
 
 - **Cubre:** REQ-018, REQ-021, REQ-022, REQ-026, REQ-029, REQ-030, REQ-031, ALT-003, ALT-004, ALT-005
-- **Componente:** story-narration-api | por definir (analista técnico) y story-narration-service | por definir (analista técnico)
+- **Componente:** story-narration-api | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/web/StoryNarrationController.java y story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryNarrationService.java
 - **Depende de:** TASK-019, TASK-020, TASK-021, TASK-022
 - **Alcance:** el cliente REST inicia la narración o la renarración con una voz, consulta el estado de narración de un cuento y descarga el audio de una página interior, y recibe los rechazos con su motivo.
 - **Hecho cuando:** cada operación del cliente llega al servicio y devuelve su resultado o el aviso de rechazo correspondiente.

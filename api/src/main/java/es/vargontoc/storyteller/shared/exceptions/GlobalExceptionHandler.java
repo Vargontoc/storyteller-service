@@ -1,5 +1,7 @@
 package es.vargontoc.storyteller.shared.exceptions;
 
+import java.util.List;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -36,6 +38,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity
             .status(exception.getStatus())
             .body(ApiResponse.error(exception.getMessage()));
+    }
+
+    /** Rechazo de voz: mismo formato de error, con el motivo estable en {@code errors[0]}. */
+    @ExceptionHandler(VoiceRejectedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleVoiceRejected(
+            VoiceRejectedException exception, HttpServletRequest request) {
+        logDomainException(exception, request);
+        return ResponseEntity
+            .status(exception.getStatus())
+            .body(ApiResponse.error(exception.getMessage(), List.of(exception.getReason().name())));
+    }
+
+    /** Rechazo de narración: mismo formato de error, con el motivo estable en {@code errors[0]}. */
+    @ExceptionHandler(NarrationRejectedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleNarrationRejected(
+            NarrationRejectedException exception, HttpServletRequest request) {
+        logDomainException(exception, request);
+        return ResponseEntity
+            .status(exception.getStatus())
+            .body(ApiResponse.error(exception.getMessage(), List.of(exception.getReason().name())));
     }
 
     @ExceptionHandler(AppException.class)

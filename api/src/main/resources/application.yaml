@@ -12,6 +12,11 @@ spring:
         username: postgres
     liquibase:
         change-log: classpath:db/changelog/db.changelog-master.xml
+    servlet:
+        multipart:
+            # Muestras de voz de hasta 30 s en WAV (el límite por defecto es 1 MB)
+            max-file-size: 25MB
+            max-request-size: 30MB
     jpa:
         hibernate:
             ddl-auto: validate

@@ -7,6 +7,7 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import es.vargontoc.storyteller.application.ports.in.persistence.PageQuery;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
@@ -41,13 +42,17 @@ public class StoryPageQueryService implements PageQuery {
     private final GenerationGatePort gate;
     private final ResourceStorage storage;
 
+    private final StoryNarrationUseCase narration;
+
     public StoryPageQueryService(StoryRepository stories, StoryPageVersionRepository versions,
-            StoryOutlineRepository outlines, GenerationGatePort gate, ResourceStorage storage) {
+            StoryOutlineRepository outlines, GenerationGatePort gate, ResourceStorage storage,
+            StoryNarrationUseCase narration) {
         this.stories = stories;
         this.versions = versions;
         this.outlines = outlines;
         this.gate = gate;
         this.storage = storage;
+        this.narration = narration;
     }
 
     @Override
@@ -58,8 +63,10 @@ public class StoryPageQueryService implements PageQuery {
 
         boolean generating = gate.isGeneratingStory(storyId);
         List<StoryPage> sorted = story.getPages().stream().sorted(Comparator.comparingInt(StoryPage::getPage)).toList();
-        List<PageDetail> details = sorted.stream().map(p -> toDetail(p, generating)).toList();
-        return Optional.of(new StoryPagesView(storyId, story.getStatus(), generating, nextPage(story, sorted, generating), details));
+        boolean audio = narration.hasAudio(storyId);
+        List<PageDetail> details = sorted.stream().map(p -> toDetail(p, generating, audio)).toList();
+        return Optional.of(new StoryPagesView(storyId, story.getStatus(), generating, nextPage(story, sorted, generating),
+            audio, narration.isNarrating(storyId), details));
     }
 
     @Override
@@ -67,7 +74,7 @@ public class StoryPageQueryService implements PageQuery {
         Story story = stories.getStory(storyId);
         if(!story.hasOutline())
             return Optional.empty();
-        return Optional.of(toDetail(pageOf(story, pageId), gate.isGeneratingStory(storyId)));
+        return Optional.of(toDetail(pageOf(story, pageId), gate.isGeneratingStory(storyId), narration.hasAudio(storyId)));
     }
 
     @Override
@@ -85,7 +92,8 @@ public class StoryPageQueryService implements PageQuery {
             .orElseThrow(() -> new ResourceNotFoundException("Page not found with id: " + pageId + " for story:" + story.getId()));
     }
 
-    private PageDetail toDetail(StoryPage page, boolean generating) {
+    /** El audio se publica atómicamente para todas las páginas interiores: con audio en el cuento, toda interior lo tiene. */
+    private PageDetail toDetail(StoryPage page, boolean generating, boolean storyHasAudio) {
         boolean pending = page.getPageStatus() == PageStatus.PENDING;
         List<PageVersion> history = versions.findByPage(page.getId());
         List<PageVersionView> views = history.stream()
@@ -95,7 +103,7 @@ public class StoryPageQueryService implements PageQuery {
         return new PageDetail(page.getId(), page.getPage(), page.getPageStatus(), page.getBeatId(),
             page.getPage() == 0 ? page.getCoverText() : null, accepted,
             pending ? views : List.of(), pending ? List.of() : views,
-            generating ? List.of() : actions(pending, history));
+            generating ? List.of() : actions(pending, history), storyHasAudio && page.getPage() > 0);
     }
 
     /**

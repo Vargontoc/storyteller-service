@@ -22,7 +22,13 @@ import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 
+import es.vargontoc.storyteller.application.ports.in.generator.PageGeneration;
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import es.vargontoc.storyteller.application.ports.in.persistence.StorytellerUseCase;
+import es.vargontoc.storyteller.domain.enums.NarrationRejectionReason;
+import es.vargontoc.storyteller.shared.exceptions.NarrationRejectedException;
+import org.springframework.http.MediaType;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
@@ -51,6 +57,8 @@ class StorytellerControllerPagesQueryTest {
     private StoryPageVersionRepository versions;
     private ResourceStorage storage;
     private StorytellerUseCase useCase;
+    private StoryNarrationUseCase narration;
+    private PageGeneration pageGeneration;
     private MockMvc mvc;
 
     private final SceneComposition scene = new SceneComposition("Luna en el claro", List.of(), "claro");
@@ -65,8 +73,10 @@ class StorytellerControllerPagesQueryTest {
         when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(),
             List.of(new StoryBeat("Beat 1", "nudo", List.of("Luna"), "curioso", "claro"),
                     new StoryBeat("Beat 2", "nudo", List.of("Luna"), "curioso", "claro")))));
-        var query = new StoryPageQueryService(stories, versions, outlines, mock(GenerationGatePort.class), storage);
-        var controller = new StorytellerController(useCase, null, null, null, query);
+        narration = mock(StoryNarrationUseCase.class);
+        pageGeneration = mock(PageGeneration.class);
+        var query = new StoryPageQueryService(stories, versions, outlines, mock(GenerationGatePort.class), storage, narration);
+        var controller = new StorytellerController(useCase, null, pageGeneration, null, query);
         mvc = MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new GlobalExceptionHandler()).build();
     }
 
@@ -136,6 +146,45 @@ class StorytellerControllerPagesQueryTest {
             .andExpect(jsonPath("$.data.id").value(101))
             .andExpect(jsonPath("$.data.actions[0]").value("ACCEPT"));
         mvc.perform(get("/api/v1/storyteller/5/pages/999")).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void narratedStoryReportsAudioInTheViewAndTheInteriorPagesButNotTheCover() throws Exception {
+        withOutline(page(100L, 0, PageStatus.ACCEPTED, null), page(101L, 1, PageStatus.ACCEPTED, null));
+        when(versions.findByPage(100L)).thenReturn(List.of());
+        when(versions.findByPage(101L)).thenReturn(List.of());
+        when(narration.hasAudio(STORY)).thenReturn(true);
+
+        mvc.perform(get("/api/v1/storyteller/5/pages"))
+            .andExpect(jsonPath("$.data.hasAudio").value(true))
+            .andExpect(jsonPath("$.data.narrating").value(false))
+            .andExpect(jsonPath("$.data.pages[0].hasAudio").value(false))
+            .andExpect(jsonPath("$.data.pages[1].hasAudio").value(true));
+        mvc.perform(get("/api/v1/storyteller/5/pages/101")).andExpect(jsonPath("$.data.hasAudio").value(true));
+        mvc.perform(get("/api/v1/storyteller/5/pages/100")).andExpect(jsonPath("$.data.hasAudio").value(false));
+    }
+
+    @Test
+    void storyBeingNarratedReportsNarrating() throws Exception {
+        withOutline(page(101L, 1, PageStatus.ACCEPTED, null));
+        when(versions.findByPage(101L)).thenReturn(List.of());
+        when(narration.isNarrating(STORY)).thenReturn(true);
+
+        mvc.perform(get("/api/v1/storyteller/5/pages"))
+            .andExpect(jsonPath("$.data.narrating").value(true))
+            .andExpect(jsonPath("$.data.hasAudio").value(false))
+            .andExpect(jsonPath("$.data.pages[0].hasAudio").value(false));
+    }
+
+    @Test
+    void narrationInProgressRejectionReachesTheClientAsConflictWithItsMessage() throws Exception {
+        when(pageGeneration.startHint(STORY, 101L, "más corto")).thenThrow(new NarrationRejectedException(
+            NarrationRejectionReason.IN_PROGRESS, "El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas"));
+
+        mvc.perform(post("/api/v1/storyteller/5/pages/101/hint").contentType(MediaType.APPLICATION_JSON).content("{\"hint\":\"más corto\"}"))
+            .andExpect(status().isConflict())
+            .andExpect(jsonPath("$.success").value(false))
+            .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("se está narrando")));
     }
 
     @Test

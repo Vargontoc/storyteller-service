@@ -385,3 +385,71 @@ try {
 ```
 
 Prueba manual (contenedor de Chatterbox en marcha): `mvn -f api/pom.xml test -Dtest=ChatterboxSpeechSynthesisManualHarness -Dspeech.harness=true -Dspeech.sample=<ruta a un WAV/MP3 de 5 a 30 s> -Dspeech.out=<salida.wav>`.
+
+## VoiceLibraryController (rutas REST de la biblioteca de voces, TASK-027)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/web/VoiceLibraryController.java` (DTO `infrastructure/adapters/in/rest/dto/VoiceLanguagesResponse.java`; el motivo del rechazo lo añade `shared/exceptions/GlobalExceptionHandler.java`)
+**Para qué sirve:** Expone `VoiceLibraryUseCase` por REST bajo `/api/v1/voices` (mismo estilo recurso que `/api/v1/catalog-characters`). Todas las respuestas usan `ApiResponse` (`success`, `data`, `message`, `errors`). Un rechazo de voz responde con su estado HTTP, `message` legible y el motivo estable en `errors[0]` (valor de `VoiceRejectionReason`). No se expone la muestra de audio de ninguna voz.
+
+| Método y ruta | Entrada | Respuesta |
+|---|---|---|
+| `GET /api/v1/voices` | - | 200, `data`: `{voices:[{id,name,language,system}], systemVoiceName, systemVoiceAvailable, systemVoiceUnavailableReason, systemVoiceNameCollision}`; la voz del sistema va primera, con `id` ausente y `system:true`, solo si está disponible |
+| `GET /api/v1/voices/languages` | - | 200, `data`: `{languages:[{code,name}], defaultLanguage:{code:"es",name:"Español"}}` |
+| `GET /api/v1/voices/eligible` | - | 200, `data`: `[{id,name,language,system}]` (sistema disponible + subidas en español; borradas y no españolas excluidas) |
+| `POST /api/v1/voices` | multipart: `file` (WAV/MP3), `name`, `language` (código, p. ej. `es`), `permission` (`true`/`false`) | 201, `data`: la voz creada `{id,name,language,system:false}` |
+| `DELETE /api/v1/voices/{id}` | `{id}`: id numérico de la voz subida, o `system` para la voz del sistema | 200, `data` nulo |
+
+Rechazos (`errors[0]`): `NAME_REQUIRED`, `LANGUAGE_REQUIRED`, `PERMISSION_REQUIRED`, `INVALID_FORMAT` (también sin fichero), `INVALID_DURATION` (400); `NAME_DUPLICATED` y `SYSTEM_VOICE_NOT_DELETABLE` (409); `VOICE_NOT_FOUND` (404, también con un id no numérico). Los campos de la subida son opcionales a nivel HTTP: es el servicio quien rechaza y da el motivo. El tamaño multipart admite hasta 25 MB por fichero (`spring.servlet.multipart`), suficiente para 30 s en WAV.
+
+```java
+// Prueba con MockMvc (servicio real, puertos simulados)
+mvc.perform(multipart("/api/v1/voices")
+        .file(new MockMultipartFile("file", "voz.mp3", "audio/mpeg", bytes))
+        .param("name", "Abuela").param("language", "es").param("permission", "true"))
+    .andExpect(status().isCreated())
+    .andExpect(jsonPath("$.data.name").value("Abuela"));
+
+mvc.perform(delete("/api/v1/voices/system"))
+    .andExpect(status().isConflict())
+    .andExpect(jsonPath("$.errors[0]").value("SYSTEM_VOICE_NOT_DELETABLE"));
+```
+
+```powershell
+# Subir un MP3 y borrarlo (curl.exe en Windows)
+curl.exe -s -X POST http://localhost:8080/api/v1/voices -F "file=@C:\voces\abuela.mp3" -F "name=Abuela" -F "language=es" -F "permission=true"
+curl.exe -s -X DELETE http://localhost:8080/api/v1/voices/1
+```
+
+## StoryNarrationController (rutas REST de la narración, TASK-028)
+
+**Ruta:** `api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/web/StoryNarrationController.java` (DTO `infrastructure/adapters/in/rest/dto/StartNarrationRequestDto.java`; el motivo del rechazo lo añade `shared/exceptions/GlobalExceptionHandler.java`)
+**Para qué sirve:** Expone `StoryNarrationUseCase` por REST bajo `/api/v1/storyteller/{storyId}`, con el mismo prefijo que `StorytellerController`. No contiene lógica: traduce `voiceId` y delega. Las respuestas JSON usan `ApiResponse`; el audio es binario. El guion de audio nunca se expone.
+
+| Método y ruta | Entrada | Respuesta |
+|---|---|---|
+| `POST /api/v1/storyteller/{storyId}/narration` | JSON `{"voiceId": "system" \| "<id numérico>"}` (obligatorio; `system` es la voz del sistema, como en `/api/v1/voices/{id}`) | 202 Accepted, `data`: `NarrationState` ya en curso (`narrating:true`, `lastResult:"IN_PROGRESS"`); la narración sigue en segundo plano y termina con un evento `COMPLETED`/`FAILED` |
+| `GET /api/v1/storyteller/{storyId}/narration` | - | 200, `data`: `{storyId, hasOutline, canNarrate, disabledReason, narrating, hasAudio, voiceName, lastResult}` |
+| `GET /api/v1/storyteller/{storyId}/pages/{number}/audio` | `{number}`: número de página interior (1..n; es el número de página, no el id de página) | 200, `Content-Type: audio/wav` y los bytes; 404 (`AUDIO_NOT_FOUND`) si es la portada (0), no hay audio o no está publicado |
+
+Valores: `disabledReason` (nulo si `canNarrate`): `NO_OUTLINE`, `PAGES_NOT_ACCEPTED`, `IN_PROGRESS`; `lastResult` (nulo si nunca se narró): `IN_PROGRESS`, `COMPLETED`, `ERROR`.
+
+Rechazos del inicio (409, `message` legible y motivo estable en `errors[0]`): `NO_OUTLINE`, `PAGES_NOT_ACCEPTED`, `IN_PROGRESS`, `VOICE_NOT_AVAILABLE`, `NO_VOICES_AVAILABLE` y `GENERATION_IN_PROGRESS`; ninguno toca el audio previo. Un `voiceId` ausente o no válido responde 400 sin iniciar nada.
+
+```java
+// Prueba con MockMvc (caso de uso simulado)
+mvc.perform(post("/api/v1/storyteller/7/narration").contentType(MediaType.APPLICATION_JSON)
+        .content("{\"voiceId\":\"system\"}"))
+    .andExpect(status().isAccepted())
+    .andExpect(jsonPath("$.data.narrating").value(true));
+
+mvc.perform(get("/api/v1/storyteller/7/pages/2/audio"))
+    .andExpect(content().contentType("audio/wav"));
+```
+
+```powershell
+# Narrar con la voz del sistema (o "12" para una voz subida), consultar y descargar (curl.exe en Windows)
+curl.exe -s -X POST http://localhost:8080/api/v1/storyteller/7/narration -H "Content-Type: application/json" -d "{\"voiceId\":\"system\"}"
+curl.exe -s http://localhost:8080/api/v1/storyteller/7/narration
+curl.exe -s -o pagina2.wav http://localhost:8080/api/v1/storyteller/7/pages/2/audio
+curl.exe -s -i http://localhost:8080/api/v1/storyteller/7/pages/0/audio   # 404: la portada no tiene audio
+```

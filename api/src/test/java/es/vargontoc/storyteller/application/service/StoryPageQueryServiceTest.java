@@ -19,6 +19,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
@@ -52,6 +53,7 @@ class StoryPageQueryServiceTest {
     private GenerationGatePort gate;
     private ResourceStorage storage;
     private StoryPageQueryService service;
+    private StoryNarrationUseCase narration;
 
     private final SceneComposition scene = new SceneComposition("Luna en el claro", List.of(), "claro");
     private final List<StoryPage> pages = new ArrayList<>();
@@ -65,7 +67,8 @@ class StoryPageQueryServiceTest {
         outlines = mock(StoryOutlineRepository.class);
         gate = mock(GenerationGatePort.class);
         storage = mock(ResourceStorage.class);
-        service = new StoryPageQueryService(stories, versions, outlines, gate, storage);
+        narration = mock(StoryNarrationUseCase.class);
+        service = new StoryPageQueryService(stories, versions, outlines, gate, storage, narration);
         List<StoryBeat> beats = new ArrayList<>();
         for (int i = 1; i <= BEATS; i++)
             beats.add(new StoryBeat("Beat " + i, "nudo", List.of("Luna"), "curioso", "claro"));
@@ -339,6 +342,50 @@ class StoryPageQueryServiceTest {
 
         assertEquals(HttpStatus.NOT_FOUND, assertThrows(AppException.class, () -> service.findPage(STORY, 999L)).getStatus());
         assertEquals(HttpStatus.NOT_FOUND, assertThrows(AppException.class, () -> service.getAcceptedImage(STORY, 999L)).getStatus());
+    }
+
+    // ---- audio y narración (TASK-026) ----
+
+    @Test
+    void narratedStoryReportsAudioInTheViewAndInEveryInteriorPageButNotTheCover() {
+        cover(true, null);
+        accepted(1, null);
+        accepted(2, null);
+        when(narration.hasAudio(STORY)).thenReturn(true);
+
+        StoryPagesView view = view();
+
+        assertTrue(view.hasAudio());
+        assertFalse(view.narrating());
+        assertFalse(view.pages().get(0).hasAudio());
+        assertTrue(view.pages().get(1).hasAudio());
+        assertTrue(view.pages().get(2).hasAudio());
+        assertTrue(service.findPage(STORY, 102L).orElseThrow().hasAudio());
+        assertFalse(service.findPage(STORY, 100L).orElseThrow().hasAudio());
+    }
+
+    @Test
+    void storyBeingNarratedReportsNarratingWithoutAudio() {
+        cover(true, null);
+        accepted(1, null);
+        when(narration.isNarrating(STORY)).thenReturn(true);
+
+        StoryPagesView view = view();
+
+        assertTrue(view.narrating());
+        assertFalse(view.hasAudio());
+        assertTrue(view.pages().stream().noneMatch(PageDetail::hasAudio));
+    }
+
+    @Test
+    void storyNeverNarratedHasNoAudioNorNarrating() {
+        accepted(1, null);
+
+        StoryPagesView view = view();
+
+        assertFalse(view.hasAudio());
+        assertFalse(view.narrating());
+        assertFalse(view.pages().get(0).hasAudio());
     }
 
     // ---- cuentos antiguos ----
