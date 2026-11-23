@@ -133,7 +133,7 @@ class DirectorModelProvisionerTest {
         verify(request).body(captor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> sent = (Map<String, Object>) captor.getValue();
-        assertEquals("qwen2.5:14b-instruct", sent.get("from"));
+        assertEquals("qwen3:14b", sent.get("from"));
         assertTrue(((String) sent.get("system")).startsWith("Eres el AGENTE DIRECTOR"));
         assertTrue(((String) sent.get("system")).endsWith("fuera del JSON."));
         assertEquals(8192, ((Map<?, ?>) sent.get("parameters")).get("num_ctx"));

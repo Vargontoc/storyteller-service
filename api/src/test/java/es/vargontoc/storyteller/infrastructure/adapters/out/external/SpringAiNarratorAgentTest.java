@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.enums.AudioFragmentKind;
 import es.vargontoc.storyteller.domain.model.PageAudioScript;
 import es.vargontoc.storyteller.infrastructure.adapters.out.external.SpringAiNarratorAgent.FragmentResponse;
 import es.vargontoc.storyteller.infrastructure.adapters.out.external.SpringAiNarratorAgent.PageResponse;
@@ -72,10 +73,13 @@ class SpringAiNarratorAgentTest {
             assertEquals(2, scripts.get(i).fragments().size());
         }
         var first = scripts.get(0).fragments().get(0);
+        var second = scripts.get(0).fragments().get(1);
         assertEquals("Texto de la página 1.", first.text());
+        assertEquals(AudioFragmentKind.NARRATION, first.kind());
         assertEquals(0.9, first.exaggeration());
         assertEquals(0.5, first.cfgWeight());
         assertEquals(0.8, first.temperature());
+        assertEquals(AudioFragmentKind.DIALOGUE, second.kind());
     }
 
     @Test
@@ -109,12 +113,14 @@ class SpringAiNarratorAgentTest {
     }
 
     @Test
-    void fragmentWithoutParametersOrTextIsAnError() {
+    void fragmentWithoutParametersTextOrKindIsAnError() {
         for (FragmentResponse bad : List.of(
                 new FragmentResponse("Texto.", null, 0.5, 0.8),
                 new FragmentResponse("Texto.", 0.9, null, 0.8),
                 new FragmentResponse("Texto.", 0.9, 0.5, null),
-                new FragmentResponse(" ", 0.9, 0.5, 0.8))) {
+                new FragmentResponse(" ", 0.9, 0.5, 0.8),
+                new FragmentResponse("Texto.", 0.9, 0.5, 0.8, null),
+                new FragmentResponse("Texto.", 0.9, 0.5, 0.8, "OTRO"))) {
             when(response.entity(ScriptResponse.class)).thenReturn(
                     new ScriptResponse(List.of(new PageResponse(1, List.of(bad)))));
 
@@ -156,8 +162,8 @@ class SpringAiNarratorAgentTest {
         List<PageResponse> list = new ArrayList<>();
         for (int i = 1; i <= pages; i++) {
             list.add(new PageResponse(i, List.of(
-                    new FragmentResponse("Texto de la página " + i + ".", 0.9, 0.5, 0.8),
-                    new FragmentResponse("Y sigue.", 0.6, 0.4, 0.8))));
+                    new FragmentResponse("Texto de la página " + i + ".", 0.9, 0.5, 0.8, "NARRATION"),
+                    new FragmentResponse("Y sigue.", 0.6, 0.4, 0.8, "DIALOGUE"))));
         }
         return new ScriptResponse(list);
     }

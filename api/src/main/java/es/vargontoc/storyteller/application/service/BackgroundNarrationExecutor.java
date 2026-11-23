@@ -1,5 +1,7 @@
 package es.vargontoc.storyteller.application.service;
 
+import java.time.Duration;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +24,7 @@ import es.vargontoc.storyteller.application.ports.out.persistence.NarrationRepos
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.utils.AudioAssembler;
+import es.vargontoc.storyteller.domain.enums.AudioFragmentKind;
 import es.vargontoc.storyteller.domain.model.AudioFragment;
 import es.vargontoc.storyteller.domain.model.PageAudioScript;
 import es.vargontoc.storyteller.domain.model.StoryPage;
@@ -40,6 +43,7 @@ public class BackgroundNarrationExecutor implements NarrationExecutor {
 
     private static final Logger log = LoggerFactory.getLogger(BackgroundNarrationExecutor.class);
     private static final String LANGUAGE = "es";
+    private static final Duration FRAGMENT_PAUSE = Duration.ofMillis(160);
 
     private final TaskExecutor executor;
     private final StoryRepository stories;
@@ -130,11 +134,32 @@ public class BackgroundNarrationExecutor implements NarrationExecutor {
     }
 
     private byte[] synthesizePage(PageAudioScript page, byte[] voiceSample) {
-        List<byte[]> clips = page.fragments().stream()
-            .map(f -> synthesizer.synthesize(new SpeechSynthesisRequest(
-                f.text(), LANGUAGE, voiceSample, f.exaggeration(), f.cfgWeight(), f.temperature())))
-            .toList();
+        List<AudioFragment> fragments = page.fragments();
+        List<byte[]> clips = new ArrayList<>(Math.max(1, fragments.size() * 2 - 1));
+        for (int i = 0; i < fragments.size(); i++) {
+            AudioFragment fragment = withProfile(fragments.get(i));
+            clips.add(synthesizer.synthesize(new SpeechSynthesisRequest(
+                fragment.text(), LANGUAGE, voiceSample, fragment.exaggeration(), fragment.cfgWeight(),
+                fragment.temperature())));
+            if (i < fragments.size() - 1)
+                clips.add(AudioAssembler.silence(FRAGMENT_PAUSE));
+        }
         return AudioAssembler.concat(clips);
+    }
+
+    /** Perfil fijo por tipo: la narración es más calmada y el diálogo, más expresivo. */
+    private AudioFragment withProfile(AudioFragment fragment) {
+        if (fragment.kind() == AudioFragmentKind.DIALOGUE)
+            return new AudioFragment(fragment.text(), clamp(fragment.exaggeration(), 0.7, 1.2),
+                clamp(fragment.cfgWeight(), 0.3, 0.45), clamp(fragment.temperature(), 0.8, 0.9),
+                fragment.kind());
+        return new AudioFragment(fragment.text(), clamp(fragment.exaggeration(), 0.35, 0.6),
+            clamp(fragment.cfgWeight(), 0.45, 0.6), clamp(fragment.temperature(), 0.6, 0.8),
+            fragment.kind());
+    }
+
+    private static double clamp(double value, double min, double max) {
+        return Math.max(min, Math.min(max, value));
     }
 
     /** Texto aceptado de las paginas interiores 1..beats, en orden; la portada no se incluye. */

@@ -27,18 +27,18 @@
 | FUN-014 | Importación de las ilustraciones de página generadas fuera | Mantener el cuento ilustrado con la herramienta externa | imprescindible | acordada | Cada página expone su descripción de escena; la imagen que devuelve la herramienta externa se importa y se muestra en la página. ComfyUI no interviene | |
 | FUN-015 | Generación de páginas una a una tras el guion aprobado | Revisar y corregir sin rehacer el cuento entero | imprescindible | acordada | El escritor redacta cada página desde su beat, incluida la descripción de escena (sin imagen). Cada página se acepta antes de generar la siguiente (PDEC-022). Cualquier cambio descarta las páginas hijas y se regeneran una a una, sin propagación automática (PDEC-020). El cambio se pide con hint, con aceptación o rechazo motivado, sin edición manual (PDEC-021). Vocabulario y frases simples, para que un niño de 3-4 años lo entienda (PDEC-023). El texto tiene 4 frases y 45-60 palabras, con una sola frase corta y las demás completas (PDEC-031); incluye al menos una línea de diálogo cuando hay dos o más personajes interactuando (PDEC-032); dramatiza el hecho del beat sin copiar su redacción y muestra la emoción con acciones y voces (PDEC-033, PDEC-034) | |
 | FUN-016 | Catálogo estático de temas para el cuento | Evitar temas inventados fuera de tono y simplificar la creación | imprescindible | acordada | Catálogo fijo en la app: aventuras, rutinas, animales, naturaleza, familia y amigos y juegos, pensados para 3-4 años y sin moraleja ni carga moral. El tema elegido viaja al director al crear el cuento; no hay agente generador ni catálogo persistido, y cada cuento guarda como texto el tema con el que nació (PDEC-024) | |
-| FUN-017 | Narración por página con voz elegida | Voz propia y expresividad controlada | imprescindible | acordada | Evoluciona FUN-004. El narrador lee el cuento entero y prepara el guion de audio (tono y énfasis), y Chatterbox Multilingual V3 sintetiza en español. Las onomatopeyas las escribe el escritor en el texto (PDEC-025), máximo una por página y solo con sonido natural en la escena (PDEC-030). La narración solo se habilita con todas las páginas interiores aceptadas (PDEC-026). El adulto sube voces y elige una al narrar; la voz se guarda con el cuento y renarrar con otra sustituye el audio (PDEC-029). La salida es audio por página: la app que integra el cuento no tiene narración automática y solo reproduce la página que se está viendo (PDEC-028). Motor: Multilingual V3, Turbo descartado (PDEC-027) | |
+| FUN-017 | Narración por página con voz elegida | Voz propia y expresividad controlada | imprescindible | acordada | Evoluciona FUN-004. El narrador lee el cuento entero y prepara el guion de audio (tono y énfasis) por frase, separa el diálogo de la narración y aplica un perfil de tono por tipo (PDEC-038); Chatterbox Multilingual V3 sintetiza en español. Las onomatopeyas las escribe el escritor en el texto (PDEC-025), máximo una por página y solo con sonido natural en la escena (PDEC-030). La narración solo se habilita con todas las páginas interiores aceptadas (PDEC-026). El adulto sube voces y elige una al narrar; la voz se guarda con el cuento y renarrar con otra sustituye el audio (PDEC-029). La salida es audio por página: la app que integra el cuento no tiene narración automática y solo reproduce la página que se está viendo (PDEC-028). Motor: Multilingual V3, Turbo descartado (PDEC-027) | |
 
 ## Opciones de tecnología
 
-### Agente de personaje en Ollama
+### Modelo del agente de personaje
 
 | Opción | Ventajas | Costes y riesgos | Fuente y fecha |
 |---|---|---|---|
-| Mismo modelo base que el director (qwen2.5:14b-instruct) con Modelfile propio | Ya descargado, sin coste de VRAM adicional si no conviven; estilo de prompt conocido | Compite por GPU con el director si se ejecutan a la vez | 2026-11-15 (estado del repo) |
-| Modelo más pequeño para el agente de personaje | Respuesta más rápida y menos VRAM | Peor calidad en descripción visual y en rechazo de hints | 2026-11-15 |
+| qwen2.5:14b-instruct | Rápido (11 s en la prueba) y ficha válida | Elige colores poco naturales para la especie (erizo verde) y mete una acción en la descripción visual («toma una bufanda») | 2026-11-23 (A/B local, ficha de erizo) |
+| qwen3:14b | Ficha más coherente y natural (erizo marrón claro, bufanda azul), 5 atributos y descripción visual sin acciones; 46 s | Más lento por el razonamiento interno; 9,3 GB | 2026-11-23 (A/B local, ficha de erizo) |
 
-Recomendación: Modelfile propio sobre el mismo modelo base; el agente de personaje no necesita convivir con el director en el mismo turno.
+Recomendación aplicada: qwen3:14b para el agente de personaje; la creación es puntual y admite la latencia.
 
 ### Motor TTS para español (Chatterbox)
 
@@ -54,10 +54,19 @@ Recomendación acordada: Multilingual V3, que es lo que ya usa el contenedor. Tu
 
 | Opción | Ventajas | Costes y riesgos | Fuente y fecha |
 |---|---|---|---|
-| qwen2.5:14b-instruct | Mismo modelo que el resto de agentes; ya descargado | Con las reglas nuevas se queda en 30-32 palabras y no cuenta; ignora el objetivo de longitud | 2026-11-23 (prueba local con los prompts del repo) |
-| qwen3:14b solo para el escritor | Respeta mejor las reglas: 41-57 palabras, diálogo y escena coherente en las pruebas; ya descargado | Razonamiento interno (unos 2.000 caracteres) y más latencia; 9,3 GB; el resto de agentes sigue en qwen2.5 | 2026-11-23 (prueba local con los prompts del repo) |
+| qwen2.5:14b-instruct | Modelo del narrador; ya descargado | Con las reglas nuevas del escritor se queda en 30-32 palabras y no cuenta; ignora el objetivo de longitud | 2026-11-23 (prueba local con los prompts del repo) |
+| qwen3:14b (escritor, director y personaje) | Respeta mejor las reglas: 41-57 palabras, diálogo y escena coherente en las pruebas; ya descargado | Razonamiento interno (unos 2.000 caracteres) y más latencia; 9,3 GB; el narrador sigue en qwen2.5 | 2026-11-23 (prueba local con los prompts del repo) |
 
-Recomendación aplicada: qwen3:14b para el escritor y qwen2.5:14b para director, narrador y agente de personaje.
+Recomendación aplicada: qwen3:14b para escritor, director y agente de personaje; qwen2.5:14b para narrador.
+
+### Modelo del director
+
+| Opción | Ventajas | Costes y riesgos | Fuente y fecha |
+|---|---|---|---|
+| qwen2.5:14b-instruct | Más rápido en la prueba (54-110 s); reparto coherente y lenguaje simple | Guion genérico y repetitivo; usa «Amigo perdido» en vez de un nombre; arco débil en la prueba de 8 páginas | 2026-11-23 (A/B local, 8 páginas) |
+| qwen3:14b | Arco más rico, tonos variados y notas visuales concretas; nombra al amigo y lo incluye en el cast; 86-158 s | Más lento; en una muestra puso el título en inglés y mezcló nombre y especie; el prompt lo corrige con reglas de español y coherencia | 2026-11-23 (A/B local, 8 páginas) |
+
+Recomendación aplicada: qwen3:14b para el director, con las reglas de español y coherencia del reparto.
 
 ## Decisiones
 
@@ -98,7 +107,10 @@ Recomendación aplicada: qwen3:14b para el escritor y qwen2.5:14b para director,
 | PDEC-033 | El beat aporta el hecho y la función narrativa, no la redacción: el escritor no copia sus palabras y lo convierte en escena con acciones, gestos y voces, pudiendo añadir detalles sensoriales que no cambien el hecho, la función ni el tono | Evita el copy-paste del beat y mantiene el contrato narrativo (PDEC-015) | Permitir parafrasear el beat; exigir solo el hecho |
 | PDEC-034 | Mostrar, no contar: la emoción se muestra en lo que los personajes hacen o dicen, no se nombra | Es lo que hace que el cuento se disfrute leído en voz alta | Nombrar la emoción; combinar ambas |
 | PDEC-035 | Si el texto no cumple la longitud o el diálogo, se muestra igualmente y es el adulto quien pide el cambio con un hint; no hay reintento automático | El adulto mantiene el control y no se gasta GPU en reintentos que quizá no coincidan con su criterio | Reintento automático antes de mostrar; aviso bloqueante |
-| PDEC-036 | El escritor usa qwen3:14b; director, narrador y agente de personaje siguen en qwen2.5:14b | Con las mismas reglas, qwen2.5 se queda en 30-32 palabras y qwen3 da 41-57 con diálogo; el coste es más latencia por el razonamiento interno | Mantener qwen2.5 y añadir una pasada de ampliación; cambiar todos los agentes a qwen3 |
+| PDEC-036 | El escritor usa qwen3:14b; el narrador sigue en qwen2.5:14b | Con las mismas reglas, qwen2.5 se queda en 30-32 palabras y qwen3 da 41-57 con diálogo; el coste es más latencia por el razonamiento interno | Mantener qwen2.5 y añadir una pasada de ampliación; cambiar también el narrador a qwen3 |
+| PDEC-037 | El director usa qwen3:14b; el narrador sigue en qwen2.5:14b | En el A/B de 8 páginas qwen3 dio un arco más rico, tonos variados y notas visuales concretas, y nombró e incluyó al amigo en el reparto; qwen2.5 fue más rápido pero genérico y dejó «Amigo perdido» | Mantener qwen2.5 por velocidad; cambiar también el narrador a qwen3 |
+| PDEC-038 | La narración se divide por frases y separa el diálogo de su atribución; cada fragmento lleva un tipo (NARRATION/DIALOGUE) y tres parámetros dentro de un perfil por tipo, que el backend recorta; se añaden 160 ms de pausa entre fragmentos | El tono de la narración no es el del diálogo; la atribución leída con tono de diálogo suena teatral, y los perfiles evitan valores inestables | Mantener 1-3 fragmentos por página con un solo tono; dejar los tres números libres al modelo |
+| PDEC-039 | El agente de personaje usa qwen3:14b; el narrador sigue en qwen2.5:14b | En el A/B qwen3 dio una ficha más coherente y natural, sin acciones en la descripción visual; qwen2.5 fue más rápido pero eligió un erizo verde y metió una acción | Mantener qwen2.5 por velocidad; cambiar también el narrador |
 
 ## Preguntas abiertas
 

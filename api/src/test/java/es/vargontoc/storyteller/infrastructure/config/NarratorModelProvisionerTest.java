@@ -94,6 +94,11 @@ class NarratorModelProvisionerTest {
         assertTrue(content.contains("cfgWeight"));
         assertTrue(content.contains("temperature"));
         assertTrue(content.contains("frases completas"));
+        assertTrue(content.contains("un fragmento por frase"));
+        assertTrue(content.contains("\"kind\""));
+        assertTrue(content.contains("NARRATION"));
+        assertTrue(content.contains("DIALOGUE"));
+        assertTrue(content.contains("atribución"));
     }
 
     @Test

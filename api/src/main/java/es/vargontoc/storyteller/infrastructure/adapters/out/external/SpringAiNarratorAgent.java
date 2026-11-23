@@ -1,6 +1,7 @@
 package es.vargontoc.storyteller.infrastructure.adapters.out.external;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -9,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.application.ports.out.external.NarratorAgent;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.enums.AudioFragmentKind;
 import es.vargontoc.storyteller.domain.model.AudioFragment;
 import es.vargontoc.storyteller.domain.model.PageAudioScript;
 import es.vargontoc.storyteller.shared.Constants;
@@ -64,7 +66,7 @@ public class SpringAiNarratorAgent implements NarratorAgent {
         }
     }
 
-    /** Exige una página por texto recibido, en orden, con fragmentos de texto y los tres parámetros. */
+    /** Exige una página por texto recibido, en orden, con texto, tipo y los tres parámetros por fragmento. */
     private List<PageAudioScript> toScripts(ScriptResponse response, int expectedPages) {
         if (response == null || response.pages() == null || response.pages().size() != expectedPages) {
             throw invalidResponse();
@@ -79,14 +81,24 @@ public class SpringAiNarratorAgent implements NarratorAgent {
             var fragments = new java.util.ArrayList<AudioFragment>();
             for (FragmentResponse f : page.fragments()) {
                 if (f == null || f.text() == null || f.text().isBlank() || f.exaggeration() == null
-                        || f.cfgWeight() == null || f.temperature() == null) {
+                        || f.cfgWeight() == null || f.temperature() == null
+                        || f.kind() == null || f.kind().isBlank()) {
                     throw invalidResponse();
                 }
-                fragments.add(new AudioFragment(f.text().trim(), f.exaggeration(), f.cfgWeight(), f.temperature()));
+                fragments.add(new AudioFragment(f.text().trim(), f.exaggeration(), f.cfgWeight(),
+                        f.temperature(), parseKind(f.kind())));
             }
             scripts.add(new PageAudioScript(i + 1, List.copyOf(fragments)));
         }
         return List.copyOf(scripts);
+    }
+
+    private AudioFragmentKind parseKind(String kind) {
+        try {
+            return AudioFragmentKind.valueOf(kind.trim().toUpperCase(Locale.ROOT));
+        } catch (IllegalArgumentException e) {
+            throw invalidResponse();
+        }
     }
 
     private AppException invalidResponse() {
@@ -100,6 +112,11 @@ public class SpringAiNarratorAgent implements NarratorAgent {
     public record PageResponse(Integer page, List<FragmentResponse> fragments) {
     }
 
-    public record FragmentResponse(String text, Double exaggeration, Double cfgWeight, Double temperature) {
+    public record FragmentResponse(String text, Double exaggeration, Double cfgWeight, Double temperature,
+            String kind) {
+
+        public FragmentResponse(String text, Double exaggeration, Double cfgWeight, Double temperature) {
+            this(text, exaggeration, cfgWeight, temperature, "NARRATION");
+        }
     }
 }

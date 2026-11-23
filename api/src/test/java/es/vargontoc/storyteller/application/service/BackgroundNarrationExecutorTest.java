@@ -35,6 +35,7 @@ import es.vargontoc.storyteller.application.ports.out.persistence.NarrationRepos
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.application.utils.AudioAssembler;
+import es.vargontoc.storyteller.domain.enums.AudioFragmentKind;
 import es.vargontoc.storyteller.domain.enums.NarrationStatus;
 import es.vargontoc.storyteller.domain.model.AudioFragment;
 import es.vargontoc.storyteller.domain.model.PageAudioScript;
@@ -141,10 +142,12 @@ class BackgroundNarrationExecutorTest {
         assertEquals(BEATS * 2, requests.size());          // dos fragmentos por pagina
         for (int i = 0; i < requests.size(); i++) {
             SpeechSynthesisRequest r = requests.get(i);
+            boolean dialogue = i % 2 == 1;
             assertEquals("es", r.language());
             assertSame(SAMPLE, r.referenceSample());
-            assertEquals(0.5 + (i % 2), r.exaggeration());  // fragmento 1: 0.5, fragmento 2: 1.5
-            assertEquals(0.4, r.cfgWeight());
+            // Perfil de narracion: 0.5 y 0.4 -> 0.5 y 0.45; dialogo: 1.5 -> 1.2 y 0.4.
+            assertEquals(dialogue ? 1.2 : 0.5, r.exaggeration());
+            assertEquals(dialogue ? 0.4 : 0.45, r.cfgWeight());
             assertEquals(0.8, r.temperature());
         }
         // Se envian los textos de todas las paginas, en orden, y ninguno es la portada.
@@ -318,7 +321,8 @@ class BackgroundNarrationExecutorTest {
             if (alterWords && i == 2)
                 second = second + " extra";
             script.add(new PageAudioScript(i + 1, List.of(
-                new AudioFragment(first, 0.5, 0.4, 0.8), new AudioFragment(second, 1.5, 0.4, 0.8))));
+                new AudioFragment(first, 0.5, 0.4, 0.8, AudioFragmentKind.NARRATION),
+                new AudioFragment(second, 1.5, 0.4, 0.8, AudioFragmentKind.DIALOGUE))));
         }
         return script;
     }
