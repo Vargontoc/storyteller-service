@@ -415,6 +415,95 @@ describe('StoryPagesPanel', () => {
     })
   })
 
+  describe('audio y narración en curso', () => {
+    const proposals: PageVersionView[] = [{ id: 200, text: 'Propuesta 1', scene: 'Escena P1', warning: 'NONE', current: true }]
+    const reopened = () =>
+      page({ id: 20, page: 2, proposals, hasAudio: true, actions: ['HINT', 'SELECT_VERSION', 'ACCEPT_PROPOSAL', 'DISCARD_PROPOSALS', 'REGENERATE'] })
+    const confirmation = { storyId: 7, pageId: 20, pageNumber: 2, status: 'ACCEPTED' as const, requiresConfirmation: true, affectedPages: 2 }
+
+    async function openCascade(hasAudio: boolean) {
+      const wrapper = await mountPanel(view({ hasAudio, pages: [reopened()] }))
+      mocked.acceptProposal.mockResolvedValue(confirmation)
+      await buttonByText(wrapper, 'Aceptar propuesta')!.trigger('click')
+      await flushPromises()
+      return wrapper
+    }
+
+    it('con audio el aviso menciona el descarte en cascada y el borrado de todo el audio', async () => {
+      const wrapper = await openCascade(true)
+
+      const text = wrapper.find('[role="alertdialog"]').text()
+      expect(text).toContain('2 páginas posteriores')
+      expect(text).toContain('Se borrará todo el audio de la narración y la voz')
+    })
+
+    it('sin audio el aviso es el de siempre', async () => {
+      const wrapper = await openCascade(false)
+
+      const text = wrapper.find('[role="alertdialog"]').text()
+      expect(text).toContain('2 páginas posteriores')
+      expect(text).not.toContain('audio')
+    })
+
+    it('cancelar con audio no envía ninguna petición más', async () => {
+      const wrapper = await openCascade(true)
+
+      await buttonByText(wrapper, 'Cancelar')!.trigger('click')
+      await flushPromises()
+
+      expect(mocked.acceptProposal).toHaveBeenCalledTimes(1)
+      expect(mocked.acceptProposal).not.toHaveBeenCalledWith(7, 20, true)
+    })
+
+    it('tras confirmar recarga la vista (sin audio ni reproductor) y avisa al padre', async () => {
+      const wrapper = await openCascade(true)
+      mocked.acceptProposal.mockResolvedValue({ ...confirmation, requiresConfirmation: false })
+      mocked.getStoryPagesView.mockResolvedValue(view({ hasAudio: false, pages: [page({ id: 20, page: 2 })] }))
+      const loadsBefore = mocked.getStoryPagesView.mock.calls.length
+
+      await buttonByText(wrapper, 'Aceptar y eliminar')!.trigger('click')
+      await flushPromises()
+
+      expect(mocked.acceptProposal).toHaveBeenLastCalledWith(7, 20, true)
+      expect(mocked.getStoryPagesView.mock.calls.length).toBe(loadsBefore + 1)
+      expect(wrapper.find('.audio').exists()).toBe(false)
+      expect(wrapper.emitted('changed')).toBeTruthy()
+    })
+
+    it('narrando: avisa y deshabilita reabrir, regenerar, versión y aceptar propuesta', async () => {
+      const wrapper = await mountPanel(view({ narrating: true, hasAudio: true, pages: [reopened(), page({ id: 21, page: 3, proposals: [{ ...proposals[0], id: 1, current: false }], actions: ['SELECT_VERSION'] })] }))
+
+      expect(wrapper.find('.narrating').text()).toContain('se está narrando')
+      for (const label of ['Enviar hint', 'Regenerar sin hint', 'Aceptar propuesta', 'Marcar como vigente']) {
+        expect(buttonByText(wrapper, label)!.attributes('disabled')).toBeDefined()
+      }
+    })
+
+    it('sin narración no hay aviso y las acciones están habilitadas', async () => {
+      const wrapper = await mountPanel(view({ pages: [reopened()] }))
+
+      expect(wrapper.find('.narrating').exists()).toBe(false)
+      expect(buttonByText(wrapper, 'Enviar hint')!.attributes('disabled')).toBeUndefined()
+    })
+
+    it('un 409 IN_PROGRESS por carrera muestra el motivo del servidor y recarga', async () => {
+      const wrapper = await mountPanel(view({ pages: [reopened()] }))
+      mocked.acceptProposal.mockRejectedValue(
+        new ApiError('El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas', 409, 'IN_PROGRESS'),
+      )
+      mocked.getStoryPagesView.mockResolvedValue(view({ narrating: true, hasAudio: true, pages: [reopened()] }))
+
+      await buttonByText(wrapper, 'Aceptar propuesta')!.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.error').text()).toContain('se está narrando')
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('.narrating').exists()).toBe(true)
+      expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false)
+      expect(wrapper.emitted('changed')).toBeUndefined()
+    })
+  })
+
   describe('eventos de generación (WebSocket)', () => {
     let eventId = 0
 

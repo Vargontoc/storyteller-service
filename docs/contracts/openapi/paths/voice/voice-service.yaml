@@ -1,0 +1,36 @@
+# Origen: specs/agent-narrator (REQ-013, REQ-014, REQ-015, ALT-010, DEC-005)
+# Estado del contrato: contrastado con el código
+delete:
+  operationId: deleteVoice
+  summary: Borra una voz subida
+  description: |
+    Elimina una voz subida y su audio de referencia de la biblioteca sin modificar las narraciones ya guardadas (que conservan una
+    copia del nombre de la voz). No permite borrar la voz del sistema (identificador reservado "system").
+  tags:
+    - Voices
+  parameters:
+    - name: id
+      in: path
+      required: true
+      description: Identificador numérico de la voz subida, o "system" para la voz del sistema (que será rechazada)
+      schema:
+        type: string
+  responses:
+    "200":
+      description: Voz subida eliminada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/api-void-response.yaml"
+    "404":
+      description: La voz no existe o el identificador no es numérico ni "system". errors[0] contiene VOICE_NOT_FOUND
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: Intento de borrar la voz del sistema ("system", REQ-013). errors[0] contiene SYSTEM_VOICE_NOT_DELETABLE
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

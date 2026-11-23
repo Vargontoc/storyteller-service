@@ -39,6 +39,8 @@ export interface BeatEditResult {
   status: BeatEditStatus
   reason: string | null
   invalidatedPages: number
+  // Solo true en CONFIRMATION_REQUIRED de un cuento con audio; puede faltar.
+  audioWillBeDeleted?: boolean
   story: Story | null
 }
 

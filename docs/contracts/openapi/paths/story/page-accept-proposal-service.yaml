@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-016, REQ-017, REQ-018, REQ-028, REQ-031, REQ-033, REQ-038, REQ-041, ALT-004, ALT-012)
+# Origen: specs/agent-writer (REQ-016, REQ-017, REQ-018, REQ-028, REQ-031, REQ-033, REQ-038, REQ-041, ALT-004, ALT-012), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
 # Estado del contrato: contrastado con el código
 post:
   operationId: acceptStoryPageProposal
@@ -9,6 +9,8 @@ post:
     páginas se eliminarán. Con confirm=true (o sin páginas posteriores), sustituye el contenido aceptado sin imagen (desasociando cualquier
     imagen previa), borra el histórico de propuestas y elimina en cascada las páginas posteriores junto con sus históricos e imágenes,
     sin regenerar nada. Si el cuento estaba en PAGES_ACCEPTED y se eliminan páginas, vuelve a SCRIPT_ACCEPTED.
+    En páginas interiores (página >= 1), se rechaza con 409 (IN_PROGRESS) mientras el cuento se está narrando (ALT-008) y, cuando la
+    propuesta se acepta de forma efectiva en un cuento con audio, borra todos los audios y la voz guardada en la misma operación (ALT-009).
   tags:
     - Storyteller
   parameters:
@@ -49,7 +51,8 @@ post:
     "409":
       description: |
         La página no está en estado ACCEPTED, no tiene propuestas pendientes, no tiene versión vigente, su propuesta vigente tiene aviso
-        de número de frases (REQ-028), o hay una generación en curso de ese cuento (REQ-033)
+        de número de frases (REQ-028), hay una generación en curso de ese cuento (REQ-033), o el cuento se está narrando en una página
+        interior (ALT-008; errors[0] = IN_PROGRESS)
       content:
         application/json:
           schema:

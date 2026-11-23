@@ -1,0 +1,10 @@
+# Origen: specs/agent-narrator (REQ-011, REQ-012)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../voice-library.yaml"
+    required:
+      - data

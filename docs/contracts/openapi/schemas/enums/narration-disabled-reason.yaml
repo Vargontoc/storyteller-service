@@ -1,0 +1,12 @@
+# Origen: specs/agent-narrator (REQ-017, REQ-018, REQ-027)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Motivo por el que narrar o renarrar un cuento no está habilitado (NarrationDisabledReason).
+  - NO_OUTLINE: cuento antiguo sin escaleta; no ofrece narración.
+  - PAGES_NOT_ACCEPTED: alguna página interior de la escaleta aún no está aceptada.
+  - IN_PROGRESS: el cuento se está narrando actualmente.
+enum:
+  - NO_OUTLINE
+  - PAGES_NOT_ACCEPTED
+  - IN_PROGRESS

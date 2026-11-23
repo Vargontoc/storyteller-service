@@ -1,0 +1,15 @@
+# Origen: specs/agent-narrator (REQ-008, DEC-001)
+# Estado del contrato: contrastado con el código
+type: object
+description: Idioma asignable a una voz del catálogo soportado por Chatterbox Multilingual V3 (VoiceLanguage)
+additionalProperties: false
+properties:
+  code:
+    type: string
+    description: Código ISO 639-1 del idioma (p. ej. "es", "en")
+  name:
+    type: string
+    description: Nombre legible del idioma en español
+required:
+  - code
+  - name

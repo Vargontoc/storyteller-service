@@ -21,6 +21,8 @@ tags:
     description: Consulta, listado y borrado de cuentos, personajes y páginas
   - name: CatalogCharacters
     description: Catálogo maestro de protagonistas reutilizables y sus revisiones
+  - name: Voices
+    description: Biblioteca de voces, catálogo de idiomas y voces elegibles para narración
 
 paths:
   /services:
@@ -93,8 +95,21 @@ paths:
     $ref: "./paths/story/page-accept-proposal-service.yaml"
   /storyteller/{storyId}/pages/{id}/proposals/discard:
     $ref: "./paths/story/page-discard-proposals-service.yaml"
+  /storyteller/{storyId}/narration:
+    $ref: "./paths/story/narration-service.yaml"
+  /storyteller/{storyId}/pages/{number}/audio:
+    $ref: "./paths/story/page-audio-service.yaml"
   /storyteller/asset:
     $ref: "./paths/storyteller/asset-service.yaml"
+
+  /voices:
+    $ref: "./paths/voice/voices-service.yaml"
+  /voices/languages:
+    $ref: "./paths/voice/voice-languages-service.yaml"
+  /voices/eligible:
+    $ref: "./paths/voice/voice-eligible-service.yaml"
+  /voices/{id}:
+    $ref: "./paths/voice/voice-service.yaml"
 
   /catalog-characters:
     $ref: "./paths/character/catalog-characters-service.yaml"
@@ -153,3 +168,23 @@ components:
       $ref: "./schemas/version-selected.yaml"
     PageHintRequest:
       $ref: "./schemas/requests/page-hint-request.yaml"
+    VoiceLanguage:
+      $ref: "./schemas/voice-language.yaml"
+    VoiceLanguages:
+      $ref: "./schemas/voice-languages.yaml"
+    VoiceEntry:
+      $ref: "./schemas/voice-entry.yaml"
+    VoiceLibrary:
+      $ref: "./schemas/voice-library.yaml"
+    VoiceRejectionReason:
+      $ref: "./schemas/enums/voice-rejection-reason.yaml"
+    NarrationStatus:
+      $ref: "./schemas/enums/narration-status.yaml"
+    NarrationDisabledReason:
+      $ref: "./schemas/enums/narration-disabled-reason.yaml"
+    NarrationRejectionReason:
+      $ref: "./schemas/enums/narration-rejection-reason.yaml"
+    NarrationState:
+      $ref: "./schemas/narration-state.yaml"
+    StartNarrationRequest:
+      $ref: "./schemas/requests/start-narration-request.yaml"

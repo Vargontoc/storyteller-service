@@ -1,0 +1,16 @@
+# Origen: specs/agent-narrator (REQ-008, DEC-001)
+# Estado del contrato: contrastado con el código
+type: object
+description: Catálogo fijo de idiomas asignables a una voz y el idioma por defecto (VoiceLanguagesResponse)
+additionalProperties: false
+properties:
+  languages:
+    type: array
+    description: Lista fija de idiomas admitidos por Chatterbox Multilingual V3
+    items:
+      $ref: "./voice-language.yaml"
+  defaultLanguage:
+    $ref: "./voice-language.yaml"
+required:
+  - languages
+  - defaultLanguage

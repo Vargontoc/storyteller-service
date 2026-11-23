@@ -1,0 +1,72 @@
+# Origen: specs/agent-narrator (REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, ALT-001, ALT-002, DEC-001, DEC-005)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getVoiceLibrary
+  summary: Lista la biblioteca de voces
+  description: |
+    Devuelve la biblioteca completa de voces: la voz del sistema en primera posición (si está configurada y su audio de referencia
+    es válido) seguida de las voces subidas con su nombre, idioma y marca de sistema. Incluye también la disponibilidad de la voz del
+    sistema, el motivo si no está disponible (ALT-002) y si su nombre coincide con el de una voz subida.
+  tags:
+    - Voices
+  responses:
+    "200":
+      description: Biblioteca de voces obtenida correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/voice-library-response.yaml"
+post:
+  operationId: uploadVoice
+  summary: Sube una nueva voz con audio de referencia
+  description: |
+    Valida y registra una nueva voz subida junto con su audio de referencia. Exige nombre único (distingue mayúsculas/minúsculas y no
+    puede coincidir con la voz del sistema), idioma perteneciente al catálogo fijo, declaración de permiso marcada (true) y un fichero
+    de audio real WAV o MP3 con duración entre 5 y 30 segundos (ambos incluidos). Si cualquier validación falla, no guarda ni la voz ni
+    el audio y devuelve en errors[0] el código estable de VoiceRejectionReason (ALT-001).
+  tags:
+    - Voices
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: Fichero de audio de referencia (solo WAV o MP3, duración entre 5 y 30 segundos)
+            name:
+              type: string
+              description: Nombre único para la voz
+            language:
+              type: string
+              description: Código ISO 639-1 del idioma asignado, perteneciente al catálogo fijo
+            permission:
+              type: boolean
+              default: false
+              description: Declaración explícita de que se tiene permiso para usar esa voz (debe ser true)
+  responses:
+    "201":
+      description: Voz registrada correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/voice-entry-response.yaml"
+    "400":
+      description: |
+        Solicitud rechazada por validación (ALT-001). errors[0] contiene el motivo estable (VoiceRejectionReason):
+        NAME_REQUIRED, LANGUAGE_REQUIRED, PERMISSION_REQUIRED, INVALID_FORMAT o INVALID_DURATION
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        El nombre ya existe en otra voz subida o coincide con el de la voz del sistema (ALT-001).
+        errors[0] contiene NAME_DUPLICATED
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

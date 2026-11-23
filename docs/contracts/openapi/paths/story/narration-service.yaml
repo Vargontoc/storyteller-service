@@ -1,0 +1,84 @@
+# Origen: specs/agent-narrator (REQ-016, REQ-017, REQ-018, REQ-020, REQ-021, REQ-022, REQ-026, REQ-027, REQ-029, REQ-031, ALT-003, ALT-004, ALT-005, DEC-003, DEC-004)
+# Estado del contrato: contrastado con el código
+post:
+  operationId: startStoryNarration
+  summary: Inicia o renarra de forma asíncrona un cuento con escaleta
+  description: |
+    Valida que el cuento tenga escaleta, todas sus páginas interiores (1..beats) aceptadas, no se esté narrando ya y la voz indicada
+    sea elegible en español ("system" o id numérico de una voz subida en español). Después solicita el turno único en generation-gate;
+    si se concede, descarta el audio y la voz anteriores si existían, marca la narración en curso, notifica STARTED por WebSocket en
+    /storyteller y lanza la narración en segundo plano. El resultado final (COMPLETED con voiceName o FAILED) llega por WebSocket.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: "../../schemas/requests/start-narration-request.yaml"
+  responses:
+    "202":
+      description: Turno concedido y narración iniciada en segundo plano (narrating=true, lastResult=IN_PROGRESS)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/narration-state-response.yaml"
+    "400":
+      description: voiceId ausente, vacío o con formato distinto de id numérico o "system"
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        Narración rechazada sin modificar el audio previo ni pedir turno (salvo si el turno estaba ocupado).
+        errors[0] contiene el código estable de NarrationRejectionReason: NO_OUTLINE, PAGES_NOT_ACCEPTED, IN_PROGRESS,
+        NO_VOICES_AVAILABLE (ALT-003), VOICE_NOT_AVAILABLE (ALT-005) o GENERATION_IN_PROGRESS (ALT-004)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+get:
+  operationId: getStoryNarrationState
+  summary: Consulta el estado de narración de un cuento
+  description: |
+    Calcula y devuelve el estado de narración a partir del estado actual de las páginas interiores del cuento (la portada no bloquea).
+    Indica si el cuento tiene escaleta, si narrar está habilitado (y disabledReason en caso contrario), si hay narración en curso, si
+    tiene audio publicado, la copia del nombre de la voz usada y el resultado del último intento.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Estado de narración obtenido correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/narration-state-response.yaml"
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

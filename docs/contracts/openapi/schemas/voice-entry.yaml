@@ -1,0 +1,24 @@
+# Origen: specs/agent-narrator (REQ-008, REQ-011, REQ-012, REQ-020, DEC-005)
+# Estado del contrato: contrastado con el código
+type: object
+description: Entrada de voz en la biblioteca o en la lista de voces elegibles (VoiceEntry)
+additionalProperties: false
+properties:
+  id:
+    type: integer
+    format: int64
+    nullable: true
+    description: Identificador numérico de una voz subida; nulo en la voz del sistema
+  name:
+    type: string
+    description: Nombre único de la voz
+  language:
+    type: string
+    description: Código ISO 639-1 del idioma de la voz ("es" en la voz del sistema)
+  system:
+    type: boolean
+    description: Indica si corresponde a la voz del sistema configurada en la instalación
+required:
+  - name
+  - language
+  - system

@@ -122,6 +122,30 @@ import StoryPagesPanel from './components/StoryPagesPanel.vue'
 </template>
 ```
 
+## story-pages-panel: aviso de borrado de audio y bloqueo durante la narración
+
+**Ruta:** `app/src/components/StoryPagesPanel.vue` (y `StoryModal.vue` para la recarga del panel de narración)
+**Para qué sirve:** (1) el aviso de confirmación del descarte en cascada al aceptar una propuesta reabierta añade «Se borrará todo el audio de la narración y la voz» solo si `view.hasAudio`; sin audio el aviso es el de siempre y cancelar no envía ninguna petición. (2) Con `view.narrating` el panel muestra «El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas» y deshabilita enviar hint (reabrir), regenerar, marcar versión vigente y aceptar propuesta; aceptar una página y descartar propuestas no se bloquean. Si aun así llega un 409 `IN_PROGRESS` por carrera, se muestra el motivo del servidor y se recarga la vista sin dar la acción por hecha. (3) No hay audio optimista: tras confirmar se recarga la vista REST (el reproductor desaparece) y el panel emite `changed`; `StoryModal` lo usa para volver a montar `StoryNarrationPanel` (clave `narration-<id>-<rev>`), que así relee su estado y muestra la narración deshabilitada hasta reaceptar las páginas, ya que el borrado del audio no genera un evento de narración.
+
+```vue
+<template>
+  <story-narration-panel :key="`narration-${storyId}-${narrationRev}`" :story-id="storyId" />
+  <story-pages-panel :story-id="storyId" @changed="narrationRev++" />
+</template>
+```
+
+## story-script-panel: aviso de borrado de audio al editar un beat
+
+**Ruta:** `app/src/components/StoryScriptPanel.vue` (tipo `BeatEditResult.audioWillBeDeleted` en `app/src/api/storyScript.ts`; `StoryModal.vue` para el refresco de la narración)
+**Para qué sirve:** la edición de un beat que invalida páginas sigue en dos pasos (primera petición, aviso, confirmación). Si el servidor responde `CONFIRMATION_REQUIRED` con `audioWillBeDeleted` verdadero, el aviso añade «Se borrará todo el audio de la narración y la voz»; si es falso o falta, el aviso es el de siempre (nunca se deduce del estado local). Si al confirmar el servidor responde 409 `IN_PROGRESS` (el cuento se está narrando), se muestra su motivo en el formulario del beat sin recargar ni emitir `changed`. Tras confirmar con éxito se recarga el guion y se emite `changed`; `StoryModal` lo usa para volver a montar `StoryNarrationPanel` (clave `narration-<id>-<rev>`), que así muestra el cuento sin audio ni voz.
+
+```vue
+<template>
+  <story-narration-panel :key="`narration-${storyId}-${narrationRev}`" :story-id="storyId" />
+  <story-script-panel :story-id="storyId" @changed="narrationRev++" />
+</template>
+```
+
 ## voice-library-view: vista de la biblioteca de voces
 
 **Ruta:** `app/src/views/VoiceLibraryView.vue`

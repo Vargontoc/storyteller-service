@@ -1,0 +1,22 @@
+# Origen: specs/agent-narrator (REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-013, REQ-014, ALT-001)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Causa estable del rechazo en operaciones de la biblioteca de voces (VoiceRejectionReason), devuelta en errors[0] de ApiResponse.
+  - NAME_REQUIRED: falta el nombre de la voz o está en blanco (400).
+  - LANGUAGE_REQUIRED: falta el idioma o no pertenece al catálogo fijo (400).
+  - PERMISSION_REQUIRED: no se ha marcado la declaración de permiso de uso (400).
+  - NAME_DUPLICATED: ya existe una voz subida con ese nombre o coincide con el nombre de la voz del sistema (409).
+  - INVALID_FORMAT: el fichero falta, está vacío o su formato real no es WAV ni MP3 (400).
+  - INVALID_DURATION: la duración del audio es inferior a 5 segundos o superior a 30 segundos (400).
+  - SYSTEM_VOICE_NOT_DELETABLE: intento de borrar la voz del sistema mediante el identificador reservado "system" (409).
+  - VOICE_NOT_FOUND: la voz indicada no existe o el identificador no es numérico ni "system" (404).
+enum:
+  - NAME_REQUIRED
+  - LANGUAGE_REQUIRED
+  - PERMISSION_REQUIRED
+  - NAME_DUPLICATED
+  - INVALID_FORMAT
+  - INVALID_DURATION
+  - SYSTEM_VOICE_NOT_DELETABLE
+  - VOICE_NOT_FOUND

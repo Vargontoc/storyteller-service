@@ -1,0 +1,42 @@
+# Origen: specs/agent-narrator (REQ-017, REQ-018, REQ-027, REQ-029, DEC-007)
+# Estado del contrato: contrastado con el código
+type: object
+description: Estado de narración de un cuento calculado a partir de sus páginas interiores actuales (NarrationState)
+additionalProperties: false
+properties:
+  storyId:
+    type: integer
+    format: int64
+    description: Identificador del cuento
+  hasOutline:
+    type: boolean
+    description: Indica si el cuento tiene escaleta (false en cuentos antiguos, que no ofrecen narración)
+  canNarrate:
+    type: boolean
+    description: Indica si narrar o renarrar está habilitado en este momento
+  disabledReason:
+    allOf:
+      - $ref: "./enums/narration-disabled-reason.yaml"
+    nullable: true
+    description: Motivo por el que narrar está deshabilitado; nulo si canNarrate es true
+  narrating:
+    type: boolean
+    description: Indica si hay una narración en curso actualmente
+  hasAudio:
+    type: boolean
+    description: Indica si el cuento tiene audio narrado publicado
+  voiceName:
+    type: string
+    nullable: true
+    description: Copia del nombre de la voz con la que se narró; nulo si no hay audio publicado
+  lastResult:
+    allOf:
+      - $ref: "./enums/narration-status.yaml"
+    nullable: true
+    description: Resultado del último intento de narración (IN_PROGRESS, COMPLETED o ERROR); nulo si nunca se intentó narrar
+required:
+  - storyId
+  - hasOutline
+  - canNarrate
+  - narrating
+  - hasAudio

@@ -525,7 +525,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   2. Ir a la portada: no hay reproductor.
   3. Borrar en la biblioteca la voz con la que se narró y volver al cuento: el audio de cada página se sigue reproduciendo y el cuento sigue indicando el nombre de la voz.
 
-### [ ] TASK-034 Aviso de borrado de audio y bloqueo de páginas durante la narración
+### [x] TASK-034 Aviso de borrado de audio y bloqueo de páginas durante la narración
 
 - **Cubre:** REQ-027, REQ-033, REQ-034, ALT-008, ALT-009
 - **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
@@ -543,7 +543,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   3. Volver a aceptar las páginas 5 a 8: narrar vuelve a estar habilitado.
   4. Durante una narración, intentar reabrir una página: se impide con el aviso de narración en curso.
 
-### [ ] TASK-035 Aviso de borrado de audio al editar un beat
+### [x] TASK-035 Aviso de borrado de audio al editar un beat
 
 - **Cubre:** REQ-033, ALT-008, ALT-009
 - **Componente:** story-script-panel | app/src/components/StoryScriptPanel.vue
@@ -557,7 +557,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. En un cuento narrado, editar un beat que invalida páginas: el aviso indica que se borrará el audio. Confirmar: el cuento queda sin audio ni voz.
 
-### [ ] TASK-036 Contrato: openapi - operaciones de la biblioteca de voces
+### [x] TASK-036 Contrato: openapi - operaciones de la biblioteca de voces
 
 - **Cubre:** REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-020, DEC-001, DEC-005
 - **Componente:** voice-library-service | por definir (analista técnico). Contrato en `docs/contracts/openapi/paths/voice/`, con el nombre del fichero por definir (analista técnico).
@@ -570,7 +570,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que cada operación de la biblioteca aparece en el contrato y coincide con la implementación.
 
-### [ ] TASK-037 Contrato: openapi - operaciones de narración
+### [x] TASK-037 Contrato: openapi - operaciones de narración
 
 - **Cubre:** REQ-016, REQ-017, REQ-018, REQ-020, REQ-021, REQ-022, REQ-026, REQ-029, REQ-030, REQ-031, DEC-003, DEC-004
 - **Componente:** story-narration-service | por definir (analista técnico). Contrato en `docs/contracts/openapi/paths/story/`, con el nombre del fichero por definir (analista técnico).
@@ -583,7 +583,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que cada operación de narración aparece en el contrato y coincide con la implementación.
 
-### [ ] TASK-038 Contrato: openapi - esquemas de voz, biblioteca, idioma y narración
+### [x] TASK-038 Contrato: openapi - esquemas de voz, biblioteca, idioma y narración
 
 - **Cubre:** REQ-008, REQ-011, REQ-018, REQ-027, REQ-029, DEC-001, DEC-005
 - **Componente:** voice-library-service | por definir (analista técnico) y story-narration-service | por definir (analista técnico). Contrato en `docs/contracts/openapi/schemas/`, con los nombres de los ficheros por definir (analista técnico).
@@ -596,7 +596,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que cada campo devuelto por las operaciones de voz y narración aparece en los esquemas.
 
-### [ ] TASK-039 Contrato: openapi - audio y narración en la vista de páginas
+### [x] TASK-039 Contrato: openapi - audio y narración en la vista de páginas
 
 - **Cubre:** REQ-027, REQ-030, REQ-033
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato en `docs/contracts/openapi/schemas/story-pages-view.yaml` y `docs/contracts/openapi/schemas/page-detail.yaml`.
@@ -608,7 +608,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que los tres datos nuevos aparecen en los esquemas y coinciden con la respuesta real.
 
-### [ ] TASK-040 Contrato: openapi - borrado de audio y rechazo por narración en páginas y beats
+### [x] TASK-040 Contrato: openapi - borrado de audio y rechazo por narración en páginas y beats
 
 - **Cubre:** REQ-027, REQ-033, REQ-034, DEC-007
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato en `docs/contracts/openapi/paths/story/` (ficheros de reapertura y cambio de página, por definir (analista técnico)) y `docs/contracts/openapi/paths/story/beat-edit-service.yaml`.
@@ -621,7 +621,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que las operaciones de reapertura, cambio de página y edición de beat describen el borrado del audio y el rechazo, y que coinciden con la implementación.
 
-### [ ] TASK-041 Contrato: openapi - registro de las operaciones de voces y narración
+### [x] TASK-041 Contrato: openapi - registro de las operaciones de voces y narración
 
 - **Cubre:** REQ-011, REQ-026, REQ-030
 - **Componente:** voice-library-service | por definir (analista técnico) y story-narration-service | por definir (analista técnico). Contrato en `docs/contracts/openapi/openapi.yaml`.
@@ -633,7 +633,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
 - **Prueba manual:**
   1. Comprobar que cada operación nueva de voces y de narración aparece registrada en `openapi.yaml`.
 
-### [ ] TASK-042 Contrato: websocket - eventos de narración
+### [x] TASK-042 Contrato: websocket - eventos de narración
 
 - **Cubre:** REQ-027, REQ-028, REQ-029, DEC-004
 - **Componente:** websocket-adapter | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/websocket/WebsocketAdapter.java. Contrato en `docs/contracts/websocket/websocket.md`.

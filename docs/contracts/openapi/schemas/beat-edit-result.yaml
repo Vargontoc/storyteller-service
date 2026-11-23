@@ -1,4 +1,4 @@
-# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005)
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005), specs/agent-narrator (REQ-033, ALT-009)
 # Estado del contrato: contrastado con el código
 type: object
 description: Resultado de la edición directa de un beat
@@ -18,6 +18,10 @@ properties:
     description: Cuento resultante (guion en SCRIPT_PENDING); solo con APPLIED
     allOf:
       - $ref: "./story.yaml"
+  audioWillBeDeleted:
+    type: boolean
+    description: Indica si al confirmar la invalidación se borrará también el audio narrado del cuento (true solo en CONFIRMATION_REQUIRED cuando el cuento tiene audio)
 required:
   - status
   - invalidatedPages
+  - audioWillBeDeleted

@@ -1,0 +1,39 @@
+# Origen: specs/agent-narrator (REQ-015, REQ-026, REQ-030)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getStoryPageAudio
+  summary: Descarga el audio narrado de una página interior
+  description: |
+    Devuelve en formato WAV los bytes del audio narrado publicado para la página interior indicada (number >= 1).
+    La portada (number = 0) nunca tiene audio. Mientras hay una narración en curso o tras un error tampoco existe audio publicado.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: number
+      in: path
+      required: true
+      description: Número de página interior (desde 1)
+      schema:
+        type: integer
+        minimum: 1
+  responses:
+    "200":
+      description: Audio WAV narrado de la página interior
+      content:
+        audio/wav:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: El cuento o la página no tiene audio publicado, o se solicitó la portada (number < 1)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"

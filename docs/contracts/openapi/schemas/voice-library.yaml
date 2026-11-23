@@ -1,0 +1,29 @@
+# Origen: specs/agent-narrator (REQ-011, REQ-012, ALT-002, DEC-005)
+# Estado del contrato: contrastado con el código
+type: object
+description: Biblioteca completa de voces con la voz del sistema (si está disponible) y las voces subidas (VoiceLibrary)
+additionalProperties: false
+properties:
+  voices:
+    type: array
+    description: Voz del sistema en primera posición (solo si systemVoiceAvailable es true) seguida de las voces subidas
+    items:
+      $ref: "./voice-entry.yaml"
+  systemVoiceName:
+    type: string
+    nullable: true
+    description: Nombre configurado para la voz del sistema; nulo si no está configurado
+  systemVoiceAvailable:
+    type: boolean
+    description: Indica si la voz del sistema está configurada y su audio de referencia es válido
+  systemVoiceUnavailableReason:
+    type: string
+    nullable: true
+    description: Motivo por el que la voz del sistema no está disponible; nulo si lo está
+  systemVoiceNameCollision:
+    type: boolean
+    description: Indica si al arrancar el nombre de la voz del sistema coincidía con el de una voz subida
+required:
+  - voices
+  - systemVoiceAvailable
+  - systemVoiceNameCollision

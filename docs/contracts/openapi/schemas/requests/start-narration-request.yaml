@@ -1,0 +1,11 @@
+# Origen: specs/agent-narrator (REQ-019, REQ-021, REQ-031)
+# Estado del contrato: contrastado con el código
+type: object
+description: Solicitud para iniciar o renarrar un cuento con una voz elegible (StartNarrationRequestDto)
+additionalProperties: false
+properties:
+  voiceId:
+    type: string
+    description: Identificador numérico (en texto) de una voz subida en español, o "system" para la voz del sistema
+required:
+  - voiceId

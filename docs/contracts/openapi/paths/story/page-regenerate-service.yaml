@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-029, REQ-032, REQ-034, DEC-003, ALT-003, ALT-010)
+# Origen: specs/agent-writer (REQ-029, REQ-032, REQ-034, DEC-003, ALT-003, ALT-010), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
 # Estado del contrato: contrastado con el código
 post:
   operationId: regenerateStoryPage
@@ -7,6 +7,8 @@ post:
     Solo permitido cuando la página está PENDING y su versión vigente tiene aviso de número de frases (SENTENCE_COUNT o BOTH).
     Pide turno a generation-gate; al concederlo responde 202 con GenerationStarted. El resultado se añade al histórico como vigente
     y llega por WebSocket en /storyteller (STARTED, VERSION_PRESENTED o FAILED).
+    Si es una página interior (página >= 1), se rechaza con 409 (IN_PROGRESS) mientras el cuento se está narrando (ALT-008) y,
+    cuando el lanzamiento tiene éxito en un cuento con audio, borra todos los audios y la voz guardada del cuento (ALT-009).
   tags:
     - Storyteller
   parameters:
@@ -40,7 +42,8 @@ post:
     "409":
       description: |
         La página no está PENDING, no tiene versión vigente, su versión vigente no tiene aviso de número de frases (REQ-029),
-        no tiene beat en la escaleta, o hay una generación en curso en la aplicación (REQ-032)
+        no tiene beat en la escaleta, hay una generación en curso en la aplicación (REQ-032), o el cuento se está narrando en
+        una página interior (ALT-008; errors[0] = IN_PROGRESS)
       content:
         application/json:
           schema:

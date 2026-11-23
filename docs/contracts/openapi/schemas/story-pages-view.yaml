@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-021, REQ-022, REQ-032, DEC-003)
+# Origen: specs/agent-writer (REQ-021, REQ-022, REQ-032, DEC-003), specs/agent-narrator (REQ-027, REQ-030, REQ-033)
 # Estado del contrato: contrastado con el código
 type: object
 description: |
@@ -13,11 +13,17 @@ properties:
     $ref: "./enums/story-status.yaml"
   generating:
     type: boolean
-    description: Indica si el cuento tiene una generación en curso (en cuyo caso nextPage es nulo y actions va vacío)
+    description: Indica si el cuento tiene una generación en curso (incluida la narración; en cuyo caso nextPage es nulo y actions va vacío)
   nextPage:
     type: integer
     nullable: true
     description: Siguiente generación permitida ahora (0 = portada, N = página N) o nulo si hay algo pendiente, el cuento está completo, el guion no está aprobado o hay generación en curso
+  hasAudio:
+    type: boolean
+    description: Indica si el cuento tiene audio narrado publicado
+  narrating:
+    type: boolean
+    description: Indica si el cuento se está narrando en curso
   pages:
     type: array
     description: Portada y páginas existentes ordenadas por número de página
@@ -27,4 +33,6 @@ required:
   - storyId
   - status
   - generating
+  - hasAudio
+  - narrating
   - pages

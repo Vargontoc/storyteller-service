@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-005, REQ-011, REQ-021, REQ-022, REQ-038, REQ-040, DEC-001, DEC-010, DEC-012)
+# Origen: specs/agent-writer (REQ-005, REQ-011, REQ-021, REQ-022, REQ-038, REQ-040, DEC-001, DEC-010, DEC-012), specs/agent-narrator (REQ-027, REQ-030, REQ-033)
 # Estado del contrato: contrastado con el código
 type: object
 description: |
@@ -47,6 +47,9 @@ properties:
     description: Acciones disponibles calculadas por el servidor (vacío si hay generación en curso del cuento)
     items:
       $ref: "./enums/page-action.yaml"
+  hasAudio:
+    type: boolean
+    description: Indica si la página interior tiene audio narrado publicado (siempre false en la portada, page = 0)
 required:
   - id
   - page
@@ -54,3 +57,4 @@ required:
   - versions
   - proposals
   - actions
+  - hasAudio

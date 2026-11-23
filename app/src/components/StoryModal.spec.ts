@@ -100,6 +100,18 @@ describe('StoryModal: pestaña de páginas', () => {
     expect(wrapper.findAllComponents(StoryNarrationPanel)).toHaveLength(1)
   })
 
+  it('un cambio en las páginas vuelve a montar el panel de narración para releer su estado', async () => {
+    const wrapper = await openModal(script({ scriptVersion: 2 }))
+    await openTab(wrapper, 'Páginas')
+    const before = wrapper.findComponent(StoryNarrationPanel).vm
+
+    wrapper.findComponent(StoryPagesPanel).vm.$emit('changed')
+    await flushPromises()
+
+    expect(wrapper.findAllComponents(StoryNarrationPanel)).toHaveLength(1)
+    expect(wrapper.findComponent(StoryNarrationPanel).vm).not.toBe(before)
+  })
+
   it('cuento antiguo no muestra el panel de narración y conserva su vista', async () => {
     const wrapper = await openModal(script({ scriptVersion: null }), [{ page: 0 }, { page: 1 }])
     await openTab(wrapper, 'Páginas')

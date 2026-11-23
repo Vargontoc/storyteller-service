@@ -1,0 +1,19 @@
+# Origen: specs/agent-narrator (REQ-017, REQ-018, REQ-020, REQ-021, REQ-022, REQ-027, ALT-003, ALT-004, ALT-005, ALT-008)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Causa estable por la que se rechaza con 409 una operación de narración o una mutación de página/beat durante la narración
+  (NarrationRejectionReason), devuelta en errors[0] de ApiResponse.
+  - NO_OUTLINE: cuento antiguo sin escaleta.
+  - PAGES_NOT_ACCEPTED: alguna página interior no está aceptada.
+  - IN_PROGRESS: el cuento se está narrando en curso.
+  - VOICE_NOT_AVAILABLE: la voz elegida no es elegible (borrada, idioma distinto de español o voz del sistema no disponible).
+  - NO_VOICES_AVAILABLE: no hay ninguna voz elegible en español.
+  - GENERATION_IN_PROGRESS: otra generación tiene el turno único de generation-gate.
+enum:
+  - NO_OUTLINE
+  - PAGES_NOT_ACCEPTED
+  - IN_PROGRESS
+  - VOICE_NOT_AVAILABLE
+  - NO_VOICES_AVAILABLE
+  - GENERATION_IN_PROGRESS

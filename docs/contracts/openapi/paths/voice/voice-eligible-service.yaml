@@ -1,0 +1,17 @@
+# Origen: specs/agent-narrator (REQ-016, REQ-019, REQ-020, ALT-002, DEC-001)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getEligibleVoices
+  summary: Lista las voces elegibles para narrar
+  description: |
+    Devuelve únicamente las voces que pueden elegirse para narrar un cuento en español: la voz del sistema en primera posición (si
+    está disponible) y las voces subidas no borradas cuyo idioma sea español ("es").
+  tags:
+    - Voices
+  responses:
+    "200":
+      description: Listado de voces elegibles para narrar
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/voice-entry-list-response.yaml"

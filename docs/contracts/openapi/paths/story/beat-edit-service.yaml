@@ -1,4 +1,4 @@
-# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004), specs/agent-writer (REQ-032, DEC-002, DEC-008)
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004), specs/agent-writer (REQ-032, DEC-002, DEC-008), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
 # Estado del contrato: contrastado con el código
 put:
   operationId: editStoryBeat
@@ -6,10 +6,12 @@ put:
   description: |
     Sustituye el beat de la página indicada (página 1 = primer beat). El director solo valida las reglas de edad:
     si rechaza el texto responde 200 con status REJECTED y reason, y el beat no cambia. Si el texto es válido y
-    el cuento tiene páginas generadas, responde 200 con CONFIRMATION_REQUIRED e invalidatedPages sin aplicar nada;
-    repetir la petición con confirmInvalidation=true elimina las páginas (portada incluida) y aplica la edición, y
-    con confirmInvalidation=false responde CANCELLED sin efectos ni consulta al director. Sin páginas generadas
-    aplica directamente. Al aplicarse, el guion vuelve a SCRIPT_PENDING y el reparto ligero se conserva.
+    el cuento tiene páginas generadas, responde 200 con CONFIRMATION_REQUIRED, invalidatedPages y audioWillBeDeleted
+    (true si el cuento tiene audio narrado publicado) sin aplicar nada; repetir la petición con confirmInvalidation=true
+    elimina las páginas (portada incluida), borra todo el audio narrado y la voz guardada si existían, y aplica la
+    edición. Con confirmInvalidation=false responde CANCELLED sin efectos ni consulta al director. Sin páginas
+    generadas aplica directamente. Si el cuento tiene páginas generadas y se está narrando en curso, rechaza con 409
+    (errors[0] = IN_PROGRESS, ALT-008). Al aplicarse, el guion vuelve a SCRIPT_PENDING y el reparto ligero se conserva.
   tags:
     - Generators
   parameters:
@@ -53,7 +55,7 @@ put:
           schema:
             $ref: "../../schemas/api-response.yaml"
     "409":
-      description: El cuento es anterior a la escaleta y no admite edición de beats, o hay una generación en curso en la aplicación (REQ-032)
+      description: El cuento es anterior a la escaleta y no admite edición de beats, hay una generación en curso en la aplicación (REQ-032), o el cuento tiene páginas y se está narrando (ALT-008; errors[0] = IN_PROGRESS)
       content:
         application/json:
           schema:

@@ -86,7 +86,7 @@
   <ConfirmModal
     :open="invalidationPages !== null"
     title="Páginas afectadas"
-    :message="`Editar este beat eliminará ${invalidationPages} página(s) ya generadas. ¿Continuar?`"
+    :message="invalidationMessage"
     confirm-label="Editar y eliminar páginas"
     danger
     @confirm="resolveInvalidation(true)"
@@ -153,6 +153,14 @@ const editError = ref<string | null>(null)
 const form = reactive({ event: '', narrativeFunction: '', participants: '', tone: '', visualNote: '' })
 // Páginas que el servidor avisa que se eliminarán; null = sin aviso abierto.
 const invalidationPages = ref<number | null>(null)
+// Lo informa el servidor; no se deduce del estado local.
+const audioWillBeDeleted = ref(false)
+
+const invalidationMessage = computed(() => {
+  const base = `Editar este beat eliminará ${invalidationPages.value} página(s) ya generadas.`
+  const audio = audioWillBeDeleted.value ? ' Se borrará todo el audio de la narración y la voz.' : ''
+  return `${base}${audio} ¿Continuar?`
+})
 
 const sortedBeats = computed(() => [...(script.value?.beats ?? [])].sort((a, b) => a.page - b.page))
 
@@ -242,6 +250,7 @@ async function handleEditResult(result: Awaited<ReturnType<typeof editStoryBeat>
   if (result.status === 'REJECTED') {
     editError.value = result.reason ?? 'La edición no cumple las reglas de edad.'
   } else if (result.status === 'CONFIRMATION_REQUIRED') {
+    audioWillBeDeleted.value = result.audioWillBeDeleted === true
     invalidationPages.value = result.invalidatedPages
   } else if (result.status === 'APPLIED') {
     cancelEdit()

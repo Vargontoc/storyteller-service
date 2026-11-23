@@ -1,0 +1,17 @@
+# Origen: specs/agent-narrator (REQ-008, DEC-001)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: getVoiceLanguages
+  summary: Lista el catálogo fijo de idiomas de voz
+  description: |
+    Devuelve la lista fija de idiomas que admite Chatterbox Multilingual V3 para asignar a una voz subida, junto con el idioma
+    por defecto (español, código "es").
+  tags:
+    - Voices
+  responses:
+    "200":
+      description: Catálogo de idiomas obtenido correctamente
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/voice-languages-response.yaml"

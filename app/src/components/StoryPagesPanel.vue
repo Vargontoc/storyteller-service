@@ -7,6 +7,9 @@
     <p v-else-if="operation !== null" class="info operation">
       Generando {{ operation === 0 ? 'la portada' : `la página ${operation}` }}...
     </p>
+    <p v-if="view.narrating" class="info narrating">
+      El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas.
+    </p>
     <p v-if="actionError" class="error">{{ actionError }}</p>
     <p v-if="eventError" class="error event-error">{{ eventError }}</p>
 
@@ -41,7 +44,7 @@
             v-if="!version.current && page.actions.includes('SELECT_VERSION')"
             type="button"
             class="btn"
-            :disabled="busy"
+            :disabled="locked"
             @click="select(page.id, version.id)"
           >
             Marcar como vigente
@@ -58,7 +61,7 @@
       </div>
 
       <div v-if="page.actions.includes('ACCEPT_PROPOSAL') || page.actions.includes('DISCARD_PROPOSALS')" class="row">
-        <button v-if="page.actions.includes('ACCEPT_PROPOSAL')" type="button" class="btn" :disabled="busy" @click="acceptReopened(page.id)">
+        <button v-if="page.actions.includes('ACCEPT_PROPOSAL')" type="button" class="btn" :disabled="locked" @click="acceptReopened(page.id)">
           Aceptar propuesta
         </button>
         <button v-if="page.actions.includes('DISCARD_PROPOSALS')" type="button" class="btn" :disabled="busy" @click="discard(page.id)">
@@ -68,14 +71,14 @@
 
       <div v-if="page.actions.includes('ACCEPT') || page.actions.includes('REGENERATE')" class="row">
         <button v-if="page.actions.includes('ACCEPT')" type="button" class="btn" :disabled="busy" @click="accept(page.id)">Aceptar</button>
-        <button v-if="page.actions.includes('REGENERATE')" type="button" class="btn" :disabled="busy" @click="regeneratePage(page.id)">
+        <button v-if="page.actions.includes('REGENERATE')" type="button" class="btn" :disabled="locked" @click="regeneratePage(page.id)">
           Regenerar sin hint
         </button>
       </div>
 
       <div v-if="page.actions.includes('HINT')">
         <textarea v-model="hints[page.id]" rows="2" placeholder="Qué quieres cambiar" />
-        <button type="button" class="btn" :disabled="busy" @click="hint(page.id)">Enviar hint</button>
+        <button type="button" class="btn" :disabled="locked" @click="hint(page.id)">Enviar hint</button>
         <p v-if="hintErrors[page.id]" class="error">{{ hintErrors[page.id] }}</p>
       </div>
     </section>
@@ -133,8 +136,15 @@ const images = reactive<Record<number, string>>({})
 const cascade = ref<{ pageId: number; affectedPages: number } | null>(null)
 const cascadeMessage = computed(() => {
   const n = cascade.value?.affectedPages ?? 0
-  return `Se eliminará${n === 1 ? '' : 'n'} ${n} página${n === 1 ? '' : 's'} posterior${n === 1 ? '' : 'es'}. ¿Continuar?`
+  const audioNotice = view.value?.hasAudio ? ' Se borrará todo el audio de la narración y la voz.' : ''
+  return `Se eliminará${n === 1 ? '' : 'n'} ${n} página${n === 1 ? '' : 's'} posterior${n === 1 ? '' : 'es'}.${audioNotice} ¿Continuar?`
 })
+
+// Mientras se narra, el servidor rechaza reabrir, regenerar, cambiar versión y aceptar propuesta.
+const locked = computed(() => busy.value || view.value?.narrating === true)
+
+// Tras una mutación completada el padre puede recargar otros paneles (p. ej. el de narración, que no recibe evento al borrarse el audio).
+const emit = defineEmits<{ changed: [] }>()
 
 const statusLabel = computed(() => {
   if (view.value?.status === 'PAGES_ACCEPTED') return 'Cuento completo'
@@ -222,8 +232,11 @@ async function mutate(action: () => Promise<unknown>) {
   try {
     await action()
     await load()
+    emit('changed')
   } catch (err) {
     actionError.value = messageOf(err)
+    // Carrera: la narración empezó tras cargar la vista; se muestra el motivo y se relee el estado real.
+    if (err instanceof ApiError && err.status === 409 && err.code === 'IN_PROGRESS') await load()
   } finally {
     busy.value = false
   }

@@ -1,0 +1,12 @@
+# Origen: specs/agent-narrator (REQ-027, REQ-028, REQ-029)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Estado de la narración de un cuento (NarrationStatus).
+  - IN_PROGRESS: narración en curso.
+  - COMPLETED: narración completada con audio publicado en todas las páginas interiores.
+  - ERROR: último intento fallido (sin audio publicado).
+enum:
+  - IN_PROGRESS
+  - COMPLETED
+  - ERROR

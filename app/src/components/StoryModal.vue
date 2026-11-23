@@ -76,8 +76,9 @@
                 <!-- Cuento con escaleta: el panel nuevo muestra portada y páginas -->
                 <template v-if="storyId && hasOutline">
                   <!-- La narración solo existe con escaleta; la clave evita reutilizar datos de otro cuento -->
-                  <story-narration-panel :key="`narration-${storyId}`" :story-id="storyId" />
-                  <story-pages-panel :key="`outline-${contentKey}`" :story-id="storyId" />
+                  <!-- narrationRev: al cambiar páginas (puede borrarse el audio) se vuelve a pedir su estado, sin evento propio -->
+                  <story-narration-panel :key="`narration-${storyId}-${narrationRev}`" :story-id="storyId" />
+                  <story-pages-panel :key="`outline-${contentKey}`" :story-id="storyId" @changed="narrationRev++" />
                 </template>
                 <!-- review no existe todavía para páginas en backend: @review queda sin usar en pages-content hasta que exista -->
                 <pages-content v-else-if="storyId"
@@ -154,6 +155,7 @@ const showReviewDetail = ref(false)
 const reviewActionError = ref<string | null>(null)
 const isStateGeneration = ref<boolean>(false)
 const contentKey = ref(0)
+const narrationRev = ref(0)
 
 const script = ref<StoryScript | null>(null)
 // Solo el marcador de versión decide la representación (nulo = cuento antiguo).
@@ -226,6 +228,7 @@ async function onScriptChanged() {
   if (!props.storyId) return
   await loadStory(props.storyId)
   contentKey.value++
+  narrationRev.value++ // la edición confirmada puede haber borrado el audio: se vuelve a pedir el estado de narración
   emit('updated', props.storyId)
 }
 
