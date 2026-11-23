@@ -116,7 +116,7 @@ app:
         narrator: "${APP_AGENT_NARRATOR:storyteller-narrator}"
         audio-narrator: "${APP_AGENT_AUDIO_NARRATOR:storyteller-audio-narrator}"
         character: "${APP_AGENT_CHARACTER:storyteller-character}"
-        character-base-model: "${APP_AGENT_CHARACTER_BASE_MODEL:qwen2.5:14b-instruct}"
+        character-base-model: "${APP_AGENT_CHARACTER_BASE_MODEL:qwen3:14b}"
         character-system: "${APP_AGENT_CHARACTER_SYSTEM:Eres el agente de personajes de un generador de cuentos infantiles para niños de 3 a 4 años. Creas fichas coherentes y fáciles de ilustrar como plantilla de cuerpo completo sobre fondo transparente. Responde solo con el JSON solicitado.}"
         character-provisioning:
             enabled: "${APP_AGENT_CHARACTER_PROVISIONING_ENABLED:true}"

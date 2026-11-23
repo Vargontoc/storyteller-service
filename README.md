@@ -63,6 +63,7 @@ Con el contenedor levantado, descargar los modelos necesarios:
 ```bash
 docker exec -it ollama ollama pull mxbai-embed-large
 docker exec -it ollama ollama pull qwen2.5:14b-instruct
+docker exec -it ollama ollama pull qwen3:14b
 ```
 
 ### Contenedor para ComfyUI
@@ -148,13 +149,13 @@ Capa de agentes en Ollama encargados de las distintas fases de generación y rev
 
 ### Requisitos
 
-* Contenedor de [Ollama](#contenedor-ollama) levantado con el modelo base `qwen2.5:14b-instruct` (y `mxbai-embed-large` para embeddings).
+* Contenedor de [Ollama](#contenedor-ollama) levantado con los modelos base `qwen3:14b` (director, escritor y personaje) y `qwen2.5:14b-instruct` (narrador), además de `mxbai-embed-large` para embeddings.
 
 ### Aprovisionamiento automático desde el backend (`api/`)
 
-Al arrancar `api/`, los provisioners comprueban si cada modelo existe en Ollama y, si falta, lo crean automáticamente desde `qwen2.5:14b-instruct` (salvo que se desactive por variable de entorno):
+Al arrancar `api/`, los provisioners comprueban si cada modelo existe en Ollama y, si falta, lo crean automáticamente desde el modelo base que corresponda: `qwen3:14b` para director, escritor y personaje, y `qwen2.5:14b-instruct` para el narrador (salvo que se desactive por variable de entorno):
 
-* **Agente de personajes (`storyteller-character`)**: aprovisionado por `CharacterModelProvisioner` (`APP_AGENT_CHARACTER_PROVISIONING_ENABLED`, por defecto `true`), usando `APP_AGENT_CHARACTER_BASE_MODEL` (`qwen2.5:14b-instruct`) y las plantillas `api/src/main/resources/prompts/character_generate.st` y `character_review.st`.
+* **Agente de personajes (`storyteller-character`)**: aprovisionado por `CharacterModelProvisioner` (`APP_AGENT_CHARACTER_PROVISIONING_ENABLED`, por defecto `true`), usando `APP_AGENT_CHARACTER_BASE_MODEL` (`qwen3:14b`) y las plantillas `api/src/main/resources/prompts/character_generate.st` y `character_review.st`.
 * **Agente director (`storyteller-director`)**: aprovisionado por `DirectorModelProvisioner` (`APP_AGENT_DIRECTOR_PROVISIONING_ENABLED`, por defecto `true`) desde `api/src/main/resources/prompts/director.modelfile`. Genera el guion (título, sinopsis, reparto episódico y escaleta de beats), revisa la escaleta por hint global y valida ediciones directas de beats.
 * **Agente escritor (`storyteller-writer`)**: aprovisionado por `WriterModelProvisioner` (`APP_AGENT_WRITER_PROVISIONING_ENABLED`, por defecto `true`) desde `api/src/main/resources/prompts/writer.modelfile`. Genera la escena de portada y el texto y escena de cada página siguiendo el beat aprobado.
 
