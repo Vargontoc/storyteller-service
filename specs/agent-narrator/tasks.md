@@ -387,7 +387,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Editar un beat que invalida páginas mientras el cuento se narra se rechaza con aviso de narración en curso (ALT-008).
 - **Prueba manual:** No aplica: se prueba desde el panel del guion en TASK-035.
 
-### [ ] TASK-026 Integración: vista de páginas con audio y narración en curso
+### [x] TASK-026 Integración: vista de páginas con audio y narración en curso
 
 - **Cubre:** REQ-027, REQ-030, REQ-033
 - **Componente:** story-pages-api | app/src/api/storyPages.ts y story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -400,10 +400,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - El rechazo por narración en curso llega al cliente con su aviso.
 - **Prueba manual:** No aplica: se prueba desde la vista en TASK-033 y TASK-034.
 
-### [ ] TASK-027 Integración: cliente de la biblioteca de voces con el servidor
+### [x] TASK-027 Integración: cliente de la biblioteca de voces con el servidor
 
 - **Cubre:** REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-013, REQ-014, REQ-019, REQ-020, DEC-001, ALT-001, ALT-002
-- **Componente:** voice-library-api | por definir (analista técnico) y voice-library-service | por definir (analista técnico)
+- **Componente:** voice-library-api | app/src/api/voices.ts y voice-library-service | por definir (analista técnico)
 - **Depende de:** TASK-010, TASK-011
 - **Alcance:** el cliente REST lista la biblioteca y los idiomas, sube una voz con su audio, idioma, nombre y declaración, borra una voz subida y consulta las voces elegibles, y recibe los rechazos con su motivo.
 - **Hecho cuando:** cada operación del cliente llega al servicio y devuelve su resultado o el aviso de rechazo correspondiente.
@@ -416,7 +416,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Las voces elegibles excluyen las borradas y las que no están en español.
 - **Prueba manual:** No aplica: se prueba desde la vista en TASK-030.
 
-### [ ] TASK-028 Integración: cliente de narración con el servidor
+### [x] TASK-028 Integración: cliente de narración con el servidor
 
 - **Cubre:** REQ-018, REQ-021, REQ-022, REQ-026, REQ-029, REQ-030, REQ-031, ALT-003, ALT-004, ALT-005
 - **Componente:** story-narration-api | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/web/StoryNarrationController.java y story-narration-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryNarrationService.java
@@ -430,7 +430,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - La descarga del audio de una página devuelve ese audio, y la de una página sin audio responde que no existe.
 - **Prueba manual:** No aplica: se prueba desde el panel en TASK-031.
 
-### [ ] TASK-029 Eventos de narración en el store de WebSocket
+### [x] TASK-029 Eventos de narración en el store de WebSocket
 
 - **Cubre:** REQ-027, REQ-028, DEC-004
 - **Componente:** websocket-store | app/src/stores/websocket.ts
@@ -443,10 +443,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   - Los eventos de retratos y de páginas se siguen difundiendo igual.
 - **Prueba manual:** No aplica: se prueba desde el panel en TASK-031.
 
-### [ ] TASK-030 Vista de la biblioteca de voces
+### [x] TASK-030 Vista de la biblioteca de voces
 
 - **Cubre:** REQ-006, REQ-007, REQ-008, REQ-009, REQ-010, REQ-011, REQ-012, REQ-013, REQ-014, ALT-001, ALT-002, ALT-010
-- **Componente:** voice-library-view | por definir (analista técnico)
+- **Componente:** voice-library-view | app/src/views/VoiceLibraryView.vue
 - **Depende de:** TASK-027
 - **Alcance:** mostrar la biblioteca con nombre, idioma y marca de voz del sistema, el aviso de voz del sistema no disponible, el formulario de subida (nombre, idioma con español preseleccionado, fichero y casilla de permiso) con sus avisos de rechazo, y el borrado de las voces subidas, sin opción de borrado para la voz del sistema.
 - **Hecho cuando:** se cumplen en la vista los criterios de aceptación de REQ-006 a REQ-014.
@@ -467,10 +467,10 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   7. Borrar «Abuela»: desaparece de la lista.
   8. Quitar la voz del sistema de la configuración y reiniciar: la biblioteca muestra el aviso de voz del sistema no disponible.
 
-### [ ] TASK-031 Panel de narración del cuento
+### [x] TASK-031 Panel de narración del cuento
 
 - **Cubre:** REQ-016, REQ-018, REQ-019, REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-031, REQ-032, REQ-034, ALT-002, ALT-003, ALT-004, ALT-005, ALT-006
-- **Componente:** story-narration-panel | por definir (analista técnico)
+- **Componente:** story-narration-panel | app/src/components/StoryNarrationPanel.vue
 - **Depende de:** TASK-027, TASK-028, TASK-029
 - **Alcance:** mostrar la acción de narrar o renarrar (habilitada o no, con su motivo), la elección de voz entre las elegibles con la voz del sistema preseleccionada si está disponible, el aviso de sustitución con confirmación al renarrar, el indicador de narración en curso, la voz con la que se narró y el resultado. Recarga el estado ante los eventos de narración o la reconexión.
 - **Hecho cuando:** se cumplen en el panel los criterios de aceptación de REQ-016, REQ-018 a REQ-020, REQ-022 y REQ-027 a REQ-032, y el guion de audio no se muestra nunca.
@@ -494,7 +494,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   8. Con una generación de retratos en curso, confirmar la narración: aviso de generación en curso y el audio previo sigue.
   9. Detener el contenedor de Chatterbox y narrar: aviso de error, ninguna página con audio y narrar habilitado.
 
-### [ ] TASK-032 Panel de narración solo en cuentos con escaleta
+### [x] TASK-032 Panel de narración solo en cuentos con escaleta
 
 - **Cubre:** REQ-017
 - **Componente:** story-modal | app/src/components/StoryModal.vue
@@ -508,7 +508,7 @@ Primero se revisa el código de FUN-004 que se puede reutilizar. Después van la
   1. Abrir un cuento antiguo: no aparece la narración de esta funcionalidad y su vista no cambia.
   2. Abrir un cuento con escaleta: aparece el panel de narración.
 
-### [ ] TASK-033 Reproductor del audio de la página que se ve
+### [x] TASK-033 Reproductor del audio de la página que se ve
 
 - **Cubre:** REQ-015, REQ-030
 - **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue

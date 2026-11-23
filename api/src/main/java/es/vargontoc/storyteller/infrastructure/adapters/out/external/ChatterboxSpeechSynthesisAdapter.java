@@ -3,6 +3,8 @@ package es.vargontoc.storyteller.infrastructure.adapters.out.external;
 import java.net.http.HttpClient;
 import java.time.Duration;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpStatus;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.ResourceAccessException;
+import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
@@ -28,6 +31,9 @@ import es.vargontoc.storyteller.shared.exceptions.AppException;
 @Component
 public class ChatterboxSpeechSynthesisAdapter implements SpeechSynthesizer {
 
+    private static final Logger log = LoggerFactory.getLogger(ChatterboxSpeechSynthesisAdapter.class);
+    static final int MAX_ERROR_BODY = 300;
+
     static final double MIN_EXAGGERATION = 0.25, MAX_EXAGGERATION = 2.0;
     static final double MIN_CFG_WEIGHT = 0.0, MAX_CFG_WEIGHT = 1.0;
     static final double MIN_TEMPERATURE = 0.05, MAX_TEMPERATURE = 5.0;
@@ -37,7 +43,9 @@ public class ChatterboxSpeechSynthesisAdapter implements SpeechSynthesizer {
     @Autowired
     public ChatterboxSpeechSynthesisAdapter(ChatterboxProperties properties) {
         JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(
-                HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build());
+                // HTTP/1.1 explícito: con el valor por defecto (HTTP/2) el JDK envía "Upgrade: h2c" y uvicorn,
+                // al ignorarlo, no lee el cuerpo multipart y responde 422 "input: Field required".
+                HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(5)).build());
         factory.setReadTimeout(Duration.ofSeconds(properties.timeoutSeconds()));
         this.restClient = RestClient.builder().baseUrl(properties.baseUrl()).requestFactory(factory).build();
     }
@@ -68,12 +76,24 @@ public class ChatterboxSpeechSynthesisAdapter implements SpeechSynthesizer {
                     .contentType(MediaType.MULTIPART_FORM_DATA).body(form).retrieve().body(byte[].class);
         } catch (ResourceAccessException e) {
             throw new AppException("Chatterbox no respondió a tiempo o no está disponible", HttpStatus.GATEWAY_TIMEOUT);
+        } catch (RestClientResponseException e) {
+            String body = abbreviate(e.getResponseBodyAsString());
+            log.error("Chatterbox respondió {} al sintetizar: {}", e.getStatusCode(), body, e);
+            throw new AppException("Chatterbox falló al sintetizar el fragmento: HTTP "
+                    + e.getStatusCode().value() + " " + body, HttpStatus.BAD_GATEWAY);
         } catch (RestClientException e) {
+            log.error("Chatterbox falló al sintetizar el fragmento", e);
             throw new AppException("Chatterbox falló al sintetizar el fragmento", HttpStatus.BAD_GATEWAY);
         }
         if (audio == null || audio.length == 0)
             throw new AppException("Chatterbox devolvió un audio vacío", HttpStatus.BAD_GATEWAY);
         return audio;
+    }
+
+    private static String abbreviate(String body) {
+        if (body == null) return "";
+        String text = body.strip();
+        return text.length() <= MAX_ERROR_BODY ? text : text.substring(0, MAX_ERROR_BODY) + "...";
     }
 
     private static double clamp(double value, double min, double max) {

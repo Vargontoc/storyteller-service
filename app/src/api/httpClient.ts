@@ -2,28 +2,35 @@ import { apiConfig } from './config'
 
 export class ApiError extends Error {
   readonly status?: number
+  // Motivo estable del servidor (errors[0], p. ej. NAME_DUPLICATED), si lo informa.
+  readonly code?: string
 
-  constructor(message: string, status?: number) {
+  constructor(message: string, status?: number, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
-async function extractErrorMessage(response: Response): Promise<string> {
+async function extractError(response: Response): Promise<{ message: string; code?: string }> {
+  let code: string | undefined
   try {
     const body = await response.clone().json()
+    if (Array.isArray(body?.errors) && typeof body.errors[0] === 'string') {
+      code = body.errors[0]
+    }
     if (typeof body?.message === 'string' && body.message) {
-      return body.message
+      return { message: body.message, code }
     }
     if (Array.isArray(body?.errors) && body.errors.length > 0) {
-      return body.errors.join(', ')
+      return { message: body.errors.join(', '), code }
     }
   } catch {
     // Body wasn't JSON (or was empty) — fall through to the generic message below.
   }
 
-  return `Request failed: ${response.status} ${response.statusText}`
+  return { message: `Request failed: ${response.status} ${response.statusText}`, code }
 }
 
 async function requestRaw(path: string, init?: RequestInit): Promise<Response> {
@@ -35,14 +42,15 @@ async function requestRaw(path: string, init?: RequestInit): Promise<Response> {
       ...init,
       headers: {
         Accept: 'application/json',
-        ...(init?.body ? { 'Content-Type': 'application/json' } : {}),
+        ...(init?.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         ...init?.headers,
       },
       signal: controller.signal,
     })
 
     if (!response.ok) {
-      throw new ApiError(await extractErrorMessage(response), response.status)
+      const { message, code } = await extractError(response)
+      throw new ApiError(message, response.status, code)
     }
 
     return response
@@ -79,6 +87,8 @@ export const httpClient = {
   get: <T>(path: string) => request<T>(path, { method: 'GET' }),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),
+  // Multipart: el navegador fija Content-Type con su boundary.
+  postForm: <T>(path: string, body: FormData) => request<T>(path, { method: 'POST', body }),
   put: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'PUT', body: body !== undefined ? JSON.stringify(body) : undefined }),
   patch: <T>(path: string, body?: unknown) =>

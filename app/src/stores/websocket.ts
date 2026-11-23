@@ -31,6 +31,18 @@ export interface StoryPageGenerationEvent {
 
 const PAGE_EVENT_TYPES: string[] = ['STARTED', 'VERSION_PRESENTED', 'HINT_REJECTED', 'FAILED']
 
+// Evento de narración de un cuento. A diferencia del de página no lleva `pageNumber` (ese es el discriminador).
+// `voiceName` solo llega en COMPLETED; el servidor no emite motivo en FAILED.
+export type NarrationEventType = 'STARTED' | 'COMPLETED' | 'FAILED'
+export interface NarrationEvent {
+  storyId: number
+  type: NarrationEventType
+  voiceName?: string
+  id: number
+}
+
+const NARRATION_EVENT_TYPES: string[] = ['STARTED', 'COMPLETED', 'FAILED']
+
 interface NotificationEvent extends WebsocketNotification {
   id: number
 }
@@ -46,10 +58,11 @@ function toWsUrl(path: string): string {
 }
 
 export const useWebsocketStore = defineStore('websocket', {
-  state: (): { lastEvent: NotificationEvent | null; lastPortraitEvent: PortraitGenerationEvent | null; lastStoryPageEvent: StoryPageGenerationEvent | null; connectionId: number } => ({
+  state: (): { lastEvent: NotificationEvent | null; lastPortraitEvent: PortraitGenerationEvent | null; lastStoryPageEvent: StoryPageGenerationEvent | null; lastNarrationEvent: NarrationEvent | null; connectionId: number } => ({
     lastEvent: null,
     lastPortraitEvent: null,
     lastStoryPageEvent: null,
+    lastNarrationEvent: null,
     connectionId: 0,
   }),
   actions: {
@@ -84,6 +97,17 @@ export const useWebsocketStore = defineStore('websocket', {
             pageNumber: page.pageNumber,
             type: page.type as StoryPageGenerationEventType,
             reason: typeof page.reason === 'string' ? page.reason : undefined,
+            id: nextEventId++,
+          }
+          return
+        }
+        // Sin pageNumber numérico: no es de página; COMPLETED/STARTED/FAILED con storyId es narración.
+        const narration = data as Partial<NarrationEvent>
+        if (typeof narration.storyId === 'number' && typeof narration.type === 'string' && NARRATION_EVENT_TYPES.includes(narration.type)) {
+          this.lastNarrationEvent = {
+            storyId: narration.storyId,
+            type: narration.type as NarrationEventType,
+            voiceName: typeof narration.voiceName === 'string' ? narration.voiceName : undefined,
             id: nextEventId++,
           }
           return

@@ -70,6 +70,48 @@ describe('consultas', () => {
     expect(result.title).toBe('La luna')
   })
 
+  it('cuento narrado: hasAudio global e interior, portada sin audio', async () => {
+    const view = {
+      storyId: 7,
+      status: 'PAGES_ACCEPTED',
+      generating: false,
+      nextPage: null,
+      hasAudio: true,
+      narrating: false,
+      pages: [
+        { id: 21, page: 0, hasAudio: false },
+        { id: 22, page: 1, hasAudio: true },
+      ],
+    }
+    fetchMock.mockResolvedValue(ok(view))
+
+    const result = await getStoryPagesView(7)
+
+    expect(result.hasAudio).toBe(true)
+    expect(result.narrating).toBe(false)
+    expect(result.pages[0]!.hasAudio).toBe(false)
+    expect(result.pages[1]!.hasAudio).toBe(true)
+  })
+
+  it('cuento narrándose: narrating', async () => {
+    fetchMock.mockResolvedValue(
+      ok({ storyId: 7, status: 'PAGES_ACCEPTED', generating: false, nextPage: null, hasAudio: false, narrating: true, pages: [] }),
+    )
+
+    const result = await getStoryPagesView(7)
+
+    expect(result.narrating).toBe(true)
+    expect(result.hasAudio).toBe(false)
+  })
+
+  it('el detalle de una página interior indica su audio', async () => {
+    fetchMock.mockResolvedValue(ok({ id: 22, page: 1, hasAudio: true }))
+
+    const result = await getPageDetail(7, 22)
+
+    expect(result.hasAudio).toBe(true)
+  })
+
   it('obtiene la imagen aceptada como blob', async () => {
     fetchMock.mockResolvedValue(new Response('png', { status: 200 }))
 
@@ -214,6 +256,25 @@ describe('rechazos del servidor', () => {
       409,
       'La página no cumple el número de frases: regenérala antes de aceptar',
     ))
+
+  it('narración en curso al reabrir o cambiar', async () => {
+    const message = 'El cuento se está narrando: no se pueden reabrir, cambiar ni eliminar sus páginas'
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ success: false, message, errors: ['IN_PROGRESS'] }), { status: 409 }),
+    )
+
+    for (const call of [
+      () => acceptProposal(7, 22, true),
+      () => selectVersion(7, 22, 5),
+      () => sendHint(7, 22, 'más corto'),
+      () => regenerate(7, 22),
+    ]) {
+      const error = await call().catch((e: unknown) => e)
+      expect(error).toBeInstanceOf(ApiError)
+      expect((error as ApiError).message).toBe(message)
+      expect((error as ApiError).status).toBe(409)
+    }
+  })
 
   it('cuento completo', () =>
     expectRejection(() => generatePage(7, 9), 409, 'El cuento ya tiene todas las páginas aceptadas'))

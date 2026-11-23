@@ -58,6 +58,73 @@ describe('websocket store', () => {
     expect(store.lastStoryPageEvent).toBeNull()
   })
 
+  it('expone STARTED de narración con su cuento y sin tocar el evento de página', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'STARTED', storyId: 9 })
+
+    expect(store.lastNarrationEvent).toMatchObject({ type: 'STARTED', storyId: 9 })
+    expect(store.lastNarrationEvent?.voiceName).toBeUndefined()
+    expect(store.lastStoryPageEvent).toBeNull()
+  })
+
+  it('expone COMPLETED de narración con la voz', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'COMPLETED', storyId: 9, voiceName: 'Abuela' })
+
+    expect(store.lastNarrationEvent).toMatchObject({ type: 'COMPLETED', storyId: 9, voiceName: 'Abuela' })
+  })
+
+  it('COMPLETED sin voz no inventa valor', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'COMPLETED', storyId: 9 })
+
+    expect(store.lastNarrationEvent?.type).toBe('COMPLETED')
+    expect(store.lastNarrationEvent?.voiceName).toBeUndefined()
+  })
+
+  it('expone FAILED de narración con su cuento y sin motivo', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'FAILED', storyId: 4 })
+
+    expect(store.lastNarrationEvent).toMatchObject({ type: 'FAILED', storyId: 4 })
+    expect(store.lastStoryPageEvent).toBeNull()
+  })
+
+  it('eventos de narración iguales consecutivos obtienen identificador distinto', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'STARTED', storyId: 9 })
+    const first = store.lastNarrationEvent?.id
+    FakeSocket.last.emit('message', { type: 'STARTED', storyId: 9 })
+
+    expect(store.lastNarrationEvent?.id).not.toBe(first)
+  })
+
+  it('STARTED y FAILED de página (con pageNumber) no son narración', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'STARTED', storyId: 7, pageNumber: 0 })
+    FakeSocket.last.emit('message', { type: 'FAILED', storyId: 7, pageNumber: 2, reason: 'Fallo' })
+
+    expect(store.lastStoryPageEvent).toMatchObject({ type: 'FAILED', storyId: 7, pageNumber: 2, reason: 'Fallo' })
+    expect(store.lastNarrationEvent).toBeNull()
+  })
+
+  it('un evento de narración no se trata como página', () => {
+    const store = connected()
+    FakeSocket.last.emit('message', { type: 'FAILED', storyId: 7 })
+
+    expect(store.lastNarrationEvent).toMatchObject({ type: 'FAILED', storyId: 7 })
+    expect(store.lastStoryPageEvent).toBeNull()
+  })
+
+  it('tras reconectar cambia connectionId para que los suscriptores recarguen', () => {
+    const store = connected()
+    FakeSocket.last.emit('open')
+    const before = store.connectionId
+    FakeSocket.last.emit('open')
+
+    expect(store.connectionId).toBe(before + 1)
+  })
+
   it('una nueva apertura incrementa connectionId', () => {
     const store = connected()
     FakeSocket.last.emit('open')

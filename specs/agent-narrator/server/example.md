@@ -384,6 +384,8 @@ try {
 }
 ```
 
+Errores: el cliente HTTP fuerza HTTP/1.1 (con HTTP/2 el JDK envía `Upgrade: h2c` y el contenedor no lee el cuerpo multipart: 422). Si el contenedor responde con error, el `AppException` (502) incluye el estado y hasta 300 caracteres del cuerpo, p. ej. `Chatterbox falló al sintetizar el fragmento: HTTP 422 {"detail":[...]}`, y se registra en el log de la API.
+
 Prueba manual (contenedor de Chatterbox en marcha): `mvn -f api/pom.xml test -Dtest=ChatterboxSpeechSynthesisManualHarness -Dspeech.harness=true -Dspeech.sample=<ruta a un WAV/MP3 de 5 a 30 s> -Dspeech.out=<salida.wav>`.
 
 ## VoiceLibraryController (rutas REST de la biblioteca de voces, TASK-027)

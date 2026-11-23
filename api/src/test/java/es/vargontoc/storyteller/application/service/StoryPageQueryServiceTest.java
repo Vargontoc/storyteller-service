@@ -162,6 +162,24 @@ class StoryPageQueryServiceTest {
         assertTrue(detail.proposals().isEmpty());
     }
 
+    @Test
+    void interiorPageWithTextAndNoStatusOffersAcceptAndHint() {
+        StoryPage p = page(2, null, null);
+        p.setText("Texto antiguo.");
+        pages.add(p);
+        when(versions.findByPage(p.getId())).thenReturn(List.of());
+
+        assertEquals(List.of(PageAction.ACCEPT, PageAction.HINT), only().actions());
+    }
+
+    @Test
+    void pageWithoutStatusAndWithoutTextDoesNotOfferAccept() {
+        pages.add(page(2, null, null));
+        when(versions.findByPage(102L)).thenReturn(List.of());
+
+        assertEquals(List.of(PageAction.HINT), only().actions());
+    }
+
     // ---- reapertura ----
 
     @Test

@@ -102,13 +102,18 @@ class SpringAiWriterAgentTest {
     }
 
     @Test
-    void onomatopoeiaRulesDoNotChangeTheWordTarget() {
+    void pageRequestIncludesTheLengthRule() {
         when(response.entity(WriterResult.class)).thenReturn(new WriterResult("Texto.", scene("Luna")));
 
         agent.writePage(pageContext());
 
         String message = sentMessage();
-        assertFalse(message.matches("(?s).*\\d+\\s+palabras.*"));
+        assertTrue(message.contains("entre 50 y 60 palabras"));
+        assertTrue(message.contains("Cuenta las palabras antes de responder"));
+    }
+
+    @Test
+    void onomatopoeiaRulesDoNotContainTheWordTarget() {
         assertFalse(SpringAiWriterAgent.PAGE_ONOMATOPOEIA_RULES.toLowerCase().contains("palabras"));
         assertFalse(SpringAiWriterAgent.COVER_ONOMATOPOEIA_RULE.toLowerCase().contains("palabras"));
     }

@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createPinia, setActivePinia } from 'pinia'
 import StoryModal from './StoryModal.vue'
 import StoryPagesPanel from './StoryPagesPanel.vue'
+import StoryNarrationPanel from './StoryNarrationPanel.vue'
 import PagesContent from './content/PagesContent.vue'
 import * as storyteller from '../api/storyteller'
 import * as reviews from '../api/reviews'
@@ -17,6 +18,7 @@ vi.mock('../api/generations')
 const stubs = {
   teleport: true,
   StoryPagesPanel: true,
+  StoryNarrationPanel: true,
   PagesContent: true,
   StoryContent: true,
   StoryScriptPanel: true,
@@ -86,6 +88,24 @@ describe('StoryModal: pestaña de páginas', () => {
 
     expect(wrapper.findComponent(PagesContent).exists()).toBe(true)
     expect(wrapper.findComponent(StoryPagesPanel).exists()).toBe(false)
+  })
+
+  it('cuento con escaleta muestra el panel de narración junto a las páginas', async () => {
+    const wrapper = await openModal(script({ scriptVersion: 2 }))
+    await openTab(wrapper, 'Páginas')
+
+    const panel = wrapper.findComponent(StoryNarrationPanel)
+    expect(panel.exists()).toBe(true)
+    expect(panel.props('storyId')).toBe(7)
+    expect(wrapper.findAllComponents(StoryNarrationPanel)).toHaveLength(1)
+  })
+
+  it('cuento antiguo no muestra el panel de narración y conserva su vista', async () => {
+    const wrapper = await openModal(script({ scriptVersion: null }), [{ page: 0 }, { page: 1 }])
+    await openTab(wrapper, 'Páginas')
+
+    expect(wrapper.findComponent(StoryNarrationPanel).exists()).toBe(false)
+    expect(wrapper.findComponent(PagesContent).exists()).toBe(true)
   })
 
   it('con guion pendiente no hay acceso operativo a páginas', async () => {

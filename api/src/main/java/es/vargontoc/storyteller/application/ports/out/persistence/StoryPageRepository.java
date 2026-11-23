@@ -18,6 +18,9 @@ public interface StoryPageRepository {
     /** Cuentos con escaleta: deja la página aceptada con ese contenido (texto null en la portada) y sin imagen importada. */
     StoryPage accept(Long idPage, String text, SceneComposition scene);
 
+    /** Marca como aceptada una página sin estado (anterior al estado por página); no cambia su contenido ni su imagen. */
+    StoryPage markAccepted(Long idPage);
+
     /** Quita solo la asociación con la imagen importada; el contenido aceptado no cambia. */
     StoryPage removeImportedImage(Long idPage);
 

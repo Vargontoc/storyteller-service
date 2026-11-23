@@ -2,7 +2,7 @@ import { httpClient } from './httpClient'
 import type { ApiEnvelope } from './envelope'
 
 // Cliente REST de portada y páginas de los cuentos con escaleta.
-// Los rechazos del servidor (409, 400, 404) llegan como ApiError con su motivo.
+// Los rechazos del servidor (409, 400, 404) llegan como ApiError con su motivo; también el 409 por narración en curso.
 // Solo tipa el caso con escaleta: para cuentos antiguos usar getStoryPages de storyteller.ts.
 //
 // Equivalencia con las rutas propuestas en el sprint (base /api/v1/storyteller/{storyId}):
@@ -55,6 +55,8 @@ export interface PageDetail {
   versions: PageVersionView[]
   proposals: PageVersionView[]
   actions: PageAction[]
+  // Audio de la página según el servidor; la portada (page 0) siempre es false.
+  hasAudio: boolean
 }
 
 // nextPage: 0 = portada, N = página N, null = nada que generar.
@@ -63,6 +65,9 @@ export interface StoryPagesView {
   status: PagesStatus
   generating: boolean
   nextPage: number | null
+  // hasAudio: el cuento tiene audio publicado. narrating: se está narrando (las mutaciones de páginas responden 409).
+  hasAudio: boolean
+  narrating: boolean
   pages: PageDetail[]
 }
 

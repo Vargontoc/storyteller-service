@@ -30,10 +30,18 @@ public class SpringAiWriterAgent implements WriterAgent {
     static final String PAGE_ONOMATOPOEIA_RULES = """
             ONOMATOPEYAS DE ESTA PÁGINA:
             - Como máximo una onomatopeya.
-            - Solo si el beat de esta página tiene un sonido natural en la escena; si el beat es silencioso, no incluyas ninguna.
-            - Usa la forma estándar y pronunciable del español («guau», «pum»), sin letras repetidas alargadas ni símbolos.
+            - Solo si el beat de esta página menciona un sonido natural; si no lo menciona, no incluyas ninguna ni inventes sonidos.
+            - Si la incluyes, ocupa una de las cuatro frases; no añadas una quinta.
+            - Usa la forma estándar y pronunciable del español («guau», «miau»), sin letras repetidas alargadas ni símbolos.
             """;
     static final String COVER_ONOMATOPOEIA_RULE = "ONOMATOPEYAS: no incluyas ninguna onomatopeya.\n";
+
+    static final String PAGE_LENGTH_RULES = """
+            REGLA OBLIGATORIA DE LONGITUD:
+            - El texto debe tener 4 frases y entre 50 y 60 palabras. Cuenta las palabras antes de responder.
+            - Si te quedas corto, amplía con una acción, un gesto o un detalle sensorial; no añadas relleno.
+            - No pases de 60: si te pasas, recorta adjetivos o detalles.
+            """;
 
     private final OllamaPort ollama;
     private final String model;
@@ -60,7 +68,8 @@ public class SpringAiWriterAgent implements WriterAgent {
 
     @Override
     public WriterResult writePage(WriterContext context) {
-        String message = "MODO: ESCRIBIR_PAGINA\n" + describeBook(context) + PAGE_ONOMATOPOEIA_RULES;
+        String message = "MODO: ESCRIBIR_PAGINA\n" + describeBook(context) + PAGE_ONOMATOPOEIA_RULES
+                + PAGE_LENGTH_RULES;
         WriterResult result = call(message, WriterResult.class);
         if (result == null || isBlank(result.text()) || !hasScene(result.scene())) {
             throw invalidResponse();
@@ -74,7 +83,7 @@ public class SpringAiWriterAgent implements WriterAgent {
                 + "Versión base:\n  texto: " + (base.text() == null ? "(portada, sin texto)" : base.text())
                 + "\n  escena: " + base.scene().scene()
                 + "\nHint del adulto: " + hint + "\n"
-                + (context.isCover() ? COVER_ONOMATOPOEIA_RULE : PAGE_ONOMATOPOEIA_RULES);
+                + (context.isCover() ? COVER_ONOMATOPOEIA_RULE : PAGE_ONOMATOPOEIA_RULES + PAGE_LENGTH_RULES);
         WriterHintResult result = call(message, WriterHintResult.class);
         if (result == null) {
             throw invalidResponse();

@@ -106,6 +106,13 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
     }
 
     @Override
+    public StoryPage markAccepted(Long idPage) {
+        StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow();
+        entity.setStatus(PageStatus.ACCEPTED);
+        return mapper.toModel(repository.save(entity));
+    }
+
+    @Override
     public StoryPage removeImportedImage(Long idPage) {
         StoryPageJpaEntity entity = repository.findById(idPage).orElseThrow();
         entity.setImportedImage(null);

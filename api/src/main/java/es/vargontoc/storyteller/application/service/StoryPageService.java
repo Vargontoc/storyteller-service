@@ -214,10 +214,13 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         StoryPage page = repository.getPage(pageId);
         if(!storyId.equals(page.getStoryId()))
             throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
-        if(page.getPageStatus() != PageStatus.PENDING)
+        boolean legacy = isLegacyWithText(page);
+        if(page.getPageStatus() != PageStatus.PENDING && !legacy)
             throw new AppException("Solo se puede aceptar la portada o una página pendiente", HttpStatus.CONFLICT);
         if(gate.isGeneratingStory(storyId))
             throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+        if(legacy)
+            return acceptLegacyPage(storyId, page);
 
         PageVersion current = versions.findByPage(pageId).stream()
             .filter(PageVersion::isCurrent).findFirst()
@@ -230,6 +233,29 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         versions.deleteByPage(pageId);
         // Última página de la escaleta: el cuento queda completo y listo para audio (la portada no cuenta)
         if(page.getPage() > 0 && outlineRepository.find(storyId).map(o -> o.beats().size() == page.getPage()).orElse(false))
+            storyRepository.updateStatus(storyId, StoryStatus.PAGES_ACCEPTED);
+        return accepted;
+    }
+
+    /** Página interior con texto pero sin estado: generada antes de que existiera el estado por página. */
+    private boolean isLegacyWithText(StoryPage page) {
+        return page.getPageStatus() == null && page.getPage() > 0 && page.getText() != null && !page.getText().isBlank();
+    }
+
+    /**
+     * Acepta una página interior sin estado: solo pasa a ACCEPTED, sin tocar su contenido ni las demás páginas, sin
+     * versiones ni turno de generación. Si con ella todas las páginas quedan aceptadas y la escaleta está cubierta, el cuento
+     * pasa a PAGES_ACCEPTED.
+     */
+    private StoryPage acceptLegacyPage(Long storyId, StoryPage page) {
+        StoryPage accepted = repository.markAccepted(page.getId());
+        boolean complete = outlineRepository.find(storyId).map(o -> {
+            List<StoryPage> all = storyRepository.getStory(storyId).getPages();
+            return all.stream().filter(p -> p.getPage() > 0).count() == o.beats().size()
+                && all.stream().filter(p -> !page.getId().equals(p.getId()))
+                    .allMatch(p -> p.getPageStatus() == PageStatus.ACCEPTED);
+        }).orElse(false);
+        if(complete)
             storyRepository.updateStatus(storyId, StoryStatus.PAGES_ACCEPTED);
         return accepted;
     }

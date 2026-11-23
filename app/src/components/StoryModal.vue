@@ -74,7 +74,11 @@
               </div>
               <div v-else-if="activeTab === 'paginas'">
                 <!-- Cuento con escaleta: el panel nuevo muestra portada y páginas -->
-                <story-pages-panel v-if="storyId && hasOutline" :key="`outline-${contentKey}`" :story-id="storyId" />
+                <template v-if="storyId && hasOutline">
+                  <!-- La narración solo existe con escaleta; la clave evita reutilizar datos de otro cuento -->
+                  <story-narration-panel :key="`narration-${storyId}`" :story-id="storyId" />
+                  <story-pages-panel :key="`outline-${contentKey}`" :story-id="storyId" />
+                </template>
                 <!-- review no existe todavía para páginas en backend: @review queda sin usar en pages-content hasta que exista -->
                 <pages-content v-else-if="storyId"
                   :key="`legacy-${contentKey}`"
@@ -106,6 +110,7 @@ import { getStory, getStoryPages, type PageSummary, type StorySummary } from '..
 import { getStoryScript, type StoryScript } from '../api/storyScript'
 import StoryScriptPanel from './StoryScriptPanel.vue'
 import StoryPagesPanel from './StoryPagesPanel.vue'
+import StoryNarrationPanel from './StoryNarrationPanel.vue'
 import { useToastStore } from '../stores/toast'
 import { useWebsocketStore } from '../stores/websocket'
 import ActorsContent from './content/ActorsContent.vue'

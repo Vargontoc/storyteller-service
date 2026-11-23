@@ -50,10 +50,35 @@ class WriterModelProvisionerTest {
         String content = new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)
                 .getContentAsString(StandardCharsets.UTF_8);
         assertTrue(content.contains("Como máximo una onomatopeya por página"));
-        assertTrue(content.contains("Solo si el beat tiene un sonido natural en la escena"));
+        assertTrue(content.contains("Solo si el beat menciona un sonido natural en la escena"));
+        assertTrue(content.contains("ocupa una de las cuatro frases"));
         assertTrue(content.contains("forma estándar y pronunciable del español"));
         assertTrue(content.contains("sin letras repetidas alargadas ni símbolos"));
         assertTrue(content.contains("Nunca incluyas onomatopeyas en la portada"));
+    }
+
+    @Test
+    void modelfileUsesQwen3ForTheWriter() throws Exception {
+        String content = new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(content.contains("FROM qwen3:14b"));
+        assertFalse(content.contains("FROM qwen2.5"));
+    }
+
+    @Test
+    void modelfileContainsLengthDialogueAndDramatizationRules() throws Exception {
+        String content = new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(content.contains("4 frases y entre 45 y 60 palabras"));
+        assertTrue(content.contains("Solo una frase puede ser corta"));
+        assertTrue(content.contains("No escribas una frase por cada acción del beat"));
+        assertTrue(content.contains("DIÁLOGO"));
+        assertTrue(content.contains("al menos una línea de diálogo"));
+        assertTrue(content.contains("MOSTRAR, NO CONTAR"));
+        assertTrue(content.contains("EJEMPLO DE PÁGINA BIEN ESCRITA"));
+        assertTrue(content.contains("EJEMPLO INCORRECTO"));
+        assertTrue(content.contains("ANTES DE RESPONDER"));
+        assertTrue(content.contains("No copies sus palabras"));
     }
 
     @Test

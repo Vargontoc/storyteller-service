@@ -7,7 +7,10 @@ import { ApiError } from '../api/httpClient'
 import * as api from '../api/storyPages'
 import type { PageDetail, PageVersionView, StoryPagesView } from '../api/storyPages'
 
+import * as narration from '../api/storyNarration'
+
 vi.mock('../api/storyPages')
+vi.mock('../api/storyNarration')
 
 const mocked = vi.mocked(api)
 
@@ -22,12 +25,22 @@ function page(overrides: Partial<PageDetail> = {}): PageDetail {
     versions: [],
     proposals: [],
     actions: ['HINT'],
+    hasAudio: false,
     ...overrides,
   }
 }
 
 function view(overrides: Partial<StoryPagesView> = {}): StoryPagesView {
-  return { storyId: 7, status: 'SCRIPT_ACCEPTED', generating: false, nextPage: null, pages: [], ...overrides }
+  return {
+    storyId: 7,
+    status: 'SCRIPT_ACCEPTED',
+    generating: false,
+    nextPage: null,
+    hasAudio: false,
+    narrating: false,
+    pages: [],
+    ...overrides,
+  }
 }
 
 let pinia: Pinia
@@ -499,6 +512,131 @@ describe('StoryPagesPanel', () => {
       expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(2)
       expect(buttonByText(wrapper, 'Generar página 1')).toBeDefined()
       expect(wrapper.text()).not.toContain('Generación en curso')
+    })
+  })
+
+  describe('reproductor del audio de la página', () => {
+    class FakeAudio {
+      static instances: FakeAudio[] = []
+      listeners: Record<string, () => void> = {}
+      play = vi.fn(() => Promise.resolve())
+      pause = vi.fn()
+      src: string
+      constructor(src: string) {
+        this.src = src
+        FakeAudio.instances.push(this)
+      }
+      addEventListener(name: string, fn: () => void) {
+        this.listeners[name] = fn
+      }
+    }
+
+    let urlCount: number
+    let eventId = 0
+
+    beforeEach(() => {
+      FakeAudio.instances = []
+      urlCount = 0
+      vi.stubGlobal('Audio', FakeAudio)
+      URL.createObjectURL = vi.fn((blob: Blob) => (blob.type === 'audio/wav' ? `blob:audio-${++urlCount}` : 'blob:img'))
+      mocked.getAcceptedImage.mockResolvedValue(new Blob(['x']))
+      vi.mocked(narration.getPageAudio).mockResolvedValue(new Blob(['a'], { type: 'audio/wav' }))
+    })
+
+    afterEach(() => vi.unstubAllGlobals())
+
+    const withAudio = (n: number) => page({ id: 10 + n, page: n, hasAudio: true })
+
+    it('interior con audio: muestra el reproductor y pide solo el audio de esa página al pulsar', async () => {
+      const wrapper = await mountPanel(view({ hasAudio: true, pages: [withAudio(1), withAudio(2), withAudio(3)] }))
+      expect(narration.getPageAudio).not.toHaveBeenCalled()
+
+      await wrapper.find('[data-page="2"] .audio button').trigger('click')
+      await flushPromises()
+
+      expect(narration.getPageAudio).toHaveBeenCalledTimes(1)
+      expect(narration.getPageAudio).toHaveBeenCalledWith(7, 2)
+      expect(FakeAudio.instances).toHaveLength(1)
+      expect(FakeAudio.instances[0].src).toBe('blob:audio-1')
+      expect(FakeAudio.instances[0].play).toHaveBeenCalled()
+    })
+
+    it('al terminar no reproduce ni carga la página siguiente y libera la URL', async () => {
+      const wrapper = await mountPanel(view({ hasAudio: true, pages: [withAudio(2), withAudio(3)] }))
+      await wrapper.find('[data-page="2"] .audio button').trigger('click')
+      await flushPromises()
+
+      FakeAudio.instances[0].listeners.ended()
+      await flushPromises()
+
+      expect(narration.getPageAudio).toHaveBeenCalledTimes(1)
+      expect(FakeAudio.instances).toHaveLength(1)
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:audio-1')
+      expect(wrapper.find('[data-page="2"] .audio button').text()).toContain('Reproducir audio')
+    })
+
+    it('portada y cuentos sin audio no muestran el reproductor', async () => {
+      const cover = page({ id: 1, page: 0, hasAudio: true })
+      const narrated = await mountPanel(view({ hasAudio: true, pages: [cover] }))
+      expect(narrated.find('.audio').exists()).toBe(false)
+
+      const silent = await mountPanel(view({ pages: [page({ hasAudio: false })] }))
+      expect(silent.find('.audio').exists()).toBe(false)
+      expect(narration.getPageAudio).not.toHaveBeenCalled()
+    })
+
+    it('tras un evento COMPLETED del cuento aparece el reproductor sin recargar a mano', async () => {
+      const wrapper = await mountPanel(view({ pages: [page()] }))
+      expect(wrapper.find('.audio').exists()).toBe(false)
+      mocked.getStoryPagesView.mockResolvedValue(view({ hasAudio: true, pages: [withAudio(1)] }))
+      const ws = useWebsocketStore(pinia)
+
+      ws.lastNarrationEvent = { storyId: 99, type: 'COMPLETED', id: ++eventId }
+      await flushPromises()
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(1)
+
+      ws.lastNarrationEvent = { storyId: 7, type: 'COMPLETED', voiceName: 'Mamá', id: ++eventId }
+      await flushPromises()
+
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('[data-page="1"] .audio').exists()).toBe(true)
+    })
+
+    it('si la narración se borra, el reproductor desaparece al recargar', async () => {
+      const wrapper = await mountPanel(view({ hasAudio: true, pages: [withAudio(1)] }))
+      mocked.getStoryPagesView.mockResolvedValue(view({ hasAudio: false, pages: [page()] }))
+
+      useWebsocketStore(pinia).connectionId += 1
+      await flushPromises()
+
+      expect(wrapper.find('.audio').exists()).toBe(false)
+    })
+
+    it('libera la URL al cambiar a otra página y al desmontar', async () => {
+      const wrapper = await mountPanel(view({ hasAudio: true, pages: [withAudio(1), withAudio(2)] }))
+      await wrapper.find('[data-page="1"] .audio button').trigger('click')
+      await flushPromises()
+
+      await wrapper.find('[data-page="2"] .audio button').trigger('click')
+      await flushPromises()
+
+      expect(FakeAudio.instances[0].pause).toHaveBeenCalled()
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:audio-1')
+
+      wrapper.unmount()
+      expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:audio-2')
+    })
+
+    it('un fallo al cargar el audio muestra un aviso sin romper el panel', async () => {
+      const wrapper = await mountPanel(view({ hasAudio: true, pages: [withAudio(1)] }))
+      vi.mocked(narration.getPageAudio).mockRejectedValue(new ApiError('Audio no encontrado', 404, 'AUDIO_NOT_FOUND'))
+
+      await wrapper.find('.audio button').trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.audio-error').text()).toContain('Audio no encontrado')
+      expect(wrapper.text()).toContain('Había una vez')
+      expect(FakeAudio.instances).toHaveLength(0)
     })
   })
 

@@ -199,6 +199,95 @@ class StoryPageServiceAcceptTest {
         verify(pages, never()).accept(any(), any(), any());
     }
 
+    private StoryPage legacyPage(int number, String text) {
+        StoryPage page = pendingPage(STORY, number);
+        page.setPageStatus(null);
+        page.setText(text);
+        return page;
+    }
+
+    private void storyWith(int beats, StoryPage... others) {
+        StoryOutlineRepository outlines = mock(StoryOutlineRepository.class);
+        StoryRepository stories = mock(StoryRepository.class);
+        List<es.vargontoc.storyteller.domain.model.StoryBeat> list = new java.util.ArrayList<>();
+        for(int i = 0; i < beats; i++)
+            list.add(new es.vargontoc.storyteller.domain.model.StoryBeat("b", "nudo", List.of(), "c", "l"));
+        when(outlines.find(STORY)).thenReturn(java.util.Optional.of(
+            new es.vargontoc.storyteller.domain.model.StoryOutline(List.of(), list)));
+        es.vargontoc.storyteller.domain.model.Story story = new es.vargontoc.storyteller.domain.model.Story();
+        story.setId(STORY);
+        List<StoryPage> all = new java.util.ArrayList<>(List.of(others));
+        all.add(pages.getPage(PAGE));
+        story.setPages(all);
+        when(stories.getStory(STORY)).thenReturn(story);
+        legacyStories = stories;
+        service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
+            mock(StoryPageReviewRepository.class), stories, outlines,
+            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+    }
+
+    private StoryRepository legacyStories;
+
+    private StoryPage accepted(Long id, int number) {
+        StoryPage p = new StoryPage();
+        p.setId(id);
+        p.setPage(number);
+        p.setPageStatus(PageStatus.ACCEPTED);
+        return p;
+    }
+
+    @Test
+    void legacyPageWithTextIsMarkedAcceptedWithoutVersionsOrContentChange() {
+        legacyPage(2, "Luna corre.");
+        storyWith(8, accepted(1L, 0), accepted(2L, 1), legacyPageOther(3L, 3));
+        acceptedResult();
+        when(pages.markAccepted(PAGE)).thenReturn(acceptedPage());
+
+        StoryPage result = service.acceptPage(STORY, PAGE);
+
+        assertEquals(PageStatus.ACCEPTED, result.getPageStatus());
+        verify(pages).markAccepted(PAGE);
+        verify(pages, never()).accept(any(), any(), any());
+        verifyNoInteractions(versions, writer, notifier);
+        verify(gate, never()).tryAcquire(any(), any());
+        verify(legacyStories, never()).updateStatus(any(), any());
+    }
+
+    @Test
+    void lastLegacyPageAcceptedLeavesTheStoryPagesAccepted() {
+        legacyPage(2, "Luna corre.");
+        storyWith(2, accepted(1L, 0), accepted(2L, 1));
+        when(pages.markAccepted(PAGE)).thenReturn(acceptedPage());
+
+        service.acceptPage(STORY, PAGE);
+
+        verify(legacyStories).updateStatus(STORY, es.vargontoc.storyteller.domain.enums.StoryStatus.PAGES_ACCEPTED);
+    }
+
+    @Test
+    void legacyPageWithoutTextIsRejected() {
+        legacyPage(2, " ");
+
+        AppException ex = assertThrows(AppException.class, () -> service.acceptPage(STORY, PAGE));
+
+        assertEquals(HttpStatus.CONFLICT, ex.getStatus());
+        verify(pages, never()).markAccepted(any());
+    }
+
+    private StoryPage legacyPageOther(Long id, int number) {
+        StoryPage p = new StoryPage();
+        p.setId(id);
+        p.setPage(number);
+        return p;
+    }
+
+    private StoryPage acceptedPage() {
+        StoryPage p = new StoryPage();
+        p.setId(PAGE);
+        p.setPageStatus(PageStatus.ACCEPTED);
+        return p;
+    }
+
     @Test
     void pageOfAnotherStoryIsNotFound() {
         pendingPage(77L, 1);

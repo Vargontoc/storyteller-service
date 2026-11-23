@@ -114,6 +114,6 @@ El modal del cuento mostrará controles de narración exclusivamente cuando `scr
 
 ## Validación
 
-- Suite del módulo: pendiente
+- Suite del módulo: correcta (origen: confirmación del usuario "success (test, pruebas)" tras TASK-032; alcance: `npm run test -- --run` y `npm run build` en `app/`)
 - Integración: pendiente
-- Validación manual: pendiente
+- Validación manual: TASK-030 correcta (origen: confirmación del usuario "pruebas"; alcance: los pasos de la prueba manual de TASK-030 con el paso 2 sustituido por "el formulario no muestra selector de idioma", idioma fijo `es`). TASK-031 correcta (origen: confirmación del usuario "pruebas"; alcance: los nueve pasos de la prueba manual de TASK-031), lo que cubre también TASK-028 y TASK-029 en lo que a TASK-031 corresponde. TASK-032 correcta (origen: confirmación del usuario "pruebas"; alcance: prueba manual de TASK-032, cuento antiguo sin narración y cuento con escaleta con el panel). TASK-026 y TASK-028 siguen cubiertas también por TASK-033/TASK-034 (pendientes); TASK-027 se cubre en TASK-030

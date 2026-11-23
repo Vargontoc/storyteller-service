@@ -46,7 +46,8 @@
                 >
                 Revisar guión
                 </button>
-                <button v-if="story.pages == story.size" type="button"   class="btn" @click="callAudioStory()">
+                <!-- Flujo antiguo de audio: con escaleta la narración es StoryNarrationPanel -->
+                <button v-if="!outlined && story.pages == story.size" type="button"   class="btn" @click="callAudioStory()">
                     Generar narración
                 </button>
             </div>

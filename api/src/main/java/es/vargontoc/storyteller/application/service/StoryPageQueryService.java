@@ -103,7 +103,7 @@ public class StoryPageQueryService implements PageQuery {
         return new PageDetail(page.getId(), page.getPage(), page.getPageStatus(), page.getBeatId(),
             page.getPage() == 0 ? page.getCoverText() : null, accepted,
             pending ? views : List.of(), pending ? List.of() : views,
-            generating ? List.of() : actions(pending, history), storyHasAudio && page.getPage() > 0);
+            generating ? List.of() : actions(pending, history, legacyAcceptable(page)), storyHasAudio && page.getPage() > 0);
     }
 
     /**
@@ -111,7 +111,7 @@ public class StoryPageQueryService implements PageQuery {
      * Aceptada: hint (la reabre) y, con propuestas, aceptarla si la vigente no avisa de frases y descartarlas.
      * Elegir versión si hay más de una.
      */
-    private List<PageAction> actions(boolean pending, List<PageVersion> history) {
+    private List<PageAction> actions(boolean pending, List<PageVersion> history, boolean legacyAcceptable) {
         boolean sentences = history.stream().filter(PageVersion::isCurrent).findFirst()
             .map(v -> v.getWarning().hasSentenceWarning()).orElse(false);
         boolean hasCurrent = history.stream().anyMatch(PageVersion::isCurrent);
@@ -125,6 +125,9 @@ public class StoryPageQueryService implements PageQuery {
             if(sentences)
                 actions.add(PageAction.REGENERATE);
         } else {
+            // Página interior con texto y sin estado (anterior al estado por página): se puede aceptar tal cual
+            if(legacyAcceptable)
+                actions.add(PageAction.ACCEPT);
             actions.add(PageAction.HINT);
         }
         if(history.size() > 1)
@@ -135,6 +138,10 @@ public class StoryPageQueryService implements PageQuery {
             actions.add(PageAction.DISCARD_PROPOSALS);
         }
         return actions;
+    }
+
+    private static boolean legacyAcceptable(StoryPage page) {
+        return page.getPageStatus() == null && page.getPage() > 0 && page.getText() != null && !page.getText().isBlank();
     }
 
     /** Lo que se puede generar ahora: 0 la portada, N la página N; null si hay algo pendiente, cuento completo o generación en curso. */

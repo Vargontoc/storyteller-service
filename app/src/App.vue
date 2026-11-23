@@ -6,12 +6,13 @@ import ToastContainer from './components/ToastContainer.vue'
 import HeaderView from './views/HeaderView.vue';
 import StorytellerView from './views/StorytellerView.vue';
 import CharacterCatalogView from './views/CharacterCatalogView.vue'
+import VoiceLibraryView from './views/VoiceLibraryView.vue'
 const STATUS_POLL_INTERVAL_MS = 5_000
 
 const serverStatus = useServerStatusStore()
 const websocketStore = useWebsocketStore()
 let statusPollId: ReturnType<typeof setInterval> | undefined
-const activeView = ref<'stories' | 'characters'>('stories')
+const activeView = ref<'stories' | 'characters' | 'voices'>('stories')
 
 onMounted(() => {
   serverStatus.fetchStatus()
@@ -36,9 +37,11 @@ onUnmounted(() => {
       <nav class="main-nav" aria-label="Secciones principales">
         <button type="button" :class="{ active: activeView === 'stories' }" @click="activeView = 'stories'">Cuentos</button>
         <button type="button" :class="{ active: activeView === 'characters' }" @click="activeView = 'characters'">Personajes</button>
+        <button type="button" :class="{ active: activeView === 'voices' }" @click="activeView = 'voices'">Voces</button>
       </nav>
       <storyteller-view v-if="activeView === 'stories'" />
-      <character-catalog-view v-else />
+      <character-catalog-view v-else-if="activeView === 'characters'" />
+      <voice-library-view v-else />
     </template>
 
     <toast-container />

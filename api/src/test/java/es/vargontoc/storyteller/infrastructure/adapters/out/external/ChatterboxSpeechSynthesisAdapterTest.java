@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withException;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withServerError;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
 
 import java.net.SocketTimeoutException;
@@ -84,6 +85,45 @@ class ChatterboxSpeechSynthesisAdapterTest {
 
         AppException e = assertThrows(AppException.class, () -> adapter.synthesize(request()));
         assertEquals(HttpStatus.BAD_GATEWAY, e.getStatus());
+    }
+
+    @Test
+    void errorMessageIncludesHttpStatusAndBoundedBodyOfTheEngine() {
+        String longBody = "{\"detail\":\"" + "x".repeat(1000) + "\"}";
+        server.expect(requestTo(URL)).andRespond(withStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(longBody).contentType(MediaType.APPLICATION_JSON));
+
+        AppException e = assertThrows(AppException.class, () -> adapter.synthesize(request()));
+        assertEquals(HttpStatus.BAD_GATEWAY, e.getStatus());
+        assertTrue(e.getMessage().contains("422"), e.getMessage());
+        assertTrue(e.getMessage().contains("{\"detail\":\"xxx"), e.getMessage());
+        assertTrue(e.getMessage().length() < 450, "cuerpo sin acotar: " + e.getMessage().length());
+    }
+
+    @Test
+    void realRequestUsesHttp11WithoutH2cUpgradeSoTheContainerReadsTheBody() throws Exception {
+        AtomicReference<String> upgrade = new AtomicReference<>("sin-leer");
+        AtomicReference<String> body = new AtomicReference<>();
+        com.sun.net.httpserver.HttpServer http = com.sun.net.httpserver.HttpServer.create(new java.net.InetSocketAddress("localhost", 0), 0);
+        http.createContext("/audio/speech/upload", ex -> {
+            upgrade.set(String.valueOf(ex.getRequestHeaders().getFirst("Upgrade")));
+            body.set(new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8));
+            ex.sendResponseHeaders(200, WAV.length);
+            ex.getResponseBody().write(WAV);
+            ex.close();
+        });
+        http.start();
+        try {
+            var props = new es.vargontoc.storyteller.infrastructure.config.ChatterboxProperties(
+                    "http://localhost:" + http.getAddress().getPort(), 10, "x");
+            byte[] audio = new ChatterboxSpeechSynthesisAdapter(props).synthesize(request());
+
+            assertArrayEquals(WAV, audio);
+            assertEquals("null", upgrade.get());
+            assertTrue(body.get().contains("name=\"input\""));
+        } finally {
+            http.stop(0);
+        }
     }
 
     @Test

@@ -49,6 +49,14 @@
         </li>
       </ul>
 
+      <!-- Audio de narración: solo interiores con audio declarado; se pide al pulsar y no se encadena. -->
+      <div v-if="page.page > 0 && page.hasAudio" class="audio">
+        <button type="button" class="btn" :disabled="playingPage === page.page" @click="playAudio(page.page)">
+          {{ playingPage === page.page ? 'Reproduciendo audio...' : 'Reproducir audio' }}
+        </button>
+        <p v-if="audioError?.page === page.page" class="error audio-error">{{ audioError.message }}</p>
+      </div>
+
       <div v-if="page.actions.includes('ACCEPT_PROPOSAL') || page.actions.includes('DISCARD_PROPOSALS')" class="row">
         <button v-if="page.actions.includes('ACCEPT_PROPOSAL')" type="button" class="btn" :disabled="busy" @click="acceptReopened(page.id)">
           Aceptar propuesta
@@ -89,6 +97,7 @@ import { computed, onBeforeUnmount, reactive, ref, watch } from 'vue'
 import { ApiError } from '../api/httpClient'
 import { useWebsocketStore } from '../stores/websocket'
 import ConfirmModal from './ConfirmModal.vue'
+import { getPageAudio } from '../api/storyNarration'
 import {
   acceptPage,
   acceptProposal,
@@ -156,8 +165,46 @@ async function loadImages(loaded: StoryPagesView) {
   }
 }
 
+// Audio de la página en reproducción (una sola a la vez); la URL temporal se libera al terminar, cambiar o desmontar.
+const playingPage = ref<number | null>(null)
+const audioError = ref<{ page: number; message: string } | null>(null)
+let audio: HTMLAudioElement | null = null
+let audioUrl: string | null = null
+
+function stopAudio() {
+  if (audio) {
+    audio.pause()
+    audio = null
+  }
+  if (audioUrl) {
+    URL.revokeObjectURL(audioUrl)
+    audioUrl = null
+  }
+  playingPage.value = null
+}
+
+async function playAudio(pageNumber: number) {
+  stopAudio()
+  audioError.value = null
+  try {
+    const url = URL.createObjectURL(await getPageAudio(props.storyId, pageNumber))
+    audioUrl = url
+    // 'ended' solo detiene esta página: nunca avanza ni reproduce otra.
+    const player = new Audio(url)
+    audio = player
+    player.addEventListener('ended', stopAudio)
+    player.addEventListener('error', stopAudio)
+    playingPage.value = pageNumber
+    await player.play()
+  } catch (err) {
+    stopAudio()
+    audioError.value = { page: pageNumber, message: err instanceof ApiError ? err.message : 'No se pudo reproducir el audio' }
+  }
+}
+
 // Fuente de verdad: el estado siempre viene de REST.
 async function load() {
+  stopAudio()
   try {
     const loaded = await getStoryPagesView(props.storyId)
     view.value = loaded
@@ -274,6 +321,16 @@ watch(
   },
 )
 
+// Narración completada del cuento abierto: recarga para que aparezca el reproductor (sin audio optimista).
+watch(
+  () => websocketStore.lastNarrationEvent?.id,
+  async () => {
+    const event = websocketStore.lastNarrationEvent
+    if (!event || event.storyId !== props.storyId || event.type !== 'COMPLETED') return
+    await load()
+  },
+)
+
 // Reconexión (reinicio del servidor o eventos perdidos): recarga el panel completo.
 watch(
   () => websocketStore.connectionId,
@@ -283,7 +340,10 @@ watch(
   },
 )
 
-onBeforeUnmount(releaseImages)
+onBeforeUnmount(() => {
+  stopAudio()
+  releaseImages()
+})
 
 async function initialLoad() {
   loading.value = true
