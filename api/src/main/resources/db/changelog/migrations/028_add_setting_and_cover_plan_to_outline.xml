@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Lugar de escena por beat y planteamiento de portada. NULL en las escaletas anteriores (sin backfill). -->
+    <changeSet id="028-add-setting-and-cover-plan-to-outline" author="storyteller">
+        <addColumn tableName="story_beat">
+            <column name="setting" type="VARCHAR(300)"/>
+        </addColumn>
+        <addColumn tableName="story_outline">
+            <column name="cover_setting" type="VARCHAR(300)"/>
+            <column name="cover_tone" type="VARCHAR(300)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

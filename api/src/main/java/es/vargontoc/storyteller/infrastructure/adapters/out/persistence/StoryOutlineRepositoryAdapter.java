@@ -10,6 +10,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
 import es.vargontoc.storyteller.domain.model.StoryOutline;
@@ -56,6 +57,10 @@ public class StoryOutlineRepositoryAdapter implements StoryOutlineRepository {
         StoryOutlineJpaEntity outline = new StoryOutlineJpaEntity();
         outline.setStory(story);
         outline.setCreatedAt(now);
+        if (domain.cover() != null) {
+            outline.setCoverSetting(domain.cover().setting());
+            outline.setCoverTone(domain.cover().tone());
+        }
         for (int i = 0; i < beats.size(); i++) {
             outline.getBeats().add(toEntity(outline, i + 1, beats.get(i), now));
         }
@@ -73,7 +78,8 @@ public class StoryOutlineRepositoryAdapter implements StoryOutlineRepository {
     public Optional<StoryOutline> find(Long storyId) {
         return outlines.findByStoryId(storyId).map(outline -> new StoryOutline(
                 outline.getCast().stream().map(c -> new EpisodicCastMember(c.getName(), c.getRole())).toList(),
-                outline.getBeats().stream().map(this::toBeat).toList()));
+                outline.getBeats().stream().map(this::toBeat).toList(),
+                toCover(outline)));
     }
 
     @Override
@@ -100,6 +106,7 @@ public class StoryOutlineRepositoryAdapter implements StoryOutlineRepository {
         entity.setParticipants(String.join(SEPARATOR, beat.participants()));
         entity.setTone(beat.tone());
         entity.setVisualNote(beat.visualNote());
+        entity.setSetting(beat.setting());
         entity.setCreatedAt(now);
         return entity;
     }
@@ -120,6 +127,14 @@ public class StoryOutlineRepositoryAdapter implements StoryOutlineRepository {
                 ? new ArrayList<>()
                 : Arrays.asList(entity.getParticipants().split(SEPARATOR));
         return new StoryBeat(entity.getEvent(), entity.getNarrativeFunction(), participants, entity.getTone(),
-                entity.getVisualNote());
+                entity.getVisualNote(), entity.getSetting());
+    }
+
+    /** Sin lugar ni tono guardados (escaleta anterior a la feature) no hay planteamiento de portada. */
+    private CoverPlan toCover(StoryOutlineJpaEntity outline) {
+        if (outline.getCoverSetting() == null && outline.getCoverTone() == null) {
+            return null;
+        }
+        return new CoverPlan(outline.getCoverSetting(), outline.getCoverTone());
     }
 }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import es.vargontoc.storyteller.shared.BaseEntity;
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
@@ -29,6 +30,17 @@ public class StoryOutlineJpaEntity extends BaseEntity {
     @OrderBy("position ASC")
     private List<EpisodicCastMemberJpaEntity> cast = new ArrayList<>();
 
+    /** Planteamiento de portada. NULL en escaletas anteriores. */
+    @Column(name = "cover_setting", length = 300)
+    private String coverSetting;
+
+    @Column(name = "cover_tone", length = 300)
+    private String coverTone;
+
+    public String getCoverSetting() { return coverSetting; }
+    public void setCoverSetting(String coverSetting) { this.coverSetting = coverSetting; }
+    public String getCoverTone() { return coverTone; }
+    public void setCoverTone(String coverTone) { this.coverTone = coverTone; }
     public StoryJpaEntity getStory() { return story; }
     public void setStory(StoryJpaEntity story) { this.story = story; }
     public List<StoryBeatJpaEntity> getBeats() { return beats; }

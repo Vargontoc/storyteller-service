@@ -10,7 +10,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 
 ## Tareas
 
-### [ ] TASK-001 Guion persistido con lugar de escena y planteamiento de portada
+### [x] TASK-001 Guion persistido con lugar de escena y planteamiento de portada
 
 - **Cubre:** REQ-017, REQ-037, REQ-027, REQ-029, DEC-001
 - **Componente:** story-outline-repository | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/persistence/StoryOutlineRepositoryAdapter.java

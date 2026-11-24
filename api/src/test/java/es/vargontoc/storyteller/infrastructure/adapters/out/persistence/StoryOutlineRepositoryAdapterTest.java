@@ -15,6 +15,7 @@ import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
 import es.vargontoc.storyteller.domain.model.StoryOutline;
@@ -160,6 +161,47 @@ class StoryOutlineRepositoryAdapterTest {
         when(outlines.findByStoryId(1L)).thenReturn(Optional.empty());
 
         assertTrue(adapter.findBeatId(1L, 1).isEmpty());
+    }
+
+    @Test
+    void savesAndReadsSettingPerBeatAndTheCoverPlanSeparatedFromPageOne() {
+        StoryJpaEntity story = story(5L, "t", "s");
+        when(stories.findById(5L)).thenReturn(Optional.of(story));
+        when(outlines.findByStoryId(5L)).thenReturn(Optional.empty());
+        var beats = List.of(beatIn("uno", "cocina"), beatIn("dos", "jardin"), beatIn("tres", "playa"), beatIn("cuatro", "cueva"));
+        var cover = new CoverPlan("habitacion al anochecer", "calma");
+
+        adapter.save(5L, new StoryOutline(List.of(), beats, cover));
+
+        var captor = ArgumentCaptor.forClass(StoryOutlineJpaEntity.class);
+        verify(outlines).save(captor.capture());
+        when(outlines.findByStoryId(5L)).thenReturn(Optional.of(captor.getValue()));
+        var script = adapter.find(5L).orElseThrow();
+        assertEquals(List.of("cocina", "jardin", "playa", "cueva"), script.beats().stream().map(StoryBeat::setting).toList());
+        assertEquals(cover, script.cover());
+        assertEquals("cocina", script.beats().get(0).setting());
+    }
+
+    @Test
+    void legacyOutlineWithoutNewColumnsReadsWithoutCoverPlanAndWithoutSettings() {
+        var outline = new StoryOutlineJpaEntity();
+        var row = beatRow(901L, 1);
+        row.setEvent("uno");
+        row.setNarrativeFunction("funcion");
+        row.setParticipants("Luna");
+        row.setTone("alegre");
+        row.setVisualNote("bosque");
+        outline.getBeats().add(row);
+        when(outlines.findByStoryId(7L)).thenReturn(Optional.of(outline));
+
+        var script = adapter.find(7L).orElseThrow();
+
+        assertNull(script.cover());
+        assertNull(script.beats().get(0).setting());
+    }
+
+    private StoryBeat beatIn(String event, String setting) {
+        return new StoryBeat(event, "funcion", List.of("Luna", "Bruno"), "alegre", "bosque", setting);
     }
 
     private es.vargontoc.storyteller.infrastructure.persistence.StoryBeatJpaEntity beatRow(Long id, int page) {

@@ -35,6 +35,12 @@ public class StoryBeatJpaEntity extends BaseEntity {
     @Column(name = "visual_note", nullable = false, length = 1000)
     private String visualNote;
 
+    /** Lugar de escena. NULL en escaletas anteriores. */
+    @Column(name = "setting", length = 300)
+    private String setting;
+
+    public String getSetting() { return setting; }
+    public void setSetting(String setting) { this.setting = setting; }
     public StoryOutlineJpaEntity getOutline() { return outline; }
     public void setOutline(StoryOutlineJpaEntity outline) { this.outline = outline; }
     public int getPageNumber() { return pageNumber; }
