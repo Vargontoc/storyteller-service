@@ -2,6 +2,7 @@ package es.vargontoc.storyteller.domain.request;
 
 import java.util.List;
 
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
 
@@ -15,10 +16,21 @@ public record WriterContext(
         String protagonist,
         List<EpisodicCastMember> cast,
         StoryBeat beat,
-        List<String> previousTexts) {
+        List<String> previousTexts,
+        CoverPlan coverPlan) {
+
+    public WriterContext(String title, String synopsis, String protagonist, List<EpisodicCastMember> cast,
+            StoryBeat beat, List<String> previousTexts) {
+        this(title, synopsis, protagonist, cast, beat, previousTexts, null);
+    }
 
     public static WriterContext cover(String title, String synopsis, String protagonist) {
-        return new WriterContext(title, synopsis, protagonist, List.of(), null, List.of());
+        return cover(title, synopsis, protagonist, null);
+    }
+
+    /** Portada con su planteamiento propio (lugar y tono); {@code coverPlan} puede ser null en cuentos antiguos. */
+    public static WriterContext cover(String title, String synopsis, String protagonist, CoverPlan coverPlan) {
+        return new WriterContext(title, synopsis, protagonist, List.of(), null, List.of(), coverPlan);
     }
 
     public boolean isCover() {

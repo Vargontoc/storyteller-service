@@ -24,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
@@ -88,7 +89,7 @@ class StoryPageServiceRegenerateTest {
         writer = mock(WriterAgent.class);
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(stories.getStory(STORY)).thenReturn(story());
         when(pages.getPage(PAGE_ID)).thenReturn(page(PAGE_ID, 2, PageStatus.PENDING));
@@ -243,7 +244,7 @@ class StoryPageServiceRegenerateTest {
     void gateIsReleasedWhenTheTaskCannotBeScheduled() {
         StoryPageService rejecting = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier,
-            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
+            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
 
         assertThrows(RuntimeException.class, () -> rejecting.startRegenerate(STORY, PAGE_ID));
 

@@ -119,7 +119,7 @@ class PortraitTurnTest {
         var outlines = mock(StoryOutlineRepository.class);
         when(stories.getStory(STORY)).thenReturn(story);
         var beat = new StoryBeat("Luna sale", "nudo", List.of("Luna"), "curioso", "claro");
-        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(), List.of(beat))));
+        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(), List.of(beat), new es.vargontoc.storyteller.domain.model.CoverPlan("habitación", "calma"))));
         when(outlines.findBeatId(STORY, 1)).thenReturn(Optional.of(501L));
         var created = new StoryPage();
         created.setId(70L);
@@ -128,7 +128,7 @@ class PortraitTurnTest {
                 new SceneComposition("Luna en el claro", List.of(), "claro")));
         return new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
                 mock(StoryPageReviewRepository.class), stories, outlines, gate, writer,
-                mock(StoryPageVersionRepository.class), mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
+                mock(StoryPageVersionRepository.class), mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
     }
 
     /** Cuento con guion aprobado; con portada aceptada solo falta la página 1, sin ella falta la portada. */

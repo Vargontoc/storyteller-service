@@ -1,7 +1,7 @@
 # Requisitos: export-import-feature
 
 Estado: aprobado
-Revisión: 5
+Revisión: 7
 
 ## Contexto
 
@@ -17,7 +17,8 @@ El adulto necesita ilustrar la portada y las páginas del cuento con una herrami
 - Incluir personajes secundarios en la exportación para el agente visual; solo se exporta el protagonista.
 - Que el adulto suba la imagen del personaje con fondo transparente.
 - Audio de la portada.
-- Un tratamiento específico de la transparencia (conservarla o aplanarla) al convertir las imágenes para Nubi Game; las imágenes de portada y de páginas no tienen transparencia (SUP-019).
+- Convertir de formato, redimensionar, reorientar, recomprimir o quitar metadatos a las imágenes de portada y de páginas al exportarlas para Nubi Game; el zip las incluye tal como se subieron y la aplicación consumidora se encarga del formato (SUP-007).
+- Comprobar en la exportación para Nubi Game que Nubi Game admite el formato de cada imagen importada (SUP-007).
 - Enviar los ficheros directamente a Nubi Game o al agente visual, o invocar su validador; la aplicación solo genera el fichero exportado.
 - Quitar una imagen importada de la portada o de una página sin sustituirla por otra.
 - Cambiar el comportamiento actual de la narración cuando una página cambia (SUP-020).
@@ -93,10 +94,11 @@ El adulto necesita ilustrar la portada y las páginas del cuento con una herrami
 
 ### REQ-011 Contenido del zip para Nubi Game
 
-- **Requisito:** Cuando se genera la exportación para Nubi Game, la aplicación deberá incluir en el zip un `story.json`, la imagen de portada y, por cada página interior, su imagen y su audio, con las imágenes ya convertidas según REQ-033 y REQ-034.
+- **Requisito:** Cuando se genera la exportación para Nubi Game, la aplicación deberá incluir en el zip un `story.json`, la imagen de portada y, por cada página interior, su imagen y su audio, con cada imagen en un fichero cuya extensión corresponde a su formato real (SUP-022).
 - **Criterios de aceptación:**
   - Dado un cuento completo de 5 páginas interiores, cuando el adulto abre el zip exportado, entonces encuentra un `story.json`, 1 imagen de portada, 5 imágenes de página y 5 audios, y ningún audio de portada.
-  - Dado un cuento completo cuyas imágenes se subieron en PNG, cuando el adulto abre el zip exportado, entonces todas las imágenes del zip están en el formato destino de SUP-015 y ninguna está en PNG.
+  - Dado un cuento completo con la portada subida en PNG y la página 1 subida en JPEG, cuando el adulto abre el zip exportado, entonces la imagen de portada del zip está en PNG con extensión `.png` y la de la página 1 en JPEG con extensión `.jpg` (SUP-007, SUP-022).
+  - Dado una página cuya imagen PNG se subió con un nombre de fichero terminado en `.jpg`, cuando el adulto abre el zip exportado, entonces el fichero de imagen de esa página tiene extensión `.png` (SUP-022).
 
 ### REQ-012 Cabecera del `story.json` para Nubi Game
 
@@ -119,9 +121,10 @@ El adulto necesita ilustrar la portada y las páginas del cuento con una herrami
 
 ### REQ-015 Imagen exportada para Nubi Game
 
-- **Requisito:** La aplicación deberá exportar para Nubi Game, como imagen de la portada y de cada página interior, la versión convertida (REQ-033 y REQ-034) de la imagen importada por el adulto en esa portada o página (SUP-002).
+- **Requisito:** La aplicación deberá exportar para Nubi Game, como imagen de la portada y de cada página interior, la imagen importada por el adulto en esa portada o página tal como se subió, sin convertir su formato ni modificar sus dimensiones (SUP-002, SUP-007).
 - **Criterios de aceptación:**
-  - Dado la página 2 con la imagen importada B, cuando se exporta el cuento para Nubi Game, entonces la imagen referenciada por la página 2 en el `story.json` muestra el mismo contenido que B, convertida al formato y tamaño de SUP-015.
+  - Dado la página 2 con la imagen importada B, cuando se exporta el cuento para Nubi Game, entonces el fichero referenciado por la página 2 en el `story.json` es idéntico byte a byte a B.
+  - Dado una página importada en BMP de 4096 × 3072 px, cuando se exporta el cuento para Nubi Game, entonces la imagen de esa página en el zip está en BMP y mide 4096 × 3072 px.
 
 ### REQ-016 Sustitución del zip anterior para Nubi Game
 
@@ -235,26 +238,17 @@ El adulto necesita ilustrar la portada y las páginas del cuento con una herrami
   - Dado un cuento cuyo título no permite derivar un `storyId` de al menos 3 caracteres, cuando el adulto pide la exportación para el agente visual, entonces no se genera zip y el mensaje indica que el identificador del cuento no cumple el patrón.
   - Dado un cuento con la portada aceptada cuya descripción de escena está vacía, cuando el adulto pide la exportación para el agente visual, entonces no se genera zip y el mensaje indica que la descripción visual de la escena de portada está vacía.
 
-### REQ-033 Formato de imagen optimizado para móvil en la exportación para Nubi Game
+### REQ-033 Formato de imagen optimizado para móvil en la exportación para Nubi Game (retirado)
 
-- **Requisito:** Cuando se genera la exportación para Nubi Game, la aplicación deberá convertir la imagen de la portada y la de cada página interior al formato destino definido en SUP-015, con independencia del formato en que se importaron, sin modificar la imagen importada que conserva el cuento.
-- **Criterios de aceptación:**
-  - Dado una portada importada en PNG y una página importada en BMP, cuando se exporta el cuento para Nubi Game, entonces ambas imágenes del zip están en WebP (SUP-015).
-  - Dado una página importada en JPEG con metadatos de orientación que indican un giro de 90°, cuando se exporta el cuento para Nubi Game, entonces la imagen del zip se ve con la misma orientación que en la aplicación y no contiene metadatos.
-  - Dado un cuento ya exportado para Nubi Game, cuando el adulto vuelve a abrir la página 2 en la aplicación, entonces ve la imagen importada original, no la convertida.
+- **Retirado en la revisión 6.** El usuario decide que el zip para Nubi Game lleva las imágenes originales sin convertir (SUP-007 validado, SUP-015 descartado); lo sustituye la nueva redacción de REQ-011 y REQ-015. El ID no se reutiliza.
 
-### REQ-034 Dimensiones de imagen limitadas en la exportación para Nubi Game
+### REQ-034 Dimensiones de imagen limitadas en la exportación para Nubi Game (retirado)
 
-- **Requisito:** Cuando se genera la exportación para Nubi Game, la aplicación deberá reducir cada imagen cuyo lado mayor supere el máximo de SUP-015 hasta ese máximo, conservando su proporción y sin ampliar las imágenes que no lo superan.
-- **Criterios de aceptación:**
-  - Dado el máximo de 2048 px de SUP-015 y una página importada de 4096 × 3072 px, cuando se exporta el cuento para Nubi Game, entonces la imagen del zip mide 2048 × 1536 px.
-  - Dado una página importada de 300 × 200 px, cuando se exporta el cuento para Nubi Game, entonces la imagen del zip mide 300 × 200 px.
+- **Retirado en la revisión 6.** Las imágenes no se redimensionan al exportarlas para Nubi Game (SUP-007); lo sustituye la nueva redacción de REQ-015. El ID no se reutiliza.
 
-### REQ-035 Rechazo de la exportación para Nubi Game por imagen no convertible
+### REQ-035 Rechazo de la exportación para Nubi Game por imagen no convertible (retirado)
 
-- **Requisito:** Si alguna imagen importada no puede convertirse según REQ-033 y REQ-034, entonces la aplicación deberá rechazar la exportación para Nubi Game sin generar el zip e indicar en qué portada o página está cada imagen que no se pudo convertir.
-- **Criterios de aceptación:**
-  - Dado una página 3 con una imagen importada que no se puede convertir, cuando el adulto pide la exportación para Nubi Game, entonces no se genera zip y el mensaje indica que la imagen de la página 3 no se pudo convertir.
+- **Retirado en la revisión 6.** Al no haber conversión (SUP-007), no existe el caso de imagen no convertible; la exportación para Nubi Game solo se rechaza por las causas de REQ-010. El ID no se reutiliza.
 
 ### REQ-036 Descripción de escena visible en la portada
 
@@ -359,9 +353,9 @@ Ninguno.
 ### SUP-007 Las imágenes se exportan en su formato original
 
 - **Tipo:** decisional
-- **Descripción:** Como la importación acepta cualquier formato de imagen (PDEC-042), el zip para Nubi Game incluye cada imagen tal como se subió, sin convertirla de formato ni redimensionarla.
-- **Impacto:** REQ-011 y REQ-015; compatibilidad con Nubi Game.
-- **Estado:** descartado. El usuario decide que las imágenes se convierten a un formato óptimo para renderizado en móviles al exportarlas para Nubi Game; sustituido por REQ-033, REQ-034, REQ-035 y SUP-015.
+- **Descripción:** Como la importación acepta cualquier formato de imagen (PDEC-042), el zip para Nubi Game incluye cada imagen tal como se subió, sin convertirla de formato ni redimensionarla. La aplicación consumidora se encarga del formato.
+- **Impacto:** REQ-011 y REQ-015; compatibilidad con Nubi Game, que queda a cargo de Nubi Game.
+- **Estado:** validado. En la revisión 6 el usuario revierte la corrección anterior (que lo había descartado en favor de convertir las imágenes a un formato óptimo para móviles, con REQ-033 a REQ-035 y SUP-015): "el zip lleva las imágenes originales tal cual se subieron, sin convertir, y la aplicación consumidora se encarga del formato".
 
 ### SUP-008 Todas las escenas visuales referencian al protagonista
 
@@ -417,7 +411,7 @@ Ninguno.
 - **Tipo:** decisional
 - **Descripción:** Las imágenes exportadas para Nubi Game se convierten a WebP con calidad 85, con la orientación ya aplicada y sin metadatos; el lado mayor se limita a 2048 px. No se define tratamiento de la transparencia, porque las imágenes no la tienen (SUP-019).
 - **Impacto:** REQ-011, REQ-015, REQ-033 y REQ-034; formato, extensión y dimensiones de las imágenes del zip y rutas del `story.json`.
-- **Estado:** validado
+- **Estado:** descartado. En la revisión 6 el usuario decide exportar las imágenes originales sin conversión (SUP-007); se retiran REQ-033, REQ-034 y REQ-035 y se reescriben REQ-011 y REQ-015.
 
 ### SUP-016 La portada tiene descripción de escena propia
 
@@ -443,8 +437,8 @@ Ninguno.
 ### SUP-019 Las imágenes de portada y de páginas no tienen transparencia
 
 - **Tipo:** contextual
-- **Descripción:** Las imágenes que el adulto importa en la portada y en las páginas interiores no tienen transparencia. Lo afirma el usuario. Por eso la conversión para Nubi Game no define cómo tratar el canal alfa.
-- **Impacto:** REQ-033 y SUP-015; si llegara una imagen con transparencia, su aspecto en el zip no está especificado.
+- **Descripción:** Las imágenes que el adulto importa en la portada y en las páginas interiores no tienen transparencia. Lo afirma el usuario. Desde la revisión 6 las imágenes se exportan sin conversión (SUP-007), así que, si alguna tuviera transparencia, llegaría al zip tal como se subió.
+- **Impacto:** Ninguno sobre requisitos vigentes desde la revisión 6; antes condicionaba REQ-033 y SUP-015, ya retirado y descartado.
 - **Estado:** validado
 
 ### SUP-020 El audio de una página que cambia sigue el comportamiento actual de la narración
@@ -460,6 +454,13 @@ Ninguno.
 - **Descripción:** Los cuentos creados antes de esta feature no tienen lugar ni tono propios de la portada (fuera de alcance), así que el escritor no puede redactar su descripción de escena de portada (REQ-038) y su portada nunca queda aceptada. Por REQ-009 y REQ-018, esos cuentos no son exportables ni para Nubi Game ni para el agente visual; antes de esta revisión sí lo eran para Nubi Game si tenían imágenes y audio.
 - **Impacto:** REQ-009, REQ-010, REQ-018 y REQ-019 aplicados a cuentos existentes.
 - **Estado:** validado. El usuario acepta que los cuentos existentes dejen de ser exportables, también para Nubi Game.
+
+### SUP-022 Cómo identifica Nubi Game el formato de cada imagen
+
+- **Tipo:** decisional
+- **Descripción:** Como las imágenes van al zip en su formato original (SUP-007), cada fichero de imagen del zip lleva la extensión que corresponde a su formato real (por ejemplo `.png`, `.jpg`, `.bmp`), con independencia del nombre con que se subió. El formato de cada imagen se identifica por la extensión de su fichero; el `story.json` para Nubi Game no lo declara en un campo aparte.
+- **Impacto:** REQ-011; rutas de imagen de REQ-012, REQ-013 y REQ-014; contenido del `story.json` para Nubi Game.
+- **Estado:** validado. En la revisión 7 el usuario acepta la propuesta y descarta la alternativa de declarar el tipo de imagen en un campo del `story.json`.
 
 ## Preguntas abiertas
 

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.external.WriterAgent;
@@ -63,7 +64,7 @@ class StoryPageServiceSelectVersionTest {
         gate = mock(GenerationGatePort.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), mock(StoryRepository.class), mock(StoryOutlineRepository.class),
-            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
+            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         when(pages.getPage(PAGE_ID)).thenReturn(page(PAGE_ID, 3, PageStatus.PENDING));
         when(pages.getPage(OTHER_PAGE_ID)).thenReturn(page(OTHER_PAGE_ID, 4, PageStatus.PENDING));
         when(pages.getPage(COVER_ID)).thenReturn(page(COVER_ID, 0, PageStatus.PENDING));

@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.request.DirectorReviewRequest;
 import es.vargontoc.storyteller.domain.request.DirectorScriptRequest;
 import es.vargontoc.storyteller.domain.response.DirectorBeat;
@@ -63,7 +64,8 @@ public class SpringAiDirectorAgent implements DirectorAgent {
         if (result == null) {
             throw invalidResponse();
         }
-        return validateScript(result.title(), result.synopsis(), result.cast(), result.beats(), request.pages());
+        return validateScript(result.title(), result.synopsis(), result.cast(), result.beats(), result.cover(),
+                request.pages());
     }
 
     @Override
@@ -94,8 +96,9 @@ public class SpringAiDirectorAgent implements DirectorAgent {
             return new DirectorReviewResult(false, result.rejectionReason().trim(), null, null, null, null);
         }
         DirectorScriptResult script = validateScript(
-                result.title(), result.synopsis(), result.cast(), result.beats(), request.beats().size());
-        return new DirectorReviewResult(true, null, script.title(), script.synopsis(), script.cast(), script.beats());
+                result.title(), result.synopsis(), result.cast(), result.beats(), result.cover(), request.beats().size());
+        return new DirectorReviewResult(true, null, script.title(), script.synopsis(), script.cast(), script.beats(),
+                script.cover());
     }
 
     @Override
@@ -114,7 +117,7 @@ public class SpringAiDirectorAgent implements DirectorAgent {
     }
 
     private DirectorScriptResult validateScript(String title, String synopsis, List<DirectorCastMember> cast,
-            List<DirectorBeat> beats, int expectedBeats) {
+            List<DirectorBeat> beats, CoverPlan cover, int expectedBeats) {
         if (isBlank(title) || isBlank(synopsis) || beats == null || beats.size() != expectedBeats
                 || !beats.stream().allMatch(this::isComplete)) {
             throw invalidResponse();
@@ -123,7 +126,8 @@ public class SpringAiDirectorAgent implements DirectorAgent {
         if (!safeCast.stream().allMatch(member -> member != null && !isBlank(member.name()) && !isBlank(member.role()))) {
             throw invalidResponse();
         }
-        return new DirectorScriptResult(title.trim(), synopsis.trim(), safeCast, beats);
+        // Lugar de los beats y planteamiento de portada se entregan tal cual; su validación es de StoryService.
+        return new DirectorScriptResult(title.trim(), synopsis.trim(), safeCast, beats, cover);
     }
 
     private boolean isComplete(DirectorBeat beat) {
@@ -150,7 +154,8 @@ public class SpringAiDirectorAgent implements DirectorAgent {
                 + " | narrativeFunction=" + beat.narrativeFunction()
                 + " | participants=" + String.join(", ", beat.participants())
                 + " | tone=" + beat.tone()
-                + " | visualNote=" + beat.visualNote();
+                + " | visualNote=" + beat.visualNote()
+                + (isBlank(beat.setting()) ? "" : " | setting=" + beat.setting());
     }
 
     private String describeCast(List<DirectorCastMember> cast) {

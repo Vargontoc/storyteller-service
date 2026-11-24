@@ -220,6 +220,38 @@ class StoryPageQueryServiceTest {
         assertNull(detail.proposals().get(0).text());
     }
 
+    // ---- descripción de escena completa (TASK-015) ----
+
+    @Test
+    void acceptedCoverReturnsItsOwnFullSceneNotThePageOnes() {
+        String coverScene = "Portada: ".concat("un claro al amanecer con Luna al centro. ".repeat(40));
+        cover(true, null);
+        accepted(1, null);
+        pages.get(0).setComposition(new SceneComposition(coverScene, List.of(), "claro"));
+        pages.get(1).setComposition(new SceneComposition("Escena de la página 1", List.of(), "bosque"));
+
+        StoryPagesView view = view();
+
+        assertEquals(coverScene, view.pages().get(0).accepted().scene());
+        assertEquals("Escena de la página 1", view.pages().get(1).accepted().scene());
+        assertEquals(coverScene, service.findPage(STORY, 100L).orElseThrow().accepted().scene());
+    }
+
+    @Test
+    void acceptedInteriorPageReturnsItsFullSceneWithoutTruncation() {
+        String longScene = "Luna camina por el bosque. ".repeat(70);
+        cover(true, null);
+        accepted(1, null);
+        accepted(2, null);
+        pages.get(2).setComposition(new SceneComposition(longScene, List.of(), "bosque"));
+
+        assertTrue(longScene.length() > 1500);
+        story();
+        assertEquals(longScene, service.findPage(STORY, 102L).orElseThrow().accepted().scene());
+        assertEquals(longScene, view().pages().get(2).accepted().scene());
+        assertEquals("Luna en el claro", view().pages().get(1).accepted().scene());
+    }
+
     // ---- siguiente página y cuento completo ----
 
     @Test

@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,7 +23,7 @@ import es.vargontoc.storyteller.shared.Constants;
 
 /**
  * Registra en Ollama el modelo del escritor al arrancar, a partir del Modelfile
- * mantenido como recurso del backend. Si el modelo ya existe no hace nada.
+ * mantenido como recurso del backend. Si el modelo ya existe lo reemplaza.
  */
 @Component
 @ConditionalOnProperty(name = "app.agents.writer-provisioning.enabled", havingValue = "true", matchIfMissing = true)
@@ -34,38 +33,31 @@ public class WriterModelProvisioner implements ApplicationRunner {
 
     private static final Logger log = LoggerFactory.getLogger(WriterModelProvisioner.class);
 
-    private final OllamaApi api;
     private final RestClient client;
     private final String name;
     private final Resource modelfile;
 
     @Autowired
     public WriterModelProvisioner(
-            OllamaApi api,
             @Value("${spring.ai.ollama.base-url}") String url,
             @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL) String name) {
-        this(api, RestClient.builder().baseUrl(url).build(), name, new ClassPathResource(MODELFILE_PATH));
+        this(RestClient.builder().baseUrl(url).build(), name, new ClassPathResource(MODELFILE_PATH));
     }
 
-    WriterModelProvisioner(OllamaApi api, RestClient client, String name, Resource modelfile) {
-        this.api = api;
+    WriterModelProvisioner(RestClient client, String name, Resource modelfile) {
         this.client = client;
         this.name = name;
         this.modelfile = modelfile;
     }
 
+    /** Registra siempre el modelo: /api/create de Ollama sustituye el ya existente, así recibe las reglas vigentes. */
     @Override
     public void run(ApplicationArguments args) {
         try {
-            if (api.listModels().models().stream()
-                    .anyMatch(m -> m.name().equals(name) || m.name().startsWith(name + ":"))) {
-                log.info("Modelo escritor {} disponible", name);
-                return;
-            }
             Map<String, Object> request = toRequest(modelfile.getContentAsString(StandardCharsets.UTF_8));
             client.post().uri("/api/create").contentType(MediaType.APPLICATION_JSON)
                     .body(request).retrieve().toBodilessEntity();
-            log.info("Modelo escritor {} creado", name);
+            log.info("Modelo escritor {} registrado con el Modelfile vigente", name);
         } catch (RestClientResponseException e) {
             throw new IllegalStateException("No se pudo aprovisionar el modelo del escritor " + name + " desde "
                     + MODELFILE_PATH + ": Ollama respondio " + e.getStatusCode() + " " + e.getResponseBodyAsString(), e);

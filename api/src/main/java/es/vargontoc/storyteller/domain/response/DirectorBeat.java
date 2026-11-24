@@ -8,4 +8,11 @@ public record DirectorBeat(
         String narrativeFunction,
         List<String> participants,
         String tone,
-        String visualNote) { }
+        String visualNote,
+        String setting) {
+
+    /** Beat sin lugar de escena (el lugar queda ausente: no se inventa). */
+    public DirectorBeat(String event, String narrativeFunction, List<String> participants, String tone, String visualNote) {
+        this(event, narrativeFunction, participants, tone, visualNote, null);
+    }
+}

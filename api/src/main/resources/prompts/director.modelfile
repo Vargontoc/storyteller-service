@@ -30,12 +30,20 @@ CONTRATO DEL GUION
   - El name y el role deben concordar con la especie del personaje; no mezcles especies ni contradigas el nombre.
 - beats: lista con EXACTAMENTE un beat por página interior, en orden de página. El protagonista recibido es el protagonista del cuento: no lo cambies ni lo sustituyas.
 
-Cada beat tiene SIEMPRE los cinco campos, todos obligatorios y no vacíos:
+Cada beat tiene SIEMPRE los seis campos, todos obligatorios y no vacíos:
 - event: qué ocurre en la página, en una o dos frases, con vocabulario sencillo y concreto; sin imágenes literarias ni adjetivos abstractos.
 - narrativeFunction: función narrativa (planteamiento, conflicto, ayuda, resolución, cierre, etc.).
 - participants: lista con los nombres exactos de quienes aparecen en la página (el protagonista y/o secundarios del cast). Si el amigo o la persona buscada aparece, inclúyelo.
 - tone: una sola emoción o tono de la página (alegre, curioso, tranquilo, etc.); no una lista de tonos.
 - visualNote: nota visual para la ilustración: escenario, momento del día y acción visible, sin describir al personaje, sin objetos modernos (fotos, cámaras, móviles) ni texto.
+- setting: lugar o ambiente de la escena de ESA página, en pocas palabras (por ejemplo «habitación al anochecer», «jardín de noche»). Nunca lo dejes vacío ni lo omitas, en ningún beat.
+
+PORTADA (campo cover, obligatorio)
+- cover: planteamiento de la portada del cuento, con sus dos campos obligatorios y no vacíos:
+  - setting: lugar o ambiente propio de la portada, en pocas palabras.
+  - tone: una sola emoción o tono de la portada (calma, curiosidad, alegría, etc.).
+- La portada NO es la página 1: su setting y su tone deben ser propios y distintos de los del primer beat. No copies el lugar ni el tono del beat de la página 1.
+- La portada no cuenta como beat: beats sigue teniendo exactamente un beat por página interior.
 
 COHERENCIA DEL REPARTO
 - Todo personaje que aparezca en un beat y no sea el protagonista debe estar en cast.
@@ -47,9 +55,9 @@ La escaleta tiene un arco claro: planteamiento, desarrollo, resolución tranquil
 ===============================================
 MODO GENERAR_GUION
 ===============================================
-Recibes tema, descripción, número de páginas y la ficha del protagonista (nombre, descripción narrativa y descripción visual). Devuelve title, synopsis, cast y beats con tantos beats como páginas se pidan. Respeta la personalidad del protagonista.
+Recibes tema, descripción, número de páginas y la ficha del protagonista (nombre, descripción narrativa y descripción visual). Devuelve title, synopsis, cast, beats y cover con tantos beats como páginas se pidan, cada beat con su setting y la portada con su setting y su tone propios. Respeta la personalidad del protagonista.
 
-Salida: JSON con los campos title, synopsis, cast, beats.
+Salida: JSON con los campos title, synopsis, cast, beats, cover.
 
 ===============================================
 MODO REVISAR_GUION
@@ -57,15 +65,15 @@ MODO REVISAR_GUION
 Recibes el guion vigente (título, sinopsis, reparto y escaleta) y un hint global del adulto.
 
 1. Evalúa si el hint viola las reglas de edad o rompe la coherencia del cuento (por ejemplo, cambia al protagonista o contradice el tema).
-2. Si el hint es apto: hintAccepted es true, rejectionReason es null y devuelves el guion COMPLETO revisado, con EXACTAMENTE el mismo número de beats que la escaleta vigente. Conserva literalmente los beats que el hint no afecta.
-3. Si el hint NO es apto: hintAccepted es false, rejectionReason explica el motivo en una frase breve y neutra, sin sermonear, y title, synopsis, cast y beats son null.
+2. Si el hint es apto: hintAccepted es true, rejectionReason es null y devuelves el guion COMPLETO revisado, con EXACTAMENTE el mismo número de beats que la escaleta vigente. Conserva literalmente los beats que el hint no afecta, incluido su setting. Devuelve también cover, con setting y tone propios no vacíos y distintos de los del primer beat; si el hint no afecta a la portada, plantea una portada coherente con el guion revisado.
+3. Si el hint NO es apto: hintAccepted es false, rejectionReason explica el motivo en una frase breve y neutra, sin sermonear, y title, synopsis, cast, beats y cover son null.
 
-Salida: JSON con los campos hintAccepted, rejectionReason, title, synopsis, cast, beats.
+Salida: JSON con los campos hintAccepted, rejectionReason, title, synopsis, cast, beats, cover.
 
 ===============================================
 MODO VALIDAR_EDICION_BEAT
 ===============================================
-Recibes un beat editado directamente por el adulto. Solo valida las reglas de edad y la claridad del beat; no lo reescribas ni lo mejores.
+Recibes un beat editado directamente por el adulto (puede incluir su setting). Solo valida las reglas de edad y la claridad del beat; no lo reescribas ni lo mejores.
 - Si cumple: accepted es true y reason es null.
 - Si no cumple: accepted es false y reason explica el motivo en una frase breve y neutra.
 
@@ -74,5 +82,5 @@ Salida: JSON con los campos accepted, reason.
 ===============================================
 FORMATO DE SALIDA
 ===============================================
-Antes de responder, comprueba que todo el contenido está en español y que el amigo o la persona buscada tiene nombre propio en la sinopsis y en los beats. Responde ÚNICAMENTE con el JSON solicitado por el esquema de la petición. No añadas markdown, comentarios ni texto fuera del JSON.
+Antes de responder, comprueba que todo el contenido está en español, que cada beat tiene setting, que cover tiene setting y tone propios distintos de los de la página 1, y que el amigo o la persona buscada tiene nombre propio en la sinopsis y en los beats. Responde ÚNICAMENTE con el JSON solicitado por el esquema de la petición. No añadas markdown, comentarios ni texto fuera del JSON.
 """

@@ -20,6 +20,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.external.WriterAgent;
@@ -67,7 +68,7 @@ class StoryPageServiceCompleteTest {
         writer = mock(WriterAgent.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions,
-            mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class));
+            mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         // Guion de 8 beats
         List<StoryBeat> beats = new ArrayList<>();
         for (int i = 1; i <= 8; i++)

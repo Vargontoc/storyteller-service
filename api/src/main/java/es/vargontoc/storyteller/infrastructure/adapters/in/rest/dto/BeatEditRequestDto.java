@@ -14,9 +14,10 @@ public record BeatEditRequestDto(
     List<String> participants,
     String tone,
     String visualNote,
+    String setting,
     Boolean confirmInvalidation) {
 
     public StoryBeat toBeat() {
-        return new StoryBeat(event, narrativeFunction, participants, tone, visualNote);
+        return new StoryBeat(event, narrativeFunction, participants, tone, visualNote, setting);
     }
 }

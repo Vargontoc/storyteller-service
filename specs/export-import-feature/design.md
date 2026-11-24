@@ -1,12 +1,12 @@
 # Diseño: export-import-feature
 
 Estado: aprobado
-Revisión: 1
-Basado en: requirements@5
+Revisión: 2
+Basado en: requirements@7
 
 ## Resumen
 
-El guion amplía cada beat con su lugar de escena y añade un lugar y un tono propios de la portada. Al aprobarse, el guion lanza solo la generación de la descripción de escena de la portada. La portada pasa a ser una página 0 que se revisa con hint, queda fuera de la cascada de PDEC-020 y es requisito para la página 1. La importación de imágenes se apoya en la imagen ligada al contenido aceptado que ya existe, con detección de imagen por contenido. Dos exportaciones síncronas bajo demanda, orquestadas por un servicio de exportación, evalúan primero todas las condiciones y después generan cada zip sin persistirlo: el zip para Nubi Game, con `story.json` de referencias explícitas e imágenes convertidas a WebP, sustituye al actual, y el zip para el agente visual se valida contra el contrato v0.1 antes de entregarse.
+El guion amplía cada beat con su lugar de escena y añade un lugar y un tono propios de la portada. Al aprobarse, el guion lanza solo la generación de la descripción de escena de la portada. La portada pasa a ser una página 0 que se revisa con hint, queda fuera de la cascada de PDEC-020 y es requisito para la página 1. La importación de imágenes se apoya en la imagen ligada al contenido aceptado que ya existe, con detección de imagen por contenido. Dos exportaciones síncronas bajo demanda, orquestadas por un servicio de exportación, evalúan primero todas las condiciones y después generan cada zip sin persistirlo: el zip para Nubi Game, con `story.json` de referencias explícitas y las imágenes originales sin modificar, cada una con la extensión de su formato real detectado por contenido, sustituye al actual, y el zip para el agente visual se valida contra el contrato v0.1 antes de entregarse.
 
 ## Supuestos sobre el sistema actual
 
@@ -14,7 +14,7 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 - Ya existe una operación para subir una imagen al contenido aceptado de una portada o página, porque `story-pages-panel` muestra la imagen importada. El mapa no la referencia: solo figura la descarga (`page-image-service.yaml`). Se asume que existe y que esta feature la amplía. No se sabe cómo valida hoy el fichero.
 - Ya existe una primera exportación del zip para Nubi Game, con la convención `page_N` (FUN-018, SUP-003), junto con su acción en la interfaz. El mapa no la referencia. Se asume que está en `storyteller-server` y que se sustituye por completo.
 - La instantánea del protagonista de cada cuento (`StoryActorSnapshot`) conserva el nombre, la descripción visual y el retrato. El mapa solo la cita de pasada en `catalog-character-usage-adapter`. Se asume que hay un acceso de lectura a ella desde `storyteller-server`.
-- "Rehacer el guion" (REQ-042, REQ-043) significa que el director entrega una escaleta completa nueva para un cuento cuyo guion ya estaba aprobado, al confirmarse una revisión global por hint, y que el adulto debe volver a aprobarla. La edición directa de un beat (`beat-editor`) no rehace el guion ni toca el lugar y el tono de la portada, así que no descarta la portada. Hay que confirmarlo con el usuario.
+- "Rehacer el guion" (REQ-042, REQ-043) significa que el director entrega una escaleta completa nueva para un cuento cuyo guion ya estaba aprobado, al confirmarse una revisión global por hint, y que el adulto debe volver a aprobarla. La edición directa de un beat (`beat-editor`) no rehace el guion ni toca el lugar y el tono de la portada, así que no descarta la portada. El usuario aclara que "rehacer el guion" es el mecanismo ya implementado, que este diseño no redefine.
 - Cada beat ya tiene un tono (SUP-010): es el campo `tone` de `story-beat.yaml`.
 - `comfyui-client` permite subir una imagen, encolar un workflow y descargar el resultado. La instalación de ComfyUI puede incorporar un nodo de eliminación de fondo.
 - `director-model-provisioner` y `writer-model-provisioner` solo registran el modelo si no existe. Las reglas nuevas de los prompts necesitan que el modelo se vuelva a registrar.
@@ -35,12 +35,11 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 | story-page-version-repository | Guarda el histórico de versiones de la portada igual que el de las páginas | existente |
 | generation-gate | Concede el turno único para la generación de la portada, ya sea automática o pedida | existente |
 | story-page-notifier | Publica los eventos de generación de la portada (STARTED, VERSION_PRESENTED, HINT_REJECTED, FAILED) | existente |
-| image-content-inspector | Decide por su contenido real si un fichero subido es una imagen, sin mirar formato declarado ni tamaño | nuevo |
+| image-content-inspector | Decide por su contenido real si un fichero subido es una imagen e identifica su formato real, sin mirar nombre, tipo declarado ni tamaño | nuevo |
 | story-protagonist-snapshot | Da acceso de lectura a la instantánea del protagonista del cuento: nombre, descripción visual y retrato | existente (sin mapear) |
 | narration-repository | Da el audio que la narración tiene asociado a cada página interior (SUP-020) | existente |
 | story-export-service | Orquesta las dos exportaciones: evalúa las condiciones, acumula todas las faltas y entrega el zip o el rechazo | nuevo |
-| nubi-game-exporter | Compone el zip para Nubi Game con `story.json` de rutas explícitas, la portada convertida y, por página, la imagen convertida y el audio | existente (sin mapear; se sustituye) |
-| export-image-converter | Convierte una imagen importada a WebP calidad 85, con la orientación aplicada, sin metadatos y con el lado mayor limitado a 2048 px, sin tocar el original | nuevo |
+| nubi-game-exporter | Compone el zip para Nubi Game con `story.json` de rutas explícitas, la imagen de portada y, por página, su imagen y su audio, con cada imagen copiada sin modificar y con la extensión de su formato real | existente (sin mapear; se sustituye) |
 | visual-agent-exporter | Compone el `story.json` v0.1 y el zip para el agente visual a partir del guion, las páginas aceptadas y la instantánea | nuevo |
 | character-background-remover | Obtiene la imagen del protagonista con fondo transparente a partir del retrato de la instantánea | nuevo |
 | comfyui-client | Ejecuta en ComfyUI el workflow de eliminación de fondo y descarga el resultado | existente |
@@ -63,7 +62,7 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 6. El adulto sube una imagen en la portada o en una página aceptada. `story-page-service` pide a `image-content-inspector` que confirme que el fichero es una imagen, y `story-page-repository` la asocia al contenido aceptado de esa portada o página, sustituyendo la anterior si la había (REQ-002 a REQ-007).
 7. Si una página interior se reaprueba o cae en la cascada de PDEC-020, `story-page-service` retira su imagen y la de las páginas descartadas (REQ-008). Si se reaprueba la portada, se retira solo la imagen de la portada y las páginas interiores no cambian (REQ-041, REQ-043).
 8. La narración sigue funcionando como hasta ahora (SUP-020).
-9. Exportación para Nubi Game: `story-export-actions` la pide. `story-export-service` comprueba todas las condiciones: portada aceptada, entendida como aceptada y con un guion que tiene lugar y tono de portada (SUP-021), todas las páginas aceptadas, imagen en la portada e imagen y audio en cada página, este último tomado de `narration-repository`. Después, `export-image-converter` convierte cada imagen importada sin modificarla y `nubi-game-exporter` compone el zip con `story.json` (título, ruta de la portada y, por página y en orden, el texto aceptado y las rutas de su imagen y su audio). El adulto descarga el zip (REQ-009 a REQ-016, REQ-033, REQ-034).
+9. Exportación para Nubi Game: `story-export-actions` la pide. `story-export-service` comprueba todas las condiciones: portada aceptada, entendida como aceptada y con un guion que tiene lugar y tono de portada (SUP-021), todas las páginas aceptadas, imagen en la portada e imagen y audio en cada página, este último tomado de `narration-repository`. Después, `nubi-game-exporter` pide a `image-content-inspector` el formato real de cada imagen importada, copia cada imagen al zip tal como se subió, en un fichero cuya extensión corresponde a ese formato con independencia del nombre con que se subió, y compone el `story.json` (título, ruta de la portada y, por página y en orden, el texto aceptado y las rutas de su imagen y su audio), sin declarar el formato en ningún campo. El adulto descarga el zip (REQ-009 a REQ-016).
 10. Exportación para el agente visual: `story-export-actions` la pide. `story-export-service` comprueba las condiciones de REQ-018. `visual-agent-exporter` obtiene de `story-protagonist-snapshot` el nombre, la descripción visual y el retrato. `character-background-remover` quita el fondo del retrato mediante `comfyui-client`. `story-slugger` deriva el `storyId` y el `id` del protagonista. `visual-agent-exporter` compone el `story.json`: campos fijos, paleta base, el protagonista como único personaje con 1 a 5 rasgos, una escena `cover` con la descripción, el lugar y el tono de la portada, y una escena `scene` por página con su texto, su descripción, el lugar y el tono de su beat, todas referenciando al protagonista. `visual-contract-validator` comprueba en una sola pasada el `story.json` y `characters/<id>/character.png`. Si no hay errores, el adulto descarga el zip (REQ-018 a REQ-032).
 
 ## Flujos alternativos y de fallo
@@ -140,13 +139,9 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 - **Resultado:** No hay zip y el adulto ve la lista completa de faltas.
 - **Cubre:** REQ-009, REQ-010
 
-### ALT-010 Imagen que no se puede convertir para Nubi Game
+### ALT-010 Imagen que no se puede convertir para Nubi Game (retirado)
 
-- **Condición:** Alguna imagen importada no puede convertirse a WebP con las reglas de SUP-015.
-- **Comportamiento:** Se intenta convertir todas las imágenes y se rechaza la exportación sin generar el zip, indicando la portada o página de cada imagen que no se pudo convertir. Las imágenes importadas no se modifican.
-- **Responsable:** story-export-service
-- **Resultado:** No hay zip y el cuento conserva sus imágenes originales.
-- **Cubre:** REQ-035, REQ-033
+- **Retirado en la revisión 2.** Las imágenes se exportan sin conversión (SUP-007) y REQ-035 está retirado, así que la exportación para Nubi Game solo se rechaza por las faltas de ALT-009. El ID no se reutiliza.
 
 ### ALT-011 Exportación para el agente visual sin las condiciones
 
@@ -193,7 +188,7 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 | story-export-service | story-page-repository | Lee el contenido aceptado de la portada y las páginas y sus imágenes importadas | - |
 | story-export-service | narration-repository | Lee el audio asociado a cada página interior | - |
 | story-export-service | nubi-game-exporter | Le entrega el cuento completo para componer el zip para Nubi Game | - |
-| nubi-game-exporter | export-image-converter | Pide la versión convertida de cada imagen importada | - |
+| nubi-game-exporter | image-content-inspector | Pide el formato real de cada imagen importada para fijar la extensión de su fichero en el zip | - |
 | story-export-service | visual-agent-exporter | Le entrega el cuento que cumple REQ-018 para componer el zip visual | - |
 | visual-agent-exporter | story-protagonist-snapshot | Lee el nombre, la descripción visual y el retrato de la instantánea | - |
 | visual-agent-exporter | story-slugger | Pide los slugs del `storyId` y del `id` del protagonista | - |
@@ -212,7 +207,7 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 - Página interior: texto y descripción de escena con versiones y contenido aceptado. Relaciones: pertenece al cuento, nace de un beat y puede tener una imagen importada y un audio de narración.
 - Imagen importada: fichero original subido por el adulto. Relaciones: ligada al contenido aceptado de una portada o página, y como mucho una por cada una.
 - Instantánea del protagonista: nombre, descripción visual y retrato con que nació el cuento. Relaciones: pertenece al cuento y es la fuente del personaje en la exportación visual.
-- Exportación para Nubi Game: zip generado bajo demanda y no persistido. Relaciones: deriva del guion, la portada, las páginas, sus imágenes convertidas y sus audios.
+- Exportación para Nubi Game: zip generado bajo demanda y no persistido. Relaciones: deriva del guion, la portada, las páginas, sus imágenes importadas sin modificar y sus audios.
 - Exportación para el agente visual: zip generado bajo demanda y no persistido. Relaciones: deriva del guion, la portada, las páginas y la instantánea del protagonista.
 
 ## Decisiones
@@ -243,21 +238,19 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 
 ### DEC-005 Exportaciones síncronas bajo demanda y sin persistir
 
-- **Decisión:** Cada exportación se calcula al pedirla y el zip se entrega como descarga directa. No se guarda en el servidor ni se guardan las imágenes convertidas.
-- **Alternativas descartadas:** Exportación asíncrona con aviso por WebSocket: ningún requisito la pide y añade estado de trabajos. Guardar el zip o las imágenes convertidas: duplica almacenamiento y obliga a invalidarlos cuando el cuento cambia.
-- **Cubre:** REQ-011, REQ-016, REQ-020, REQ-033
+- **Decisión:** Cada exportación se calcula al pedirla y el zip se entrega como descarga directa. No se guarda en el servidor.
+- **Alternativas descartadas:** Exportación asíncrona con aviso por WebSocket: ningún requisito la pide y añade estado de trabajos. Guardar el zip: duplica almacenamiento y obliga a invalidarlo cuando el cuento cambia.
+- **Cubre:** REQ-011, REQ-016, REQ-020
 
 ### DEC-006 Evaluación completa antes de rechazar
 
-- **Decisión:** `story-export-service` comprueba todas las condiciones de disponibilidad y devuelve todas las faltas juntas. En la exportación visual, la imagen del protagonista y el `story.json` se validan en una sola pasada que acumula todas las reglas incumplidas. En Nubi Game se intenta convertir todas las imágenes antes de rechazar por las que fallan.
-- **Alternativas descartadas:** Detenerse en la primera falta: REQ-010, REQ-019, REQ-026, REQ-032 y REQ-035 piden indicar cada elemento o regla.
-- **Cubre:** REQ-010, REQ-019, REQ-026, REQ-032, REQ-035
+- **Decisión:** `story-export-service` comprueba todas las condiciones de disponibilidad y devuelve todas las faltas juntas. En la exportación visual, la imagen del protagonista y el `story.json` se validan en una sola pasada que acumula todas las reglas incumplidas.
+- **Alternativas descartadas:** Detenerse en la primera falta: REQ-010, REQ-019, REQ-026 y REQ-032 piden indicar cada elemento o regla.
+- **Cubre:** REQ-010, REQ-019, REQ-026, REQ-032
 
-### DEC-007 Conversión de imágenes al exportar, sobre una copia
+### DEC-007 Conversión de imágenes al exportar, sobre una copia (retirada)
 
-- **Decisión:** Las imágenes se convierten a WebP (SUP-015) solo al generar el zip para Nubi Game, a partir del original importado, que no se modifica.
-- **Alternativas descartadas:** Convertir al subir: altera o duplica la imagen que conserva el cuento (REQ-033) y haría fallar la subida de imágenes válidas que no se pueden convertir, en contra de REQ-004.
-- **Cubre:** REQ-015, REQ-033, REQ-034, REQ-035
+- **Retirada en la revisión 2.** El usuario descarta la conversión a WebP (SUP-015) y REQ-033, REQ-034 y REQ-035 están retirados. La sustituye DEC-015. El ID no se reutiliza.
 
 ### DEC-008 Eliminación del fondo del protagonista con ComfyUI
 
@@ -301,10 +294,18 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 - **Alternativas descartadas:** Mantener la convención `page_N` del zip actual: la sustituye PDEC-040 (SUP-003).
 - **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-016
 
+### DEC-015 Imágenes originales con extensión según su formato real, detectado al exportar
+
+- **Decisión:** `nubi-game-exporter` copia al zip cada imagen importada tal como se subió, sin convertir, redimensionar, reorientar, recomprimir ni quitar metadatos. La extensión de cada fichero la fija el formato real de la imagen, que `image-content-inspector` identifica por su contenido en el momento de exportar, con la extensión habitual de ese formato (por ejemplo `.png`, `.jpg`, `.bmp`). El `story.json` no declara el formato en ningún campo: basta la extensión de la ruta.
+- **Alternativas descartadas:** Usar la extensión del nombre con que se subió el fichero: no corresponde necesariamente al formato real, en contra de REQ-011. Guardar el formato detectado al subir la imagen: añade un dato persistido que el inspector puede obtener al exportar a partir del mismo contenido. Declarar el formato en un campo del `story.json`: lo descarta el usuario (SUP-022). Convertir las imágenes a un formato único: lo descarta el usuario (SUP-007, SUP-015).
+- **Cubre:** REQ-011, REQ-014, REQ-015
+
 ## Riesgos
 
 - Los provisioners solo registran el modelo si no existe, así que un modelo del director o del escritor ya registrado no aplicaría las reglas nuevas. La capa técnica debe prever cómo se vuelve a registrar.
-- La subida sin límite de tamaño (PDEC-042) y la conversión síncrona de imágenes grandes pueden consumir mucha memoria y alargar la exportación. Se asume como riesgo aceptado en `producto.md` y se vigila.
+- La subida sin límite de tamaño (PDEC-042) y la composición síncrona de un zip con imágenes originales grandes pueden consumir mucha memoria y alargar la exportación y la descarga. Se asume como riesgo aceptado en `producto.md` y se vigila.
+- Nubi Game puede no admitir algunos formatos que la importación acepta (por ejemplo BMP, TIFF o HEIC). La comprobación queda fuera de alcance y a cargo de Nubi Game (SUP-007).
+- Para cada formato que `image-content-inspector` acepte como imagen debe existir una extensión habitual que lo identifique (DEC-015). La capa técnica debe definir esa correspondencia para todos los formatos aceptados.
 - Algunos formatos de imagen válidos, como TIFF o HEIC, pueden no verse en el navegador aunque la subida los acepte. REQ-004 solo exige mostrar formatos como PNG o JPEG. Queda como riesgo de visualización.
 - La eliminación de fondo comparte la GPU con Ollama y ComfyUI sin pasar por `generation-gate`, lo que puede ralentizar o hacer fallar la exportación si coincide con una generación. En ese caso aplica ALT-012.
 - Puede que la instalación de ComfyUI no tenga el nodo de eliminación de fondo, y habría que incorporarlo al contenedor.
@@ -312,7 +313,6 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 - Según SUP-012, el retrato puede medir menos de 1024 × 1024 px y la exportación visual se rechazaría por REQ-026. La pregunta abierta de `producto.md` sigue pendiente.
 - Una descripción visual de la instantánea sin separadores daría un solo rasgo muy largo (DEC-011). Cumple el contrato, pero es poco útil.
 - Los cuentos existentes dejan de poder exportarse para Nubi Game (SUP-021). Lo ha aceptado el usuario.
-- La definición de "rehacer el guion" que asume este diseño (solo una escaleta nueva del director, no la edición directa de un beat) está sin confirmar.
 
 ## Trazabilidad
 
@@ -330,11 +330,11 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 | REQ-008 | story-page-service, story-page-repository | DEC-003 |
 | REQ-009 | story-export-service, narration-repository, story-page-repository, story-outline-repository, story-export-actions, story-export-api | DEC-004 |
 | REQ-010 | story-export-service, story-export-actions | DEC-004, DEC-006 |
-| REQ-011 | nubi-game-exporter, export-image-converter | DEC-005, DEC-014 |
+| REQ-011 | nubi-game-exporter, image-content-inspector, story-page-repository, narration-repository | DEC-005, DEC-014, DEC-015 |
 | REQ-012 | nubi-game-exporter | DEC-014 |
 | REQ-013 | nubi-game-exporter, narration-repository, story-page-repository | DEC-014 |
-| REQ-014 | nubi-game-exporter | DEC-014 |
-| REQ-015 | nubi-game-exporter, export-image-converter, story-page-repository | DEC-007 |
+| REQ-014 | nubi-game-exporter | DEC-014, DEC-015 |
+| REQ-015 | nubi-game-exporter, story-page-repository | DEC-015 |
 | REQ-016 | nubi-game-exporter, story-export-actions, story-export-api | DEC-005, DEC-014 |
 | REQ-017 | director-agent, director-model-provisioner, story-service, story-outline-repository, beat-editor, story-script-panel, story-script-api | DEC-001 |
 | REQ-018 | story-export-service, story-outline-repository, story-page-repository, story-export-actions, story-export-api | DEC-004 |
@@ -352,9 +352,9 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 | REQ-030 | visual-agent-exporter, visual-contract-validator | DEC-009 |
 | REQ-031 | visual-contract-validator, visual-agent-exporter, story-slugger | DEC-009, DEC-012 |
 | REQ-032 | visual-contract-validator, story-export-service, story-export-actions | DEC-006, DEC-009 |
-| REQ-033 | export-image-converter, nubi-game-exporter | DEC-005, DEC-007 |
-| REQ-034 | export-image-converter | DEC-007 |
-| REQ-035 | export-image-converter, story-export-service | DEC-006, DEC-007 |
+| REQ-033 | retirado en requirements@6; sin cobertura | - |
+| REQ-034 | retirado en requirements@6; sin cobertura | - |
+| REQ-035 | retirado en requirements@6; sin cobertura | - |
 | REQ-036 | story-pages-panel, story-pages-api, story-page-service | - |
 | REQ-037 | director-agent, director-model-provisioner, story-service, story-outline-repository, story-script-panel, story-script-api | DEC-001 |
 | REQ-038 | story-service, story-page-service, writer-agent, writer-model-provisioner, generation-gate, story-page-notifier, story-page-version-repository | DEC-002, DEC-004 |
@@ -375,21 +375,20 @@ El guion amplía cada beat con su lugar de escena y añade un lugar y un tono pr
 | openapi | docs/contracts/openapi/paths/story/cover-generate-service.yaml | Nuevo rechazo cuando el guion no tiene lugar y tono de portada. La operación también se lanza sola al aprobar el guion. |
 | openapi | docs/contracts/openapi/paths/story/page-hint-service.yaml, page-generate-service.yaml, page-accept-service.yaml, page-accept-proposal-service.yaml | El hint se admite en la portada, pendiente o aceptada, con rechazo cuando falta su lugar y su tono. La página 1 se rechaza sin portada aceptada. Aceptar una versión nueva de la portada no aplica la cascada y retira solo su imagen. |
 | openapi | Operación de subida de imagen de la portada o página (ruta a definir; hoy no figura en el mapa) | Se formaliza o se crea: solo para contenido aceptado, acepta cualquier imagen, rechaza lo que no es imagen conservando la anterior y sustituye la imagen previa. |
-| openapi | Operación de exportación para Nubi Game (ruta a definir; la actual no figura en el mapa) | Sustituye a la exportación actual: devuelve el zip nuevo o la lista de faltas por portada o página, incluidas las imágenes no convertibles. |
+| openapi | Operación de exportación para Nubi Game (ruta a definir; la actual no figura en el mapa) | Sustituye a la exportación actual: devuelve el zip nuevo o la lista de faltas por portada o página. |
 | openapi | Operación de exportación para el agente visual (ruta a definir) | Nueva: devuelve el zip visual o la lista de condiciones o reglas del contrato incumplidas. |
-| file/json | docs/contracts/nubi-game/story-export.md (nuevo) | Nuevo contrato del zip para Nubi Game: `story.json` con título, ruta de la portada y páginas en orden con texto, ruta de la imagen y ruta del audio; rutas relativas a la raíz; imágenes en WebP con el lado mayor de 2048 px como máximo. |
+| file/json | docs/contracts/nubi-game/story-export.md (nuevo) | Nuevo contrato del zip para Nubi Game: `story.json` con título, ruta de la portada y páginas en orden con texto, ruta de la imagen y ruta del audio; rutas relativas a la raíz; imágenes en su formato original, sin modificar, con la extensión de su formato real y sin campo que declare el formato. |
 | file/json | docs/contracts/agent-visual/input.md | La estructura no cambia. StoryTeller pasa a ser un productor implementado; se actualiza el estado y la trazabilidad del contrato para incluir esta feature. |
 
 ## Cambios sugeridos al mapa
 
 - + Componente: `story-export-service | (ruta a definir en api/) | Orquesta las exportaciones para Nubi Game y el agente visual, acumulando todas las faltas | story-outline-repository, story-page-repository, narration-repository, nubi-game-exporter, visual-agent-exporter`
-- + Componente: `nubi-game-exporter | (ruta actual del zip para Nubi Game, hoy sin mapear) | Zip para Nubi Game con story.json de rutas explícitas e imágenes WebP | export-image-converter`
-- + Componente: `export-image-converter | (ruta a definir en api/) | Convierte imágenes importadas a WebP 85, orientadas, sin metadatos, con un máximo de 2048 px | -`
+- + Componente: `nubi-game-exporter | (ruta actual del zip para Nubi Game, hoy sin mapear) | Zip para Nubi Game: story.json con rutas, imágenes originales con extensión real | image-content-inspector`
 - + Componente: `visual-agent-exporter | (ruta a definir en api/) | Compone el story.json v0.1 y el zip para el agente visual | story-protagonist-snapshot, story-slugger, character-background-remover, visual-contract-validator`
 - + Componente: `character-background-remover | (ruta a definir en api/) | Quita el fondo del retrato de la instantánea mediante ComfyUI | comfyui-client`
 - + Componente: `visual-contract-validator | (ruta a definir en api/) | Valida el story.json y la imagen del personaje con las reglas del contrato v0.1 | -`
 - + Componente: `story-slugger | (ruta a definir en api/) | Deriva slugs deterministas para storyId e id del protagonista | -`
-- + Componente: `image-content-inspector | (ruta a definir en api/) | Decide por contenido real si un fichero subido es imagen | -`
+- + Componente: `image-content-inspector | (ruta a definir en api/) | Decide por contenido si un fichero es imagen e identifica su formato | -`
 - + Componente: `story-protagonist-snapshot | (ruta actual de StoryActorSnapshot, hoy sin mapear) | Lectura de la instantánea del protagonista: nombre, descripción visual y retrato | JPA`
 - + Componente: `story-export-api | (ruta a definir en app/src/api/) | Cliente REST de las exportaciones para Nubi Game y el agente visual | httpClient`
 - + Componente: `story-export-actions | (ruta actual de la acción de exportación, hoy sin mapear) | Pide las exportaciones, descarga el zip o muestra las faltas | story-export-api`

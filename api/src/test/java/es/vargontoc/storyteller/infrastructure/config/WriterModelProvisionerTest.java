@@ -6,16 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
@@ -27,15 +25,14 @@ class WriterModelProvisionerTest {
     private final ByteArrayResource definition = new ByteArrayResource(
             "FROM base\n\nPARAMETER temperature 0.7\nPARAMETER num_ctx 8192\n\nSYSTEM \"\"\"\nHola\nmundo\n\"\"\"\n".getBytes());
 
-    private OllamaApi apiWith(String... models) {
-        OllamaApi api = mock(OllamaApi.class);
-        List<OllamaApi.Model> list = java.util.Arrays.stream(models).map(n -> {
-            OllamaApi.Model m = mock(OllamaApi.Model.class);
-            when(m.name()).thenReturn(n);
-            return m;
-        }).toList();
-        when(api.listModels()).thenReturn(new OllamaApi.ListModelResponse(list));
-        return api;
+    @Test
+    void modelfileContainsCoverSceneRules() throws Exception {
+        String content = new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)
+                .getContentAsString(StandardCharsets.UTF_8);
+        assertTrue(content.contains("\"Lugar de la portada\" y el \"Tono de la portada\""));
+        assertTrue(content.contains("no los sustituyas por los de la página 1"));
+        assertTrue(content.contains("La portada no tiene beat"));
+        assertTrue(content.contains("devuelve la descripción de escena completa"));
     }
 
     @Test
@@ -94,13 +91,14 @@ class WriterModelProvisionerTest {
         when(body.retrieve()).thenReturn(response);
         org.mockito.ArgumentCaptor<Object> sent = org.mockito.ArgumentCaptor.forClass(Object.class);
 
-        new WriterModelProvisioner(apiWith(), client, "storyteller-writer",
+        new WriterModelProvisioner(client, "storyteller-writer",
                 new ClassPathResource(WriterModelProvisioner.MODELFILE_PATH)).run(args);
 
         verify(request).body(sent.capture());
         String system = (String) ((Map<?, ?>) sent.getValue()).get("system");
         assertTrue(system.contains("ONOMATOPEYAS"));
         assertTrue(system.contains("Nunca incluyas onomatopeyas en la portada"));
+        assertTrue(system.contains("Tono de la portada"));
     }
 
     @Test
@@ -115,7 +113,7 @@ class WriterModelProvisionerTest {
         when(request.body(any(Object.class))).thenReturn(body);
         when(body.retrieve()).thenReturn(response);
 
-        new WriterModelProvisioner(apiWith(), client, "storyteller-writer", definition).run(args);
+        new WriterModelProvisioner(client, "storyteller-writer", definition).run(args);
 
         verify(request).body(Map.of("model", "storyteller-writer", "from", "base", "system", "Hola\nmundo",
                 "parameters", Map.of("temperature", 0.7, "num_ctx", 8192), "stream", false));
@@ -123,13 +121,22 @@ class WriterModelProvisionerTest {
     }
 
     @Test
-    void existingModelDoesNotCreateAgain() {
+    void runningAgainRegistersTheModelAgainSoItReplacesThePreviousOne() {
         RestClient client = mock(RestClient.class);
+        RestClient.RequestBodyUriSpec request = mock(RestClient.RequestBodyUriSpec.class);
+        RestClient.RequestBodySpec body = mock(RestClient.RequestBodySpec.class);
+        RestClient.ResponseSpec response = mock(RestClient.ResponseSpec.class);
+        when(client.post()).thenReturn(request);
+        when(request.uri("/api/create")).thenReturn(request);
+        when(request.contentType(any())).thenReturn(request);
+        when(request.body(any(Object.class))).thenReturn(body);
+        when(body.retrieve()).thenReturn(response);
+        WriterModelProvisioner provisioner = new WriterModelProvisioner(client, "storyteller-writer", definition);
 
-        new WriterModelProvisioner(apiWith("storyteller-writer:latest"), client, "storyteller-writer", definition)
-                .run(args);
+        provisioner.run(args);
+        provisioner.run(args);
 
-        verify(client, never()).post();
+        verify(response, times(2)).toBodilessEntity();
     }
 
     @Test
@@ -140,7 +147,7 @@ class WriterModelProvisionerTest {
                 "{\"error\":\"invalid model\"}".getBytes(), null));
 
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new WriterModelProvisioner(apiWith(), client, "storyteller-writer", definition).run(args));
+                () -> new WriterModelProvisioner(client, "storyteller-writer", definition).run(args));
         assertTrue(e.getMessage().contains("400"));
         assertTrue(e.getMessage().contains("invalid model"));
     }
@@ -148,7 +155,7 @@ class WriterModelProvisionerTest {
     @Test
     void modelfileWithoutFromFailsStartup() {
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new WriterModelProvisioner(apiWith(), mock(RestClient.class), "storyteller-writer",
+                () -> new WriterModelProvisioner(mock(RestClient.class), "storyteller-writer",
                         new ByteArrayResource("SYSTEM x".getBytes())).run(args));
         assertTrue(e.getMessage().contains("FROM"));
     }

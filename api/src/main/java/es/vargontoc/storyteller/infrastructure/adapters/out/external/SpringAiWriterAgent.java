@@ -119,6 +119,10 @@ public class SpringAiWriterAgent implements WriterAgent {
                 .append("Sinopsis: ").append(context.synopsis()).append('\n')
                 .append("Protagonista: ").append(context.protagonist()).append('\n');
         if (context.isCover()) {
+            if (context.coverPlan() != null) {
+                text.append("Lugar de la portada: ").append(context.coverPlan().setting()).append('\n')
+                        .append("Tono de la portada: ").append(context.coverPlan().tone()).append('\n');
+            }
             return text.toString();
         }
         text.append("Reparto episódico: ").append(describeCast(context.cast())).append('\n')

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.external.WriterAgent;
@@ -58,7 +59,7 @@ class StoryPageServiceAcceptTest {
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), mock(StoryRepository.class), mock(StoryOutlineRepository.class),
-            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
     }
 
     private StoryPage pendingPage(Long storyId, int number) {
@@ -223,7 +224,7 @@ class StoryPageServiceAcceptTest {
         legacyStories = stories;
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines,
-            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+            gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
     }
 
     private StoryRepository legacyStories;

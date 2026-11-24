@@ -41,6 +41,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/v1/storyteller")
@@ -167,6 +169,24 @@ public class StorytellerController {
         return ResponseEntity.ok(pageQuery.getAcceptedImage(storyId, id));
     }
     
+    @PostMapping(value = "/{storyId}/pages/{id}/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(description = "Sube una imagen (parte multipart 'file') a la portada (página 0) o a una página aceptada y sustituye la anterior. Acepta cualquier formato de imagen y tamaño. 404 si la página no es del cuento; 409 si no está aceptada; 415 si el fichero no es una imagen (se conserva la imagen anterior)")
+    public ResponseEntity<ApiResponse<PageAccepted>> uploadPageImage(@PathVariable("storyId") Long storyId, @PathVariable("id") Long id,
+            @RequestPart(name = "file", required = false) MultipartFile file) {
+        StoryPage page = pageAcceptance.uploadImage(storyId, id, bytesOf(file));
+        return ResponseEntity.ok(ApiResponse.ok(new PageAccepted(storyId, page.getId(), page.getPage(), page.getPageStatus())));
+    }
+
+    private static byte[] bytesOf(MultipartFile file) {
+        if (file == null || file.isEmpty())
+            return new byte[0];
+        try {
+            return file.getBytes();
+        } catch (IOException e) {
+            throw new AppException("No se pudo leer el fichero subido", HttpStatus.BAD_REQUEST);
+        }
+    }
+
     @PostMapping("/asset")
     @Operation(description = "Obtiene el recurso almacenado segun el path")
     public ResponseEntity<byte[]> getResource(@RequestBody ResourceRequest request){

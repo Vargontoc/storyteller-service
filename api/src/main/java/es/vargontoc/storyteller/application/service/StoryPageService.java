@@ -27,6 +27,7 @@ import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGenerati
 import es.vargontoc.storyteller.application.ports.in.persistence.StoryPageUseCase;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.external.WriterAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
@@ -41,6 +42,7 @@ import es.vargontoc.storyteller.domain.enums.PageLengthWarning;
 import es.vargontoc.storyteller.domain.enums.PageStatus;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.PageVersion;
 import es.vargontoc.storyteller.domain.request.WriterContext;
 import es.vargontoc.storyteller.domain.response.GenerationStarted;
@@ -104,6 +106,8 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
     private final StoryPageNotifier notifier;
     private final TaskExecutor executor;
     private final StoryNarrationUseCase narration;
+    private final ResourceStorage storage;
+    private final ImageContentInspector imageInspector;
 
     public StoryPageService(OllamaPort ollama,
         @Qualifier(Constants.BeanNames.AGENT_SCRIPTWRITER_MODEL)String model,
@@ -117,7 +121,11 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         StoryPageVersionRepository versions,
         StoryPageNotifier notifier,
         TaskExecutor executor,
-        StoryNarrationUseCase narration) {
+        StoryNarrationUseCase narration,
+        ResourceStorage storage,
+        ImageContentInspector imageInspector) {
+            this.storage = storage;
+            this.imageInspector = imageInspector;
             this.narration = narration;
             this.writer = writer;
             this.versions = versions;
@@ -165,7 +173,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
             throw new AppException("Ya hay una portada para esta story: " + storyId, HttpStatus.CONFLICT);
 
         // El contexto se arma ahora, dentro de la transacción de la solicitud; la tarea asíncrona ya no lee el cuento
-        WriterContext context = WriterContext.cover(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()));
+        WriterContext context = coverContext(story);
         return launch(storyId, 0, () -> createCover(storyId, writer.writeCover(context)));
     }
 
@@ -258,6 +266,21 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         if(complete)
             storyRepository.updateStatus(storyId, StoryStatus.PAGES_ACCEPTED);
         return accepted;
+    }
+
+    /** Imagen importada de la portada o de una página aceptada. Las validaciones van antes de tocar el almacén: un rechazo conserva la imagen anterior. */
+    @Override
+    public StoryPage uploadImage(Long storyId, Long pageId, byte[] content) {
+        StoryPage page = repository.getPage(pageId);
+        if(!storyId.equals(page.getStoryId()))
+            throw new AppException("La página " + pageId + " no pertenece al cuento " + storyId, HttpStatus.NOT_FOUND);
+        if(page.getPageStatus() != PageStatus.ACCEPTED)
+            throw new AppException("Solo se puede subir una imagen en la portada o en una página aceptada", HttpStatus.CONFLICT);
+        if(!imageInspector.isImage(content))
+            throw new AppException("El fichero no es una imagen", HttpStatus.UNSUPPORTED_MEDIA_TYPE);
+
+        String path = storage.saveImportedImage(storyId, pageId, content);
+        return repository.setImportedImage(pageId, path);
     }
 
     /** Un cuento con todas las páginas aceptadas no admite generar más páginas (ALT-014). */
@@ -390,7 +413,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         int number = page.getPage();
         boolean cover = number == 0;
         WriterContext context = cover
-            ? WriterContext.cover(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()))
+            ? coverContext(story)
             : hintPageContext(story, number);
         String cleanHint = hint.strip();
 
@@ -434,6 +457,14 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         GenerationStarted started = launch(storyId, number, () -> addHintVersions(realPageId, false, () -> writer.writePage(context)));
         deleteAudioIfAny(storyId, page);
         return started;
+    }
+
+    /** Contexto de portada con su propio lugar y tono; sin planteamiento (cuento anterior a la feature) se rechaza antes de llamar al escritor. */
+    private WriterContext coverContext(Story story) {
+        CoverPlan plan = requireOutline(story.getId()).cover();
+        if(plan == null || plan.setting() == null || plan.setting().isBlank() || plan.tone() == null || plan.tone().isBlank())
+            throw new AppException("Al guion le faltan el lugar y el tono de la portada", HttpStatus.CONFLICT);
+        return WriterContext.cover(story.getTitle(), story.getSynopsis(), readActors(story.getCharacters()), plan);
     }
 
     private WriterContext hintPageContext(Story story, int number) {

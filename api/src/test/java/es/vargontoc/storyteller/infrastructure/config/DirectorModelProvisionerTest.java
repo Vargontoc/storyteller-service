@@ -6,15 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.Test;
-import org.springframework.ai.ollama.api.OllamaApi;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.ClassPathResource;
@@ -26,30 +23,24 @@ class DirectorModelProvisionerTest {
     private final ByteArrayResource definition = new ByteArrayResource(
             "FROM base\n\nPARAMETER temperature 0.7\nPARAMETER num_ctx 8192\n\nSYSTEM \"\"\"\nHola\nmundo\n\"\"\"\n".getBytes());
 
-    private OllamaApi apiWith(String... models) {
-        OllamaApi api = mock(OllamaApi.class);
-        List<OllamaApi.Model> list = java.util.Arrays.stream(models).map(n -> {
-            OllamaApi.Model m = mock(OllamaApi.Model.class);
-            when(m.name()).thenReturn(n);
-            return m;
-        }).toList();
-        when(api.listModels()).thenReturn(new OllamaApi.ListModelResponse(list));
-        return api;
-    }
-
-    @Test
-    void missingModelCreatesWithNameAndResourceContent() {
-        RestClient client = mock(RestClient.class);
+    private RestClient.RequestBodyUriSpec stubCreate(RestClient client, RestClient.ResponseSpec response) {
         RestClient.RequestBodyUriSpec request = mock(RestClient.RequestBodyUriSpec.class);
         RestClient.RequestBodySpec body = mock(RestClient.RequestBodySpec.class);
-        RestClient.ResponseSpec response = mock(RestClient.ResponseSpec.class);
         when(client.post()).thenReturn(request);
         when(request.uri("/api/create")).thenReturn(request);
         when(request.contentType(any())).thenReturn(request);
         when(request.body(any(Object.class))).thenReturn(body);
         when(body.retrieve()).thenReturn(response);
+        return request;
+    }
 
-        new DirectorModelProvisioner(apiWith(), client, "storyteller-director", definition).run(args);
+    @Test
+    void createsModelWithNameAndResourceContent() {
+        RestClient client = mock(RestClient.class);
+        RestClient.ResponseSpec response = mock(RestClient.ResponseSpec.class);
+        RestClient.RequestBodyUriSpec request = stubCreate(client, response);
+
+        new DirectorModelProvisioner(client, "storyteller-director", definition).run(args);
 
         verify(request).body(Map.of("model", "storyteller-director", "from", "base", "system", "Hola\nmundo",
                 "parameters", Map.of("temperature", 0.7, "num_ctx", 8192), "stream", false));
@@ -57,13 +48,16 @@ class DirectorModelProvisionerTest {
     }
 
     @Test
-    void existingModelDoesNotCreateAgain() {
+    void runningAgainRegistersTheModelAgainSoItReplacesThePreviousOne() {
         RestClient client = mock(RestClient.class);
+        RestClient.ResponseSpec response = mock(RestClient.ResponseSpec.class);
+        stubCreate(client, response);
+        DirectorModelProvisioner provisioner = new DirectorModelProvisioner(client, "storyteller-director", definition);
 
-        new DirectorModelProvisioner(apiWith("storyteller-director:latest"), client, "storyteller-director", definition)
-                .run(args);
+        provisioner.run(args);
+        provisioner.run(args);
 
-        verify(client, never()).post();
+        verify(response, org.mockito.Mockito.times(2)).toBodilessEntity();
     }
 
     @Test
@@ -75,23 +69,12 @@ class DirectorModelProvisionerTest {
     }
 
     @Test
-    void unavailableOllamaFailsStartup() {
-        OllamaApi api = mock(OllamaApi.class);
-        when(api.listModels()).thenThrow(new IllegalStateException("offline"));
-
-        IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new DirectorModelProvisioner(api, mock(RestClient.class), "storyteller-director", definition)
-                        .run(args));
-        assertEquals("offline", e.getCause().getMessage());
-    }
-
-    @Test
     void createFailureFailsStartup() {
         RestClient client = mock(RestClient.class);
         when(client.post()).thenThrow(new IllegalStateException("create failed"));
 
         assertThrows(IllegalStateException.class,
-                () -> new DirectorModelProvisioner(apiWith(), client, "storyteller-director", definition).run(args));
+                () -> new DirectorModelProvisioner(client, "storyteller-director", definition).run(args));
     }
 
     @Test
@@ -102,7 +85,7 @@ class DirectorModelProvisionerTest {
                 "{\"error\":\"invalid model\"}".getBytes(), null));
 
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new DirectorModelProvisioner(apiWith(), client, "storyteller-director", definition).run(args));
+                () -> new DirectorModelProvisioner(client, "storyteller-director", definition).run(args));
         assertTrue(e.getMessage().contains("400"));
         assertTrue(e.getMessage().contains("invalid model"));
     }
@@ -110,32 +93,31 @@ class DirectorModelProvisionerTest {
     @Test
     void modelfileWithoutFromFailsStartup() {
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> new DirectorModelProvisioner(apiWith(), mock(RestClient.class), "storyteller-director",
+                () -> new DirectorModelProvisioner(mock(RestClient.class), "storyteller-director",
                         new ByteArrayResource("SYSTEM x".getBytes())).run(args));
         assertTrue(e.getMessage().contains("FROM"));
     }
 
     @Test
-    void realModelfileIsTranslated() throws Exception {
+    void realModelfileIsTranslatedWithSettingAndCoverRules() {
         RestClient client = mock(RestClient.class);
-        RestClient.RequestBodyUriSpec request = mock(RestClient.RequestBodyUriSpec.class);
-        RestClient.RequestBodySpec body = mock(RestClient.RequestBodySpec.class);
-        when(client.post()).thenReturn(request);
-        when(request.uri("/api/create")).thenReturn(request);
-        when(request.contentType(any())).thenReturn(request);
-        when(request.body(any(Object.class))).thenReturn(body);
-        when(body.retrieve()).thenReturn(mock(RestClient.ResponseSpec.class));
+        RestClient.RequestBodyUriSpec request = stubCreate(client, mock(RestClient.ResponseSpec.class));
 
-        new DirectorModelProvisioner(apiWith(), client, "storyteller-director",
+        new DirectorModelProvisioner(client, "storyteller-director",
                 new ClassPathResource(DirectorModelProvisioner.MODELFILE_PATH)).run(args);
 
         org.mockito.ArgumentCaptor<Object> captor = org.mockito.ArgumentCaptor.forClass(Object.class);
         verify(request).body(captor.capture());
         @SuppressWarnings("unchecked")
         Map<String, Object> sent = (Map<String, Object>) captor.getValue();
+        String system = (String) sent.get("system");
         assertEquals("qwen3:14b", sent.get("from"));
-        assertTrue(((String) sent.get("system")).startsWith("Eres el AGENTE DIRECTOR"));
-        assertTrue(((String) sent.get("system")).endsWith("fuera del JSON."));
+        assertTrue(system.startsWith("Eres el AGENTE DIRECTOR"));
+        assertTrue(system.endsWith("fuera del JSON."));
+        assertTrue(system.contains("- setting:"));
+        assertTrue(system.contains("- cover:"));
+        assertTrue(system.contains("distintos de los del primer beat"));
+        assertTrue(system.contains("cast, beats, cover"));
         assertEquals(8192, ((Map<?, ?>) sent.get("parameters")).get("num_ctx"));
     }
 }

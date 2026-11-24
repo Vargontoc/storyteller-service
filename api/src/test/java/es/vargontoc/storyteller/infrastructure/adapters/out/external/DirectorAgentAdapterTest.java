@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.ai.chat.client.ChatClient;
 
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.request.DirectorReviewRequest;
 import es.vargontoc.storyteller.domain.request.DirectorScriptRequest;
 import es.vargontoc.storyteller.domain.response.DirectorBeat;
@@ -52,6 +53,44 @@ class DirectorAgentAdapterTest {
         assertEquals(List.of(new DirectorCastMember("Pipo", "Amigo que necesita ayuda")), result.cast());
         assertEquals(2, result.beats().size());
         assertEquals("Luna sale a pasear", result.beats().get(0).event());
+    }
+
+    @Test
+    void generationDeliversTheSettingOfEachBeatAndTheCoverPlan() {
+        var cover = new CoverPlan("habitación al anochecer", "calma");
+        var beats = List.of(settingBeat("cocina"), settingBeat("jardín"), settingBeat("río"), settingBeat("cama"));
+        when(response.entity(DirectorScriptResult.class)).thenReturn(
+                new DirectorScriptResult("Título", "Sinopsis", List.of(), beats, cover));
+
+        DirectorScriptResult result = agent.generateScript(scriptRequest(4));
+
+        assertEquals(List.of("cocina", "jardín", "río", "cama"),
+                result.beats().stream().map(DirectorBeat::setting).toList());
+        assertEquals(cover, result.cover());
+    }
+
+    @Test
+    void reviewDeliversTheSettingOfEachBeatAndTheCoverPlan() {
+        var cover = new CoverPlan("playa", "alegre");
+        var beats = List.of(settingBeat("cocina"), settingBeat("playa"));
+        when(response.entity(DirectorReviewResult.class)).thenReturn(new DirectorReviewResult(
+                true, null, "Título", "Sinopsis", List.of(), beats, cover));
+
+        DirectorReviewResult result = agent.reviewScript(reviewRequest(2));
+
+        assertEquals("cocina", result.beats().get(0).setting());
+        assertEquals("playa", result.beats().get(1).setting());
+        assertEquals(cover, result.cover());
+    }
+
+    @Test
+    void missingSettingOrCoverPlanIsDeliveredAbsentWithoutInventingValues() {
+        when(response.entity(DirectorScriptResult.class)).thenReturn(script(2));
+
+        DirectorScriptResult result = agent.generateScript(scriptRequest(2));
+
+        assertNull(result.beats().get(0).setting());
+        assertNull(result.cover());
     }
 
     @Test
@@ -180,6 +219,10 @@ class DirectorAgentAdapterTest {
 
     private DirectorReviewResult accepted(DirectorScriptResult script) {
         return new DirectorReviewResult(true, null, script.title(), script.synopsis(), script.cast(), script.beats());
+    }
+
+    private DirectorBeat settingBeat(String setting) {
+        return new DirectorBeat("Luna sale", "Planteamiento", List.of("Luna"), "Alegre", "Bosque", setting);
     }
 
     private DirectorBeat beat(String event) {

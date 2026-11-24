@@ -38,6 +38,7 @@ import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.enums.StorySize;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.domain.model.CatalogCharacter;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -197,6 +198,42 @@ class StoryServiceTest {
         verify(stories).create(persisted.capture(), any(), anyString(), anyString(), anyLong());
         assertEquals("T", persisted.getValue().title());
         assertEquals(1, persisted.getValue().characters().size());
+        // Los lugares de los beats y el planteamiento de la portada se persisten con la escaleta
+        assertTrue(outline.getValue().beats().stream().allMatch(b -> "claro del bosque".equals(b.setting())));
+        assertEquals(COVER, outline.getValue().cover());
+    }
+
+    @Test
+    void beatWithoutOrBlankSettingOrIncompleteCoverIsRetriedAndNotPersisted() {
+        when(catalog.findById(7L)).thenReturn(luna(7L));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        int pages = SIZE.getPages();
+        when(director.generateScript(any()))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages, null), COVER))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages, "  "), COVER))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages), new CoverPlan("  ", "misterioso")));
+
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L)));
+
+        verify(director, times(3)).generateScript(any());
+        verify(stories, never()).create(any(), any(), anyString(), anyString(), anyLong());
+        verify(outlines, never()).save(anyLong(), any());
+    }
+
+    @Test
+    void coverWithoutToneOrMissingCoverIsNotPersisted() {
+        when(catalog.findById(7L)).thenReturn(luna(7L));
+        when(images.hasApprovedPortrait(7L)).thenReturn(true);
+        int pages = SIZE.getPages();
+        when(director.generateScript(any()))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages), new CoverPlan("camino", "")))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages), null))
+                .thenReturn(new DirectorScriptResult("T", "S", CAST, beats(pages)));
+
+        assertThrows(AppException.class, () -> service.generate(new StoryGenerateCommand("Amistad", "Un paseo", SIZE, 7L)));
+
+        verify(stories, never()).create(any(), any(), anyString(), anyString(), anyLong());
+        verify(outlines, never()).save(anyLong(), any());
     }
 
     // --- Aprobación ---
@@ -225,7 +262,7 @@ class StoryServiceTest {
     void acceptedHintCreatesPendingReviewWithCandidate() {
         arrangeCurrentOutline();
         DirectorReviewResult accepted = new DirectorReviewResult(true, null, "Nuevo título", "Nueva sinopsis",
-                List.of(new DirectorCastMember("Pipo", "Amigo")), beats(SIZE.getPages()));
+                List.of(new DirectorCastMember("Pipo", "Amigo")), beats(SIZE.getPages()), COVER);
         when(director.reviewScript(any())).thenReturn(accepted);
         StoryReview pending = new StoryReview();
         when(reviews.createOutlineReview(anyLong(), any(), anyBoolean(), any(), any(), any(), any())).thenReturn(pending);
@@ -242,7 +279,34 @@ class StoryServiceTest {
         verify(reviews).createOutlineReview(eq(10L), eq("Final en la playa"), eq(true), isNullString(),
                 eq("Nuevo título"), eq("Nueva sinopsis"), candidate.capture());
         assertEquals(SIZE.getPages(), candidate.getValue().beats().size());
+        assertEquals("claro del bosque", candidate.getValue().beats().get(0).setting());
+        assertEquals(COVER, candidate.getValue().cover());
         verify(outlines, never()).save(anyLong(), any());
+    }
+
+    @Test
+    void reviewWithoutCoverSettingOrToneOrBeatSettingIsNotAcceptedNorPersisted() {
+        arrangeCurrentOutline();
+        int pages = SIZE.getPages();
+        when(director.reviewScript(any()))
+                .thenReturn(review(beats(pages), new CoverPlan("camino", null)))
+                .thenReturn(review(beats(pages), new CoverPlan("  ", "misterioso")))
+                .thenReturn(review(beats(pages), null));
+
+        assertThrows(AppException.class, () -> service.review(new StoryReviewCommand(10L, "hint")));
+
+        verify(director, times(3)).reviewScript(any());
+        verify(reviews, never()).createOutlineReview(anyLong(), any(), anyBoolean(), any(), any(), any(), any());
+    }
+
+    @Test
+    void reviewWithBlankBeatSettingIsNotAccepted() {
+        arrangeCurrentOutline();
+        when(director.reviewScript(any())).thenReturn(review(beats(SIZE.getPages(), "   "), COVER));
+
+        assertThrows(AppException.class, () -> service.review(new StoryReviewCommand(10L, "hint")));
+
+        verify(reviews, never()).createOutlineReview(anyLong(), any(), anyBoolean(), any(), any(), any(), any());
     }
 
     @Test
@@ -395,18 +459,29 @@ class StoryServiceTest {
     }
 
     private static DirectorScriptResult script(int pages) {
-        return new DirectorScriptResult("T", "S", List.of(new DirectorCastMember("Pipo", "Amigo")), beats(pages));
+        return new DirectorScriptResult("T", "S", List.of(new DirectorCastMember("Pipo", "Amigo")), beats(pages), COVER);
     }
 
     private static List<DirectorBeat> beats(int pages) {
+        return beats(pages, "claro del bosque");
+    }
+
+    private static List<DirectorBeat> beats(int pages, String setting) {
         return java.util.stream.IntStream.range(0, pages)
-                .mapToObj(i -> new DirectorBeat("Pasa " + i, "inicio", List.of("Luna"), "alegre", "bosque"))
+                .mapToObj(i -> new DirectorBeat("Pasa " + i, "inicio", List.of("Luna"), "alegre", "bosque", setting))
                 .toList();
     }
 
     private static List<StoryBeat> storyBeats(int pages) {
         return java.util.stream.IntStream.range(0, pages)
-                .mapToObj(i -> new StoryBeat("Pasa " + i, "inicio", List.of("Luna"), "alegre", "bosque"))
+                .mapToObj(i -> new StoryBeat("Pasa " + i, "inicio", List.of("Luna"), "alegre", "bosque", "claro del bosque"))
                 .toList();
+    }
+
+    private static final CoverPlan COVER = new CoverPlan("camino al bosque", "misterioso");
+    private static final List<DirectorCastMember> CAST = List.of(new DirectorCastMember("Pipo", "Amigo"));
+
+    private static DirectorReviewResult review(List<DirectorBeat> beats, CoverPlan cover) {
+        return new DirectorReviewResult(true, null, "T2", "S2", CAST, beats, cover);
     }
 }

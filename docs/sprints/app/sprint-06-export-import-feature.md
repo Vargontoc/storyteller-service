@@ -10,9 +10,9 @@ Estado: aprobado
 
 ## Origen SDD
 
-- Requirements: 5
-- Design: 1
-- Tasks: 1
+- Requirements: 7
+- Design: 2
+- Tasks: 2
 
 ## Enfoque técnico
 
@@ -78,7 +78,7 @@ La descarga heredada de Nubi en `StorytellerView` se reemplazará por un cliente
 - **Ficheros:** `app/src/views/StorytellerView.vue` (modificar): reemplazar la descarga heredada por acciones Nubi Game y agente visual, descarga del zip y presentación completa de rechazos. `app/src/views/StorytellerView.spec.ts` (nuevo, propuesta): acciones únicas, errores y descarga. `app/src/api/storyteller.ts` (modificar): retirar el uso de `downloadStory` heredado si queda sin consumidores.
 - **Enfoque:** ubicar las dos acciones en las opciones existentes de cada cuento; eliminar la única acción antigua para Nubi y no conservar dos alternativas. Generar y revocar la URL del blob sólo en éxito; presentar todas las faltas recibidas con su contexto, sin iniciar descarga ante un rechazo.
 - **Pruebas automáticas:** una acción Nubi y una visual, rechazo múltiple visible y click de descarga ante zip; `npm run test -- --run` y `npm run build` desde `app/`.
-- **Prueba manual:** ejecutar los siete pasos de TASK-032: zip Nubi con imágenes WebP y audio, preservación del original, falta de imagen, zip visual y su contrato, y rechazo de cuento legacy.
+- **Prueba manual:** ejecutar los siete pasos de TASK-032: zip Nubi con imágenes originales y audio (incluida su extensión según formato real), preservación del original, falta de imagen, zip visual y su contrato, y rechazo de cuento legacy.
 
 ## Orden de implementación
 

@@ -29,4 +29,10 @@ public interface PageAcceptance {
      * aceptado (sin imagen), borra su histórico y elimina las posteriores. No inicia ninguna generación.
      */
     ProposalAccepted acceptProposal(Long storyId, Long pageId, boolean confirm);
+
+    /**
+     * Sube una imagen a la portada o a una página aceptada: se guarda tal cual, sin límite de tamaño propio, y sustituye
+     * la anterior. Se rechaza (conservando la anterior) si la portada o página no está aceptada o el contenido no es una imagen.
+     */
+    StoryPage uploadImage(Long storyId, Long pageId, byte[] content);
 }

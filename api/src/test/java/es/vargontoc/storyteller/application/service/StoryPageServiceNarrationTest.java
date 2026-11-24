@@ -22,6 +22,7 @@ import org.mockito.InOrder;
 import org.springframework.ai.chat.client.ChatClient;
 
 import es.vargontoc.storyteller.application.ports.in.generator.StoryNarrationUseCase;
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
 import es.vargontoc.storyteller.application.ports.out.external.WriterAgent;
@@ -78,11 +79,11 @@ class StoryPageServiceNarrationTest {
         narration = mock(StoryNarrationUseCase.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier,
-            Runnable::run, narration);
+            Runnable::run, narration, mock(ResourceStorage.class), new ImageContentInspector());
 
         StoryBeat beat = new StoryBeat("e", "nudo", List.of("Luna"), "curioso", "claro");
         when(outlines.find(STORY)).thenReturn(Optional.of(
-            new StoryOutline(List.of(new EpisodicCastMember("Conejo", "amigo")), List.of(beat, beat, beat))));
+            new StoryOutline(List.of(new EpisodicCastMember("Conejo", "amigo")), List.of(beat, beat, beat), new es.vargontoc.storyteller.domain.model.CoverPlan("habitación al anochecer", "calma"))));
         Story story = story();
         when(stories.getStory(STORY)).thenReturn(story);
         for (StoryPage p : story.getPages())

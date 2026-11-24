@@ -12,6 +12,9 @@ public interface ResourceStorage {
 
     boolean existsAsset(String asset);
 
+    /** Guarda tal cual (sin convertir) la imagen importada de una portada o página y borra la importada anterior. Devuelve su ruta. */
+    String saveImportedImage(long storyId, long pageId, byte[] imageBytes);
+
     String saveAudio(Long storyId, Long id, byte[] audioBytes);
 
     byte[] getResource(String path);

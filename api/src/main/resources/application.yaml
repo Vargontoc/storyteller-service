@@ -14,9 +14,9 @@ spring:
         change-log: classpath:db/changelog/db.changelog-master.xml
     servlet:
         multipart:
-            # Muestras de voz de hasta 30 s en WAV (el límite por defecto es 1 MB)
-            max-file-size: 25MB
-            max-request-size: 30MB
+            # Muestras de voz de hasta 30 s en WAV e imágenes importadas sin límite propio (el límite por defecto es 1 MB)
+            max-file-size: 100MB
+            max-request-size: 110MB
     jpa:
         hibernate:
             ddl-auto: validate

@@ -70,6 +70,8 @@ public class BeatEditorService implements BeatEditing {
         StoryBeat beat = cmd.beat();
         if (beat == null || !beat.isComplete())
             throw new AppException("El beat debe tener los cinco campos obligatorios", HttpStatus.BAD_REQUEST);
+        if (beat.setting() == null || beat.setting().isBlank())
+            throw new AppException("El beat debe tener el lugar de la escena", HttpStatus.BAD_REQUEST);
 
         // Cancelación del aviso: sin efectos y sin consultar al director
         if (Boolean.FALSE.equals(cmd.confirmInvalidation()))
@@ -94,7 +96,7 @@ public class BeatEditorService implements BeatEditing {
             StoryBeat beat) {
         // El director solo da el veredicto de edad; ante rechazo no se muta nada
         DirectorBeatVerdict verdict = director.validateBeat(new DirectorBeat(
-            beat.event(), beat.narrativeFunction(), beat.participants(), beat.tone(), beat.visualNote()));
+            beat.event(), beat.narrativeFunction(), beat.participants(), beat.tone(), beat.visualNote(), beat.setting()));
         if (verdict == null || !verdict.accepted())
             return BeatEditResult.rejected(verdict == null ? "El director no devolvió veredicto" : verdict.reason());
 
@@ -107,7 +109,7 @@ public class BeatEditorService implements BeatEditing {
         int removed = generated > 0 ? pages.deleteInvalidatedPages(cmd.storyId()) : 0;
         List<StoryBeat> beats = new ArrayList<>(outline.beats());
         beats.set(index, beat);
-        outlines.save(cmd.storyId(), new StoryOutline(outline.cast(), beats));
+        outlines.save(cmd.storyId(), new StoryOutline(outline.cast(), beats, outline.cover())); // la portada no se toca
         stories.updateStatus(cmd.storyId(), StoryStatus.SCRIPT_PENDING);
         Story updated = stories.getStory(cmd.storyId());
         if (removed > 0)

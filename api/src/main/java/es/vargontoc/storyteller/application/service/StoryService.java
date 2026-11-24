@@ -21,6 +21,7 @@ import es.vargontoc.storyteller.domain.command.StoryReviewCommand;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
 import es.vargontoc.storyteller.domain.model.CatalogCharacter;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -93,7 +94,7 @@ public class StoryService implements StoryGeneration {
                 protagonist.visualDescription(), protagonist.id());
             DirectorScriptResult script = callDirector(() -> {
                 DirectorScriptResult result = director.generateScript(request);
-                if (result == null || !toOutline(result.cast(), result.beats()).isComplete()) {
+                if (result == null || !isValidOutline(toOutline(result.cast(), result.beats(), result.cover()))) {
                     throw new AppException("Escaleta incompleta", HttpStatus.BAD_REQUEST);
                 }
                 return result;
@@ -103,7 +104,7 @@ public class StoryService implements StoryGeneration {
             Story story = repository.create(
                 new StoryAgentResult(script.title(), script.synopsis(), List.of(toCharacter(protagonist))),
                 cmd.size(), cmd.topic(), cmd.description(), protagonist.id());
-            outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats()));
+            outlineRepository.save(story.getId(), toOutline(script.cast(), script.beats(), script.cover()));
             return repository.getStory(story.getId());
         } finally {
             gate.release();
@@ -141,12 +142,12 @@ public class StoryService implements StoryGeneration {
 
             DirectorReviewRequest request = new DirectorReviewRequest(current.getTitle(), current.getSynopsis(),
                 outline.cast().stream().map(c -> new DirectorCastMember(c.name(), c.role())).toList(),
-                outline.beats().stream().map(b -> new DirectorBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList(),
+                outline.beats().stream().map(b -> new DirectorBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote(), b.setting())).toList(),
                 review.hint());
             DirectorReviewResult result = callDirector(() -> {
                 DirectorReviewResult r = director.reviewScript(request);
                 if (r == null || (!r.hintAccepted() && (r.rejectionReason() == null || r.rejectionReason().isBlank()))
-                        || (r.hintAccepted() && !toOutline(r.cast(), r.beats()).isComplete())) {
+                        || (r.hintAccepted() && !isValidOutline(toOutline(r.cast(), r.beats(), r.cover())))) {
                     throw new AppException("Respuesta de revisión incompleta", HttpStatus.BAD_REQUEST);
                 }
                 return r;
@@ -157,7 +158,7 @@ public class StoryService implements StoryGeneration {
                 return reviewRepository.createOutlineReview(review.storyId(), review.hint(), false, result.rejectionReason(), null, null, null);
             }
             return reviewRepository.createOutlineReview(review.storyId(), review.hint(), true, null,
-                result.title(), result.synopsis(), toOutline(result.cast(), result.beats()));
+                result.title(), result.synopsis(), toOutline(result.cast(), result.beats(), result.cover()));
         } finally {
             gate.release();
         }
@@ -239,11 +240,23 @@ public class StoryService implements StoryGeneration {
         throw new AppException("El agente no devolvió una respuesta válida", HttpStatus.BAD_REQUEST);
     }
 
-    private StoryOutline toOutline(List<DirectorCastMember> cast, List<DirectorBeat> beats) {
+    private StoryOutline toOutline(List<DirectorCastMember> cast, List<DirectorBeat> beats, CoverPlan cover) {
         return new StoryOutline(
             cast == null ? List.of() : cast.stream().map(c -> new EpisodicCastMember(c.name(), c.role())).toList(),
             beats == null ? null : beats.stream()
-                .map(b -> new StoryBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote())).toList());
+                .map(b -> new StoryBeat(b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote(), b.setting())).toList(),
+            cover);
+    }
+
+    /** Un guion nuevo exige además el lugar de cada beat y el lugar y el tono de la portada, no vacíos. */
+    private boolean isValidOutline(StoryOutline outline) {
+        return outline.isComplete()
+            && outline.beats().stream().allMatch(b -> notBlank(b.setting()))
+            && outline.cover() != null && notBlank(outline.cover().setting()) && notBlank(outline.cover().tone());
+    }
+
+    private static boolean notBlank(String value) {
+        return value != null && !value.isBlank();
     }
 
     private CharacterAgentResult toCharacter(CatalogCharacter c) {

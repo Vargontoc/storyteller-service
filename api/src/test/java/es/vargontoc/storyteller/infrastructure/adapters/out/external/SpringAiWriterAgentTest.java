@@ -18,6 +18,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.SceneComposition;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -159,6 +160,46 @@ class SpringAiWriterAgentTest {
     }
 
     @Test
+    void coverRequestIncludesItsSettingAndTone() {
+        when(response.entity(WriterResult.class)).thenReturn(new WriterResult(null, scene("Luna en la ventana")));
+
+        WriterResult result = agent.writeCover(coverContext());
+
+        String message = sentMessage();
+        assertTrue(message.contains("habitación al anochecer"));
+        assertTrue(message.contains("calma"));
+        assertEquals("Luna en la ventana", result.scene().scene());
+    }
+
+    @Test
+    void acceptedCoverHintSendsSettingAndToneAndReturnsCompleteScene() {
+        when(response.entity(WriterHintResult.class)).thenReturn(
+                new WriterHintResult(true, null, null, scene("Luna llena en la ventana")));
+
+        WriterHintResult result = agent.rewrite(coverContext(), new WriterResult(null, scene("Luna")),
+                "que se vea la luna llena");
+
+        String message = sentMessage();
+        assertTrue(message.contains("habitación al anochecer"));
+        assertTrue(message.contains("calma"));
+        assertTrue(message.contains("que se vea la luna llena"));
+        assertTrue(result.hintAccepted());
+        assertEquals("Luna llena en la ventana", result.scene().scene());
+    }
+
+    @Test
+    void rejectedCoverHintReturnsTheReasonWithoutScene() {
+        when(response.entity(WriterHintResult.class)).thenReturn(
+                new WriterHintResult(false, " No cabe en la portada ", null, null));
+
+        WriterHintResult result = agent.rewrite(coverContext(), new WriterResult(null, scene("Luna")), "que llueva");
+
+        assertFalse(result.hintAccepted());
+        assertEquals("No cabe en la portada", result.rejectionReason());
+        assertNull(result.scene());
+    }
+
+    @Test
     void rejectionWithoutReasonIsAFailure() {
         when(response.entity(WriterHintResult.class)).thenReturn(new WriterHintResult(false, " ", null, null));
 
@@ -213,6 +254,11 @@ class SpringAiWriterAgentTest {
         ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
         verify(request).user(captor.capture());
         return captor.getValue();
+    }
+
+    private WriterContext coverContext() {
+        return WriterContext.cover("El bosque de Luna", "Luna ayuda a un amigo", "Luna, zorra naranja",
+                new CoverPlan("habitación al anochecer", "calma"));
     }
 
     private WriterContext pageContext() {

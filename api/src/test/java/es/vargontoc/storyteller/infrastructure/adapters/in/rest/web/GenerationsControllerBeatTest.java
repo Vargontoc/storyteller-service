@@ -25,7 +25,7 @@ class GenerationsControllerBeatTest {
         var controller = new GenerationsController(null, null, null, editing, null);
 
         var response = controller.editBeat(7L, 2,
-            new BeatEditRequestDto("Luna sale", "nudo", List.of("Luna"), "curioso", "bosque", true));
+            new BeatEditRequestDto("Luna sale", "nudo", List.of("Luna"), "curioso", "bosque", "claro del bosque", true));
 
         assertTrue(response.getBody().success());
         assertEquals(BeatEditStatus.CONFIRMATION_REQUIRED, response.getBody().data().status());

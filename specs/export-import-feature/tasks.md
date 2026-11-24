@@ -1,12 +1,12 @@
 # Tareas: export-import-feature
 
 Estado: aprobado
-Revisión: 1
-Basado en: requirements@5, design@1
+Revisión: 2
+Basado en: requirements@7, design@2
 
 ## Resumen
 
-El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (lugar de escena por beat y planteamiento de portada), portada como página 0 revisable y fuera de la cascada, importación de imágenes, exportación para Nubi Game y exportación para el agente visual. Cada bloque tiene primero sus tareas de backend y después las de interfaz. Al final van las tareas de contrato, que se formalizan después de implementar (`implementation-first`). En total hay 43 tareas.
+El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (lugar de escena por beat y planteamiento de portada), portada como página 0 revisable y fuera de la cascada, importación de imágenes, exportación para Nubi Game (con las imágenes originales sin convertir, cada una con la extensión de su formato real) y exportación para el agente visual. Cada bloque tiene primero sus tareas de backend y después las de interfaz. Al final van las tareas de contrato, que se formalizan después de implementar (`implementation-first`). Hay 44 tareas numeradas, de las que TASK-023 está retirada, así que quedan 43 vigentes.
 
 ## Tareas
 
@@ -24,7 +24,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: es persistencia interna sin interfaz propia. Se verifica de extremo a extremo en TASK-017.
 
-### [ ] TASK-002 Director genera lugar por beat y planteamiento de portada
+### [x] TASK-002 Director genera lugar por beat y planteamiento de portada
 
 - **Cubre:** REQ-017, REQ-037, DEC-001
 - **Componente:** director-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiDirectorAgent.java
@@ -38,7 +38,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica con el modelo real en TASK-003 y TASK-017.
 
-### [ ] TASK-003 Modelfile del director con las reglas de lugar y de planteamiento de portada
+### [x] TASK-003 Modelfile del director con las reglas de lugar y de planteamiento de portada
 
 - **Cubre:** REQ-017, REQ-037
 - **Componente:** director-model-provisioner | api/src/main/java/es/vargontoc/storyteller/infrastructure/config/DirectorModelProvisioner.java
@@ -52,7 +52,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   1. Arrancar la aplicación con el modelo del director antiguo ya registrado en Ollama.
   2. Crear un cuento nuevo de 4 páginas: los 4 beats tienen un lugar de escena no vacío, y la portada tiene un lugar y un tono propios no vacíos, mostrados aparte del beat de la página 1.
 
-### [ ] TASK-004 Validación del guion ampliado
+### [x] TASK-004 Validación del guion ampliado
 
 - **Cubre:** REQ-017, REQ-037, DEC-001, ALT-007
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java
@@ -67,7 +67,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: la salida incompleta del director solo puede forzarse con dobles de prueba. El caso correcto se verifica en TASK-017.
 
-### [ ] TASK-005 Lugar de escena editable en la edición directa de un beat
+### [x] TASK-005 Lugar de escena editable en la edición directa de un beat
 
 - **Cubre:** REQ-017
 - **Componente:** beat-editor | api/src/main/java/es/vargontoc/storyteller/application/service/BeatEditorService.java
@@ -80,7 +80,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica desde la interfaz en TASK-017.
 
-### [ ] TASK-006 Escritor redacta la escena de portada desde su lugar y su tono
+### [x] TASK-006 Escritor redacta la escena de portada desde su lugar y su tono
 
 - **Cubre:** REQ-038, REQ-039, ALT-005
 - **Componente:** writer-agent | api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/SpringAiWriterAgent.java
@@ -94,7 +94,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica con el modelo real en TASK-007 y TASK-021.
 
-### [ ] TASK-007 Modelfile del escritor con las reglas de la escena de portada
+### [x] TASK-007 Modelfile del escritor con las reglas de la escena de portada
 
 - **Cubre:** REQ-038, REQ-039
 - **Componente:** writer-model-provisioner | api/src/main/java/es/vargontoc/storyteller/infrastructure/config/WriterModelProvisioner.java
@@ -108,7 +108,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   1. Arrancar la aplicación con el modelo del escritor antiguo ya registrado en Ollama.
   2. Generar la portada de un cuento con lugar "habitación al anochecer" y tono de calma: la descripción de escena presentada es coherente con ese lugar y ese tono.
 
-### [ ] TASK-008 Generación y revisión con hint de la portada
+### [x] TASK-008 Generación y revisión con hint de la portada
 
 - **Cubre:** REQ-038, REQ-039, DEC-004, ALT-004, ALT-005, ALT-006
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -189,10 +189,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   2. Rehacer el guion con la acción que ofrece hoy la aplicación: la portada deja de mostrar la imagen y deja de estar aceptada.
   3. Aprobar el nuevo guion: la portada muestra una descripción de escena nueva pendiente de revisión, no la anterior.
 
-### [ ] TASK-013 Detección de imagen por su contenido
+### [x] TASK-013 Detección de imagen por su contenido
 
 - **Cubre:** REQ-004, REQ-005, DEC-013
-- **Componente:** image-content-inspector | por definir (analista técnico)
+- **Componente:** image-content-inspector | api/src/main/java/es/vargontoc/storyteller/application/service/ImageContentInspector.java
 - **Depende de:** -
 - **Alcance:** Decide si un fichero es una imagen por su contenido real, sin tener en cuenta la extensión, el tipo declarado, las dimensiones ni el peso.
 - **Hecho cuando:** los ficheros de imagen de cualquier formato y tamaño se reconocen como imagen y los que no lo son se reconocen como no imagen, sea cual sea su extensión o tipo declarado.
@@ -206,7 +206,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: es un componente interno. Se verifica desde la interfaz en TASK-020.
 
-### [ ] TASK-014 Subida de imagen en la portada y en las páginas aceptadas
+### [x] TASK-014 Subida de imagen en la portada y en las páginas aceptadas
 
 - **Cubre:** REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, DEC-013, ALT-001, ALT-002
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -225,7 +225,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica desde la interfaz en TASK-020.
 
-### [ ] TASK-015 Descripción de escena completa de la portada y de las páginas en la vista
+### [x] TASK-015 Descripción de escena completa de la portada y de las páginas en la vista
 
 - **Cubre:** REQ-001, REQ-036
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java
@@ -339,10 +339,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   4. Con las páginas 1 a 3 aceptadas y la página 2 con imagen, y la portada con imagen, pedir un cambio en la portada y aceptarlo: las páginas 1 a 3 siguen aceptadas con el mismo texto, la página 2 conserva su imagen y la portada ya no tiene imagen.
   5. Abrir un cuento anterior a la feature: la portada avisa de que faltan su lugar y su tono.
 
-### [ ] TASK-022 Derivación de slugs deterministas
+### [x] TASK-022 Derivación de slugs deterministas
 
 - **Cubre:** REQ-022, REQ-024, REQ-032, DEC-012
-- **Componente:** story-slugger | por definir (analista técnico)
+- **Componente:** story-slugger | api/src/main/java/es/vargontoc/storyteller/domain/service/StorySlugger.java
 - **Depende de:** -
 - **Alcance:** Deriva un slug desde un texto con la regla de SUP-009: minúsculas, tildes, diéresis y `ñ` transliteradas, secuencias no alfanuméricas convertidas en un guion, sin guiones iniciales ni finales y recortado a 40 caracteres sin guion final. Indica si el resultado tiene menos de 3 caracteres.
 - **Hecho cuando:** el mismo texto da siempre el mismo slug con la regla de SUP-009, y un resultado demasiado corto se detecta.
@@ -355,49 +355,57 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: es una función interna determinista, cubierta por las pruebas automáticas.
 
-### [ ] TASK-023 Conversión de imágenes a WebP para la exportación
+### [ ] TASK-023 Retirada: conversión de imágenes a WebP para la exportación
 
-- **Cubre:** REQ-015, REQ-033, REQ-034, REQ-035, DEC-007, ALT-010
-- **Componente:** export-image-converter | por definir (analista técnico)
-- **Depende de:** -
-- **Alcance:** Convierte una imagen importada a WebP con calidad 85, con la orientación aplicada y sin metadatos. Reduce el lado mayor a 2048 px si lo supera, conservando la proporción y sin ampliar nunca. Trabaja sobre una copia, sin modificar el original, e informa de que no ha podido convertir cuando la imagen no se puede convertir.
-- **Hecho cuando:** se cumplen los criterios de aceptación de REQ-033 (los dos primeros) y REQ-034, y una imagen no convertible da un fallo identificable sin modificar el original.
+- **Retirada en la revisión 2.** El zip para Nubi Game lleva las imágenes originales sin convertir (SUP-007). REQ-033, REQ-034 y REQ-035 están retirados, y en el diseño se han eliminado `export-image-converter`, DEC-007 y ALT-010. No hay nada que implementar y el ID no se reutiliza. La identificación del formato real que necesita el zip pasa a TASK-044.
+
+### [x] TASK-044 Identificación del formato real de una imagen por su contenido
+
+- **Cubre:** REQ-011, DEC-015
+- **Componente:** image-content-inspector | api/src/main/java/es/vargontoc/storyteller/application/service/ImageContentInspector.java
+- **Depende de:** TASK-013
+- **Alcance:** Amplía `image-content-inspector` para que, además de decidir si un fichero es una imagen, identifique su formato real por el contenido y la extensión habitual de ese formato, sin tener en cuenta el nombre ni el tipo declarado. Cualquier formato que el inspector acepte como imagen tiene una extensión asociada (riesgo del diseño).
+- **Hecho cuando:** cada imagen reconocida devuelve su formato real y su extensión habitual, sea cual sea el nombre con que se subió, y ningún formato aceptado como imagen se queda sin extensión.
 - **Pruebas automáticas:**
-  - PNG y BMP: la salida es WebP.
-  - JPEG con orientación EXIF de 90°: la salida se ve con la misma orientación y no tiene metadatos.
-  - 4096 × 3072 px: la salida mide 2048 × 1536 px.
-  - 300 × 200 px: la salida mide 300 × 200 px.
-  - Tras convertir, el fichero original es idéntico byte a byte.
-  - Imagen que se reconoce como imagen pero no se puede decodificar para convertirla: se informa del fallo y el original no cambia (ALT-010).
+  - PNG: formato PNG, extensión `.png`.
+  - JPEG: formato JPEG, extensión `.jpg`.
+  - BMP: formato BMP, extensión `.bmp`.
+  - PNG con nombre terminado en `.jpg` y tipo declarado JPEG: formato PNG, extensión `.png`.
+  - Para cada formato que el inspector reconoce como imagen hay una extensión asociada no vacía.
+  - Fichero de texto: no se identifica ningún formato de imagen.
+  - El análisis no modifica el fichero: tras inspeccionarlo es idéntico byte a byte.
 - **Prueba manual:**
-  No aplica: se verifica de extremo a extremo en TASK-032.
+  No aplica: es un componente interno. Se verifica de extremo a extremo en TASK-032.
 
-### [ ] TASK-024 Zip para Nubi Game con referencias explícitas
+### [ ] TASK-024 Zip para Nubi Game con referencias explícitas e imágenes originales
 
-- **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-016, REQ-033, DEC-005, DEC-014
+- **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-016, DEC-005, DEC-014, DEC-015
 - **Componente:** nubi-game-exporter | no consta en el mapa
-- **Depende de:** TASK-023
-- **Alcance:** Sustituye la composición actual del zip con la convención `page_N` por un zip con `story.json` (título, ruta de la portada y, por página y en orden, texto aceptado, ruta de la imagen y ruta del audio), la portada convertida y, por página, su imagen convertida y su audio. Las rutas son relativas a la raíz y el zip no se persiste.
+- **Depende de:** TASK-044
+- **Alcance:** Sustituye la composición actual del zip con la convención `page_N` por un zip con `story.json` (título, ruta de la portada y, por página y en orden, texto aceptado, ruta de la imagen y ruta del audio), la imagen de portada y, por página, su imagen y su audio. Cada imagen se copia tal como se subió, sin convertir, redimensionar, reorientar, recomprimir ni quitar metadatos, en un fichero con la extensión de su formato real según `image-content-inspector`. El `story.json` no declara el formato en ningún campo, las rutas son relativas a la raíz y el zip no se persiste.
 - **Hecho cuando:** se cumplen los criterios de aceptación de REQ-011 a REQ-015, y el zip resultante ya no usa la convención `page_N` como único medio para asociar los ficheros.
 - **Pruebas automáticas:**
   - Cuento completo de 5 páginas: el zip contiene `story.json`, 1 imagen de portada, 5 imágenes de página y 5 audios, y ningún audio de portada.
-  - Imágenes importadas en PNG: todas las del zip están en WebP y ninguna en PNG.
+  - Portada subida en PNG y página 1 en JPEG: la imagen de portada del zip está en PNG con extensión `.png` y la de la página 1 en JPEG con extensión `.jpg`.
+  - Página con una imagen PNG subida con un nombre terminado en `.jpg`: su fichero en el zip tiene extensión `.png`.
   - Cuento "La luna dormida": el `story.json` tiene ese título y una ruta de portada que existe en el zip.
   - Cuento de 3 páginas: hay 3 entradas de página en orden 1, 2, 3, cada una con su texto aceptado y sus rutas de imagen y audio.
   - Cada ruta del `story.json`, resuelta desde la raíz del zip, apunta a un fichero existente.
   - Se renombran todos los ficheros de imagen y audio y se actualizan sus rutas: cada página sigue asociada a su imagen y su audio.
-  - Página 2 con la imagen B: la imagen referenciada por la página 2 tiene el mismo contenido que B convertida.
-  - Tras exportar, no queda ningún zip ni imagen convertida guardados en el servidor.
+  - Página 2 con la imagen B: el fichero referenciado por la página 2 es idéntico byte a byte a B.
+  - Página con una imagen BMP de 4096 × 3072 px: su imagen en el zip está en BMP y mide 4096 × 3072 px.
+  - El `story.json` no tiene ningún campo que declare el formato de las imágenes.
+  - Tras exportar, la imagen importada original no cambia y no queda ningún zip guardado en el servidor.
 - **Prueba manual:**
   No aplica: se verifica de extremo a extremo en TASK-032.
 
 ### [ ] TASK-025 Exportación para Nubi Game con evaluación completa de faltas
 
-- **Cubre:** REQ-009, REQ-010, REQ-016, REQ-035, DEC-004, DEC-006, ALT-009, ALT-010
+- **Cubre:** REQ-009, REQ-010, REQ-016, DEC-004, DEC-006, ALT-009
 - **Componente:** story-export-service | por definir (analista técnico)
 - **Depende de:** TASK-001, TASK-024
-- **Alcance:** Expone la operación de exportación para Nubi Game, que sustituye a la actual. Comprueba la portada aceptada (aceptada y con planteamiento de portada en el guion), cada página aceptada, la imagen de la portada y la imagen y el audio de cada página, este último según `narration-repository`. Acumula todas las faltas, intenta convertir todas las imágenes, rechaza sin zip indicando cada falta o cada imagen no convertible con su portada o página y, si no hay faltas, entrega el zip.
-- **Hecho cuando:** se cumplen los criterios de aceptación de REQ-009, REQ-010 y REQ-035, y la operación de exportación anterior deja de estar disponible.
+- **Alcance:** Expone la operación de exportación para Nubi Game, que sustituye a la actual. Comprueba la portada aceptada (aceptada y con planteamiento de portada en el guion), cada página aceptada, la imagen de la portada y la imagen y el audio de cada página, este último según `narration-repository`. Acumula todas las faltas, rechaza sin zip indicando cada falta con su portada o página y, si no hay faltas, entrega el zip. Solo rechaza por las faltas de REQ-010.
+- **Hecho cuando:** se cumplen los criterios de aceptación de REQ-009 y REQ-010, y la operación de exportación anterior deja de estar disponible.
 - **Pruebas automáticas:**
   - Cuento completo: se entrega el zip.
   - Cuento completo sin audio de portada: se entrega el zip.
@@ -406,16 +414,16 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   - Portada sin aceptar: no hay zip y se indica "portada sin aceptar".
   - Cuento anterior a la feature con imágenes y audio: no hay zip y se indica "portada sin aceptar" (DEC-004).
   - Página 3 sin aceptar: se indica la falta de texto aceptado en la página 3.
-  - Imagen de la página 3 no convertible: no hay zip, se indica la página 3 y se intentan convertir las demás (ALT-010).
+  - Cuento completo con imágenes en formatos distintos (PNG, JPEG y BMP): se entrega el zip, sin rechazo por el formato.
   - Varias faltas a la vez: se devuelven todas en la misma respuesta.
   - La ruta de la exportación anterior ya no responde con un zip.
 - **Prueba manual:**
   No aplica: se verifica desde la interfaz en TASK-032.
 
-### [ ] TASK-026 Lectura de la instantánea del protagonista
+### [x] TASK-026 Lectura de la instantánea del protagonista
 
 - **Cubre:** REQ-024, REQ-025
-- **Componente:** story-protagonist-snapshot | no consta en el mapa
+- **Componente:** story-protagonist-snapshot | api/src/main/java/es/vargontoc/storyteller/application/ports/out/persistence/StoryProtagonistSnapshotReader.java
 - **Depende de:** -
 - **Alcance:** Garantiza el acceso de lectura, desde `storyteller-server`, al nombre, la descripción visual y el retrato de la instantánea del protagonista de un cuento.
 - **Hecho cuando:** para un cuento se obtienen el nombre, la descripción visual y el retrato de su instantánea, y no los del catálogo actual.
@@ -425,10 +433,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: es un acceso interno. Se verifica de extremo a extremo en TASK-032.
 
-### [ ] TASK-027 Eliminación del fondo del retrato con ComfyUI
+### [x] TASK-027 Eliminación del fondo del retrato con ComfyUI
 
 - **Cubre:** REQ-025, DEC-008, ALT-012
-- **Componente:** character-background-remover | por definir (analista técnico)
+- **Componente:** character-background-remover | api/src/main/java/es/vargontoc/storyteller/application/ports/out/external/CharacterBackgroundRemover.java
 - **Depende de:** -
 - **Alcance:** Usa `comfyui-client` (api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/clients/ComfyUIClient.java) para subir el retrato recibido, ejecutar un workflow de eliminación de fondo y descargar el PNG resultante, sin reescalarlo y sin pedir turno a `generation-gate`. Informa de que no ha podido obtener la imagen si el proceso no termina.
 - **Hecho cuando:** un retrato con fondo de color da un PNG con el protagonista y el fondo transparente, del mismo tamaño que el retrato, y un fallo de ComfyUI da un resultado identificable de imagen no obtenida. El nodo de eliminación de fondo está disponible en la instalación de ComfyUI del proyecto.
@@ -439,10 +447,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Con ComfyUI levantado, ejecutar la eliminación de fondo sobre un retrato con fondo de color: el PNG resultante muestra al protagonista con el fondo transparente.
 
-### [ ] TASK-028 Validador del contrato v0.1 del agente visual
+### [x] TASK-028 Validador del contrato v0.1 del agente visual
 
 - **Cubre:** REQ-021, REQ-023, REQ-026, REQ-030, REQ-031, REQ-032, DEC-006, DEC-009, ALT-013
-- **Componente:** visual-contract-validator | por definir (analista técnico)
+- **Componente:** visual-contract-validator | api/src/main/java/es/vargontoc/storyteller/application/service/VisualContractValidator.java
 - **Depende de:** -
 - **Alcance:** Comprueba en una sola pasada un `story.json` y la imagen del personaje con las reglas de la sección 5 de `docs/contracts/agent-visual/input.md` v0.1, tomando la raíz del zip como `input/`. Incluye UTF-8 sin BOM, JSON sin claves duplicadas, `id` únicos en formato slug, referencias de escena existentes, campos fijos, paleta base y reglas de la imagen (PNG real, alfa con fondo transparente, al menos 1024 × 1024 px, 1:1). Devuelve todas las reglas incumplidas.
 - **Hecho cuando:** un `story.json` y una imagen conformes no dan errores, y cada regla de la sección 5 incumplida aparece en la lista devuelta, todas a la vez.
@@ -519,7 +527,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 
 ### [ ] TASK-032 Acciones de exportación en la interfaz
 
-- **Cubre:** REQ-009, REQ-010, REQ-016, REQ-018, REQ-019, REQ-026, REQ-032, REQ-035, ALT-009, ALT-011
+- **Cubre:** REQ-009, REQ-010, REQ-011, REQ-015, REQ-016, REQ-018, REQ-019, REQ-026, REQ-032, ALT-009, ALT-011
 - **Componente:** story-export-actions | no consta en el mapa
 - **Depende de:** TASK-031
 - **Alcance:** Sustituye la acción actual de exportación para Nubi Game por la nueva, añade la exportación para el agente visual, descarga el zip o muestra la lista completa de faltas o reglas incumplidas.
@@ -529,8 +537,8 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   - Respuesta de rechazo con varias faltas: se muestran todas, con su portada o página.
   - Respuesta con zip: se inicia la descarga.
 - **Prueba manual:**
-  1. En un cuento nuevo completo (portada y páginas aceptadas, con imágenes PNG en la portada y en las páginas, y audio en cada página), abrir las opciones de exportación: solo hay una exportación para Nubi Game.
-  2. Exportar para Nubi Game: se descarga un zip con `story.json`, la portada y una imagen y un audio por página. Las imágenes están en WebP con el lado mayor de 2048 px como máximo, y las rutas del `story.json` existen en el zip.
+  1. En un cuento nuevo completo (portada y páginas aceptadas, con imagen PNG en la portada, imagen JPEG en la página 1, imagen PNG subida con nombre terminado en `.jpg` en la página 2, y audio en cada página), abrir las opciones de exportación: solo hay una exportación para Nubi Game.
+  2. Exportar para Nubi Game: se descarga un zip con `story.json`, la portada y una imagen y un audio por página. La portada tiene extensión `.png`, la página 1 `.jpg` y la página 2 `.png`; cada imagen es idéntica a la subida, con sus dimensiones originales, y las rutas del `story.json` existen en el zip.
   3. Volver a abrir la página 2: se ve la imagen importada original.
   4. En otro cuento completo salvo la imagen de la página 2, que no se ha subido, exportar para Nubi Game: se muestra "imagen" en la página 2 y no se descarga nada.
   5. Exportar el cuento del paso 1 para el agente visual: se descarga un zip con `story.json` y `characters/<id>/character.png` con el fondo transparente.
@@ -623,15 +631,15 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 
 ### [ ] TASK-040 Contrato: openapi - exportación para Nubi Game
 
-- **Cubre:** REQ-009, REQ-010, REQ-016, REQ-035, DEC-004, DEC-006
+- **Cubre:** REQ-009, REQ-010, REQ-016, DEC-004, DEC-006
 - **Componente:** story-export-service | por definir (analista técnico). Contrato: docs/contracts/openapi/, fichero por definir (analista técnico)
 - **Depende de:** TASK-025
-- **Alcance:** Formalizar la operación de exportación para Nubi Game, que sustituye a la actual: devuelve el zip nuevo o la lista de faltas por portada o página, incluidas las imágenes no convertibles.
+- **Alcance:** Formalizar la operación de exportación para Nubi Game, que sustituye a la actual: devuelve el zip nuevo o la lista de faltas por portada o página.
 - **Hecho cuando:** el contrato existe en `docs/contracts/openapi/` y describe la operación tal como quedó implementada, con la respuesta de rechazo y sus tipos de falta, y la operación anterior ya no figura.
 - **Pruebas automáticas:**
   - El documento OpenAPI completo es válido según la especificación OpenAPI.
 - **Prueba manual:**
-  1. Repasar que la respuesta con zip y la de rechazo (portada sin aceptar, texto aceptado, imagen, audio, imagen no convertible, cada una con su portada o página) coinciden con la implementación.
+  1. Repasar que la respuesta con zip y la de rechazo (portada sin aceptar, texto aceptado, imagen y audio, cada una con su portada o página) coinciden con la implementación, y que no figura ningún rechazo por imagen no convertible.
 
 ### [ ] TASK-041 Contrato: openapi - exportación para el agente visual
 
@@ -647,15 +655,15 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 
 ### [ ] TASK-042 Contrato: file/json - zip para Nubi Game
 
-- **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, REQ-033, REQ-034, DEC-014
+- **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, DEC-014, DEC-015
 - **Componente:** nubi-game-exporter | no consta en el mapa. Contrato: docs/contracts/nubi-game/story-export.md (nuevo, según "Contratos afectados")
 - **Depende de:** TASK-024
-- **Alcance:** Crear el contrato del zip para Nubi Game: `story.json` con título, ruta de la portada y páginas en orden con texto, ruta de imagen y ruta de audio; rutas relativas a la raíz; imágenes en WebP con el lado mayor de 2048 px como máximo.
+- **Alcance:** Crear el contrato del zip para Nubi Game: `story.json` con título, ruta de la portada y páginas en orden con texto, ruta de imagen y ruta de audio; rutas relativas a la raíz; imágenes en su formato original, sin modificar, con la extensión de su formato real y sin ningún campo que declare el formato.
 - **Hecho cuando:** el contrato existe en `docs/contracts/nubi-game/story-export.md` y describe el zip tal como quedó implementado.
 - **Pruebas automáticas:**
   - El `story.json` de un zip exportado en TASK-024 cumple la estructura descrita en el contrato.
 - **Prueba manual:**
-  1. Repasar que cada campo del `story.json`, la estructura del zip y las reglas de imagen coinciden con un zip exportado.
+  1. Repasar que cada campo del `story.json`, la estructura del zip y las reglas de imagen (original sin modificar, extensión según el formato real, sin campo de formato) coinciden con un zip exportado y que el contrato no menciona WebP ni límite de dimensiones.
 
 ### [ ] TASK-043 Contrato: file/json - StoryTeller como productor del agente visual
 
@@ -683,11 +691,11 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 | REQ-008 | TASK-010, TASK-038 |
 | REQ-009 | TASK-025, TASK-031, TASK-032, TASK-040 |
 | REQ-010 | TASK-025, TASK-032, TASK-040 |
-| REQ-011 | TASK-024, TASK-042 |
+| REQ-011 | TASK-044, TASK-024, TASK-032, TASK-042 |
 | REQ-012 | TASK-024, TASK-042 |
 | REQ-013 | TASK-024, TASK-042 |
 | REQ-014 | TASK-024, TASK-042 |
-| REQ-015 | TASK-023, TASK-024, TASK-042 |
+| REQ-015 | TASK-024, TASK-032, TASK-042 |
 | REQ-016 | TASK-024, TASK-025, TASK-031, TASK-032, TASK-040 |
 | REQ-017 | TASK-001, TASK-002, TASK-003, TASK-004, TASK-005, TASK-016, TASK-017, TASK-033, TASK-034, TASK-035 |
 | REQ-018 | TASK-030, TASK-031, TASK-032, TASK-041 |
@@ -705,9 +713,9 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 | REQ-030 | TASK-028, TASK-029, TASK-043 |
 | REQ-031 | TASK-028, TASK-029, TASK-043 |
 | REQ-032 | TASK-022, TASK-028, TASK-030, TASK-032, TASK-041 |
-| REQ-033 | TASK-023, TASK-024, TASK-042 |
-| REQ-034 | TASK-023, TASK-042 |
-| REQ-035 | TASK-023, TASK-025, TASK-032, TASK-040 |
+| REQ-033 | retirado en requirements@6; sin cobertura |
+| REQ-034 | retirado en requirements@6; sin cobertura |
+| REQ-035 | retirado en requirements@6; sin cobertura |
 | REQ-036 | TASK-015, TASK-019 |
 | REQ-037 | TASK-001, TASK-002, TASK-003, TASK-004, TASK-016, TASK-017, TASK-034 |
 | REQ-038 | TASK-006, TASK-007, TASK-008, TASK-011, TASK-021, TASK-036, TASK-037 |

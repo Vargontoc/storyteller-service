@@ -24,6 +24,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
@@ -81,7 +82,7 @@ class StoryPageServicePageTest {
         writer = mock(WriterAgent.class);
         notifier = mock(StoryPageNotifier.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         // Ids de fila de story_beat distintos del número de página, como en la base de datos real
         when(outlines.findBeatId(STORY, 1)).thenReturn(Optional.of(501L));
@@ -358,7 +359,7 @@ class StoryPageServicePageTest {
         when(stories.getStory(STORY)).thenReturn(story);
         List<Runnable> tasks = new ArrayList<>();
         StoryPageService deferred = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
-            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, tasks::add, mock(StoryNarrationUseCase.class));
+            mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier, tasks::add, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
 
         deferred.startPage(STORY, 1);
         story.getCharacters().get(0).setVisualDescription("editado después");
@@ -416,7 +417,7 @@ class StoryPageServicePageTest {
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, PageStatus.ACCEPTED));
         StoryPageService rejecting = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, outlines, gate, writer, versions, notifier,
-            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
+            task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
 
         assertThrows(RuntimeException.class, () -> rejecting.startPage(STORY, 1));
 

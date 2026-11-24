@@ -48,6 +48,26 @@ public class ResourceStorageAdapter implements ResourceStorage {
     }
 
     @Override
+    public String saveImportedImage(long storyId, long pageId, byte[] imageBytes) {
+        try {
+            Path dir = basePath.resolve(String.valueOf(storyId)).resolve("pages")
+                .resolve(String.valueOf(pageId)).resolve("imported");
+            Files.createDirectories(dir);
+            // Sin extensión: el formato real se deduce del contenido. Primero se escribe la nueva y luego se retira la anterior
+            Path file = dir.resolve(String.valueOf(System.nanoTime()));
+            Files.write(file, imageBytes);
+            try (var entries = Files.list(dir)) {
+                for (Path entry : (Iterable<Path>) entries::iterator)
+                    if (!entry.equals(file))
+                        Files.deleteIfExists(entry);
+            }
+            return file.toString();
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo guardar la imagen importada", e);
+        }
+    }
+
+    @Override
     public String saveAudio(Long storyId, Long id, byte[] audioBytes) {
         try {
             Path dir = basePath.resolve(String.valueOf(storyId))

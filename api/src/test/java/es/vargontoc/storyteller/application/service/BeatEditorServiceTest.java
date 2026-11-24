@@ -34,6 +34,7 @@ import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepositor
 import es.vargontoc.storyteller.domain.command.BeatEditCommand;
 import es.vargontoc.storyteller.domain.enums.BeatEditStatus;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -59,7 +60,8 @@ class BeatEditorServiceTest {
 
     private final StoryOutline outline = new StoryOutline(
         List.of(new EpisodicCastMember("Bruno", "amigo del bosque")),
-        List.of(beat("Luna sale"), beat("Luna encuentra una piedra"), beat("Luna vuelve")));
+        List.of(beat("Luna sale"), beat("Luna encuentra una piedra"), beat("Luna vuelve")),
+        new CoverPlan("portal del bosque", "misterioso"));
 
     @BeforeEach
     void setUp() {
@@ -87,6 +89,32 @@ class BeatEditorServiceTest {
         assertEquals("Luna sale", saved.getValue().beats().get(0).event());
         verify(stories).updateStatus(STORY, StoryStatus.SCRIPT_PENDING);
         verify(pages, never()).deleteInvalidatedPages(anyLong());
+    }
+
+    @Test
+    void editingSettingSavesItAndKeepsCoverUntouched() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        StoryBeat edited = new StoryBeat("Luna cocina", "nudo", List.of("Luna"), "alegre", "cocina", "cocina de la abuela");
+
+        service.edit(new BeatEditCommand(STORY, 2, edited, null));
+
+        ArgumentCaptor<StoryOutline> saved = ArgumentCaptor.forClass(StoryOutline.class);
+        verify(outlines).save(Mockito.eq(STORY), saved.capture());
+        assertEquals("cocina de la abuela", saved.getValue().beats().get(1).setting());
+        assertEquals(new CoverPlan("portal del bosque", "misterioso"), saved.getValue().cover());
+    }
+
+    @Test
+    void blankSettingIsRejectedWithoutSaving() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+
+        for (String setting : new String[] {null, "", "   "}) {
+            StoryBeat noSetting = new StoryBeat("Luna cocina", "nudo", List.of("Luna"), "alegre", "cocina", setting);
+            assertThrows(AppException.class, () -> service.edit(new BeatEditCommand(STORY, 2, noSetting, true)));
+        }
+        verifyNoInteractions(director, pages);
+        verify(outlines, never()).save(anyLong(), any());
+        verify(stories, never()).updateStatus(anyLong(), any());
     }
 
     @Test
@@ -309,7 +337,7 @@ class BeatEditorServiceTest {
     }
 
     private static StoryBeat beat(String event) {
-        return new StoryBeat(event, "nudo", List.of("Luna"), "curioso", "claro del bosque");
+        return new StoryBeat(event, "nudo", List.of("Luna"), "curioso", "claro del bosque", "claro del bosque");
     }
 
     private static Story story(StoryStatus status, int generatedPages) {

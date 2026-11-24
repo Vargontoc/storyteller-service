@@ -27,6 +27,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Answers;
 import org.springframework.ai.chat.client.ChatClient;
 
+import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
 import es.vargontoc.storyteller.application.ports.out.external.OllamaPort;
@@ -74,7 +75,8 @@ class StoryPageServiceTest {
     private StoryPageService service;
 
     private final StoryOutline outline = new StoryOutline(List.of(),
-        List.of(beat("Luna sale"), beat("Luna encuentra una piedra"), beat("Luna vuelve")));
+        List.of(beat("Luna sale"), beat("Luna encuentra una piedra"), beat("Luna vuelve")),
+        new es.vargontoc.storyteller.domain.model.CoverPlan("habitación al anochecer", "calma"));
 
     @BeforeEach
     void setUp() {
@@ -91,7 +93,7 @@ class StoryPageServiceTest {
         notifier = mock(StoryPageNotifier.class);
         // Ejecutor síncrono: la tarea asíncrona corre dentro de la propia llamada
         service = new StoryPageService(ollama, "writer", client, pages, reviews, stories, outlines, gate,
-            writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class));
+            writer, versions, notifier, Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         when(ollama.isAvailable("writer")).thenReturn(true);
         when(outlines.find(STORY)).thenReturn(Optional.of(outline));
         when(pages.create(any(), anyLong(), anyInt())).thenReturn(new StoryPage());
@@ -151,6 +153,7 @@ class StoryPageServiceTest {
         assertTrue(context.getValue().isCover());
         assertEquals("El bosque de Luna", context.getValue().title());
         assertEquals("sinopsis", context.getValue().synopsis());
+        assertEquals(outline.cover(), context.getValue().coverPlan());
         ArgumentCaptor<PageVersion> version = ArgumentCaptor.forClass(PageVersion.class);
         verify(versions).add(eq(40L), version.capture());
         assertEquals(scene, version.getValue().getScene());
@@ -197,6 +200,29 @@ class StoryPageServiceTest {
         AppException ex = assertThrows(AppException.class, () -> service.startCover(STORY));
 
         assertTrue(ex.getMessage().contains("Ya hay una portada"));
+        verifyNoInteractions(gate, writer, notifier);
+    }
+
+    @Test
+    void coverIsRejectedWithoutTurnNorWriterWhenTheOutlineHasNoCoverPlan() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(), outline.beats())));
+
+        AppException ex = assertThrows(AppException.class, () -> service.startCover(STORY));
+
+        assertTrue(ex.getMessage().contains("lugar y el tono de la portada"));
+        verifyNoInteractions(gate, writer, notifier);
+        verify(pages, never()).createPending(anyLong(), anyInt(), any());
+    }
+
+    @Test
+    void coverIsRejectedWhenTheCoverPlanIsBlank() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
+        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(), outline.beats(),
+            new es.vargontoc.storyteller.domain.model.CoverPlan(" ", "calma"))));
+
+        assertThrows(AppException.class, () -> service.startCover(STORY));
+
         verifyNoInteractions(gate, writer, notifier);
     }
 
@@ -256,7 +282,7 @@ class StoryPageServiceTest {
     @Test
     void coverReleasesTheGateWhenTheTaskCannotBeScheduled() {
         StoryPageService rejecting = new StoryPageService(ollama, "writer", client, pages, reviews, stories, outlines,
-            gate, writer, versions, notifier, task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class));
+            gate, writer, versions, notifier, task -> { throw new RuntimeException("cola llena"); }, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0));
 
         assertThrows(RuntimeException.class, () -> rejecting.startCover(STORY));
