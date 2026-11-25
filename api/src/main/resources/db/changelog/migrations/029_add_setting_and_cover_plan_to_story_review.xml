@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.27.xsd">
+
+    <!-- Lugar de escena por beat candidato y planteamiento de portada de la escaleta candidata. NULL en las revisiones anteriores (sin backfill). -->
+    <changeSet id="029-add-setting-and-cover-plan-to-story-review" author="storyteller">
+        <addColumn tableName="story_review_beat">
+            <column name="setting" type="VARCHAR(300)"/>
+        </addColumn>
+        <addColumn tableName="story_review">
+            <column name="candidate_cover_setting" type="VARCHAR(300)"/>
+            <column name="candidate_cover_tone" type="VARCHAR(300)"/>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

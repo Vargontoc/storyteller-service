@@ -7,6 +7,7 @@ import java.util.List;
 import org.springframework.stereotype.Component;
 
 import es.vargontoc.storyteller.domain.model.Actor;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -66,8 +67,10 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
     /** Copia la escaleta candidata y sus beats distintos a la entidad de revision. */
     public void fillOutline(StoryReviewJpaEntity target, StoryOutline outline, List<Integer> changedBeats) {
         target.setCandidateBeats(outline.beats().stream()
-            .map(b -> new CandidateBeat(b.event(), b.narrativeFunction(), String.join(SEPARATOR, b.participants()), b.tone(), b.visualNote()))
+            .map(b -> new CandidateBeat(b.event(), b.narrativeFunction(), String.join(SEPARATOR, b.participants()), b.tone(), b.visualNote(), b.setting()))
             .toList());
+        target.setCandidateCoverSetting(outline.cover() == null ? null : outline.cover().setting());
+        target.setCandidateCoverTone(outline.cover() == null ? null : outline.cover().tone());
         target.setCandidateCast(outline.cast().stream().map(c -> new CandidateCastMember(c.name(), c.role())).toList());
         target.setChangedBeats(changedBeats == null ? new ArrayList<>() : new ArrayList<>(changedBeats));
     }
@@ -75,12 +78,14 @@ public class StoryReviewMapper extends AbstractReviewMapper<StoryReviewJpaEntity
     /** Escaleta candidata de la revision, lista para publicarla como vigente. */
     public StoryOutline toOutline(StoryReviewJpaEntity entity) {
         List<StoryBeat> beats = entity.getCandidateBeats().stream()
-            .map(b -> new StoryBeat(b.getEvent(), b.getNarrativeFunction(), Arrays.asList(b.getParticipants().split(SEPARATOR)), b.getTone(), b.getVisualNote()))
+            .map(b -> new StoryBeat(b.getEvent(), b.getNarrativeFunction(), Arrays.asList(b.getParticipants().split(SEPARATOR)), b.getTone(), b.getVisualNote(), b.getSetting()))
             .toList();
         List<EpisodicCastMember> cast = entity.getCandidateCast().stream()
             .map(c -> new EpisodicCastMember(c.getName(), c.getRole()))
             .toList();
-        return new StoryOutline(cast, beats);
+        boolean noCover = entity.getCandidateCoverSetting() == null && entity.getCandidateCoverTone() == null;
+        CoverPlan cover = noCover ? null : new CoverPlan(entity.getCandidateCoverSetting(), entity.getCandidateCoverTone());
+        return new StoryOutline(cast, beats, cover);
     }
 
     private Story readStory(StoryReviewJpaEntity entity){

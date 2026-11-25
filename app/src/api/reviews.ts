@@ -1,7 +1,7 @@
 import { ApiError, httpClient } from './httpClient'
 import type { ApiEnvelope } from './envelope'
 import type { Actor, Page, Story } from './generations'
-import type { StoryBeatFields, CastMember } from './storyScript'
+import type { StoryBeatFields, CastMember, CoverPlan } from './storyScript'
 
 
 export type RevisionStatus = 'PENDING' | 'CONFIRMED' | 'DISCARDED'
@@ -13,6 +13,7 @@ export type ReviewPageTarget = 'TEXT' | 'SCENE' | 'BOTH'
 export interface CandidateOutline {
   cast: CastMember[]
   beats: StoryBeatFields[]
+  cover?: CoverPlan | null
 }
 
 export interface StoryReview {

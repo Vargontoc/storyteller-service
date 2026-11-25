@@ -10,13 +10,21 @@ export interface CastMember {
   role: string
 }
 
-// Los cinco campos del beat.
+// Los campos del beat. setting (lugar de la escena) puede faltar o ser null en cuentos anteriores;
+// el servidor lo exige no vacío al editar un beat.
 export interface StoryBeatFields {
   event: string
   narrativeFunction: string
   participants: string[]
   tone: string
   visualNote: string
+  setting?: string | null
+}
+
+// Planteamiento de la portada; independiente del beat 1.
+export interface CoverPlan {
+  setting: string
+  tone: string
 }
 
 // Beat del guion vigente; page empieza en 1.
@@ -33,6 +41,14 @@ export interface StoryScript {
   scriptVersion: number | null
   cast: CastMember[]
   beats: ScriptBeat[]
+  // Ausente o null en cuentos anteriores.
+  cover?: CoverPlan | null
+}
+
+// Resultado de aprobar el guion; coverStarted indica si la portada empezó a generarse.
+export interface ApproveResult {
+  story: Story
+  coverStarted: boolean
 }
 
 export interface BeatEditResult {
@@ -52,7 +68,7 @@ export function getStoryScript(storyId: number) {
 
 export function approveStoryScript(storyId: number) {
   return httpClient
-    .post<ApiEnvelope<Story>>(`/api/v1/generations/story/${storyId}/approve`)
+    .post<ApiEnvelope<ApproveResult>>(`/api/v1/generations/story/${storyId}/approve`)
     .then((envelope) => envelope.data)
 }
 

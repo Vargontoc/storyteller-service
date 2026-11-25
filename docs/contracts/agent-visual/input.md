@@ -1,6 +1,6 @@
 <!--
-Origen: specs/definicion-artistica (REQ-009, ALT-001, DEC-006)
-Estado del contrato: diseño pendiente de implementación
+Origen: specs/definicion-artistica (REQ-009, ALT-001, DEC-006), specs/export-import-feature (REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031, REQ-032)
+Estado del contrato: contrastado con el código (productor StoryTeller implementado; consumidor Visual Production Agent pendiente de implementación en este repositorio)
 -->
 
 # Contrato `story.json` — file/json
@@ -12,17 +12,19 @@ se van a ilustrar, la paleta aplicable y el personaje protagonista con su imagen
 transparente.
 
 Este contrato formaliza la estructura lógica de
-`docs/visual-production-guidelines.md#contratos-v0` (sección 7.1). No describe todavía una
-interfaz contrastada con código: en este repositorio no existe implementación del validador.
-El estado pasará a `contrastado con el código` cuando el piloto implemente la validación y se
-compare con ella.
+`docs/visual-production-guidelines.md#contratos-v0` (sección 7.1).
+Por parte del productor (**StoryTeller**, implementado en `storyteller-server` mediante
+`specs/export-import-feature`), la composición del `story.json` v0.1, la generación del zip con
+`characters/<id>/character.png` y la validación local previa con las reglas de la sección 5
+están contrastadas con el código. El consumidor **Visual Production Agent** sigue pendiente de
+implementación en este repositorio.
 
 ## 2. Participantes
 
 | Participante | Rol | Responsabilidad |
 |---|---|---|
-| StoryTeller | Productor | Genera `story.json` y la imagen del personaje a partir del cuento. |
-| Visual Production Agent | Consumidor | Valida la entrada y rechaza el cuento si no cumple este contrato. |
+| StoryTeller (`storyteller-server`) | Productor (implementado) | Genera `story.json` y `characters/<id>/character.png` a partir del cuento y valida localmente el contrato v0.1 antes de entregar el zip. |
+| Visual Production Agent | Consumidor (pendiente) | Valida la entrada y rechaza el cuento si no cumple este contrato. |
 | Producción visual | Consumidor interno | Usa las escenas validadas para generar los assets. |
 
 ## 3. Transporte
@@ -254,3 +256,10 @@ Cualquiera de estos errores rechaza la entrada y bloquea el cuento hasta que se 
 | ALT-001 | Rechazo de la entrada con el detalle de campos y validaciones fallidas. |
 | DEC-006 | Contrato de entrada en JSON v0. |
 | DEC-002, DEC-003, DEC-005 | Paleta en `style`, formato del personaje y ruta en `input/`. |
+| specs/export-import-feature: REQ-020, DEC-005 | Zip en memoria con `story.json` en la raíz y `characters/<id>/character.png` (`VisualAgentExporter`). |
+| specs/export-import-feature: REQ-021, REQ-023 | Campos fijos (`schemaVersion` `"0.1"`, `language` `"es"`, `ageRange` `"3-4"`) y paleta base sin `colors`. |
+| specs/export-import-feature: REQ-022, DEC-012 | `title` y `storyId` slug determinista (`StorySlugger`, 3-40 caracteres) e `id` posicionales en escenas. |
+| specs/export-import-feature: REQ-024, DEC-011 | Protagonista de la instantánea como único personaje con 1 a 5 `immutableTraits` literales de su descripción visual. |
+| specs/export-import-feature: REQ-025, DEC-008 | Retrato de la instantánea con fondo eliminado vía ComfyUI (`CharacterBackgroundRemover`). |
+| specs/export-import-feature: REQ-026, REQ-031, REQ-032, DEC-009 | Validación completa en una pasada antes de empaquetar (`VisualContractValidator`) y rechazo acumulado en `StoryExportService`. |
+| specs/export-import-feature: REQ-027, REQ-028, REQ-029, REQ-030, DEC-010 | Escena `cover` con descripción, lugar y tono propios de la portada y escenas `scene` por página con lugar y tono de su beat, referenciando al protagonista. |

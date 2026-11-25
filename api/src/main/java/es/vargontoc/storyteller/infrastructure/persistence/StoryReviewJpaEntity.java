@@ -54,7 +54,19 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
     @Column(name = "page_number")
     private List<Integer> changedBeats = new ArrayList<>();
 
+    // Planteamiento de portada de la escaleta candidata (nulo en revisiones anteriores).
+    @Column(name = "candidate_cover_setting", length = 300)
+    private String candidateCoverSetting;
+
+    @Column(name = "candidate_cover_tone", length = 300)
+    private String candidateCoverTone;
+
     public StoryReviewJpaEntity() { super(); }
+
+    public String getCandidateCoverSetting() { return candidateCoverSetting; }
+    public void setCandidateCoverSetting(String candidateCoverSetting) { this.candidateCoverSetting = candidateCoverSetting; }
+    public String getCandidateCoverTone() { return candidateCoverTone; }
+    public void setCandidateCoverTone(String candidateCoverTone) { this.candidateCoverTone = candidateCoverTone; }
 
     public List<CandidateBeat> getCandidateBeats() { return candidateBeats; }
     public void setCandidateBeats(List<CandidateBeat> candidateBeats) { this.candidateBeats = candidateBeats; }
@@ -148,15 +160,18 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
         private String tone;
         @Column(name = "visual_note", length = 1000)
         private String visualNote;
+        @Column(name = "setting", length = 300)
+        private String setting;
 
         protected CandidateBeat() {}
 
-        public CandidateBeat(String event, String narrativeFunction, String participants, String tone, String visualNote) {
+        public CandidateBeat(String event, String narrativeFunction, String participants, String tone, String visualNote, String setting) {
             this.event = event;
             this.narrativeFunction = narrativeFunction;
             this.participants = participants;
             this.tone = tone;
             this.visualNote = visualNote;
+            this.setting = setting;
         }
 
         public String getEvent() { return event; }
@@ -164,6 +179,7 @@ public class StoryReviewJpaEntity extends ReviewBaseEntity {
         public String getParticipants() { return participants; }
         public String getTone() { return tone; }
         public String getVisualNote() { return visualNote; }
+        public String getSetting() { return setting; }
     }
 
     @Embeddable

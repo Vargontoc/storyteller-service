@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryRepository;
 import es.vargontoc.storyteller.domain.enums.StoryStatus;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.Story;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
@@ -68,6 +69,30 @@ class StoryScriptServiceTest {
     }
 
     @Test
+    void scriptExposesBeatSettingAndCoverPlan() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryScriptVersion.OUTLINE, StoryStatus.SCRIPT_ACCEPTED));
+        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(),
+            List.of(new StoryBeat("Luna sale", "inicio", List.of("Luna"), "alegre", "bosque", "cocina de la abuela")),
+            new CoverPlan("habitacion al anochecer", "calma"))));
+
+        StoryScript script = service.getScript(STORY);
+
+        assertEquals("cocina de la abuela", script.beats().get(0).setting());
+        assertEquals(new CoverPlan("habitacion al anochecer", "calma"), script.cover());
+    }
+
+    @Test
+    void legacyOutlineHasNullSettingAndCover() {
+        when(stories.getStory(STORY)).thenReturn(story(StoryScriptVersion.OUTLINE, StoryStatus.SCRIPT_ACCEPTED));
+        when(outlines.find(STORY)).thenReturn(Optional.of(new StoryOutline(List.of(), List.of(beat("Luna sale")))));
+
+        StoryScript script = service.getScript(STORY);
+
+        assertNull(script.beats().get(0).setting());
+        assertNull(script.cover());
+    }
+
+    @Test
     void oldStoryReturnsEmptyCastAndBeatsWithNullVersion() {
         when(stories.getStory(STORY)).thenReturn(story(null, StoryStatus.SCRIPT_PENDING));
 
@@ -77,6 +102,7 @@ class StoryScriptServiceTest {
         assertEquals(StoryStatus.SCRIPT_PENDING, script.status());
         assertTrue(script.cast().isEmpty());
         assertTrue(script.beats().isEmpty());
+        assertNull(script.cover());
         verifyNoInteractions(outlines);
     }
 

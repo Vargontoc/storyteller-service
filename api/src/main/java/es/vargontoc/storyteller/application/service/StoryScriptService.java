@@ -33,14 +33,14 @@ public class StoryScriptService implements StoryScriptReading {
         StoryOutline outline = story.hasOutline() ? outlines.find(storyId).orElse(null) : null;
         if (outline == null)
             return new StoryScript(story.getId(), story.getTitle(), story.getSynopsis(), story.getStatus(),
-                story.getScriptVersion(), List.of(), List.of());
+                story.getScriptVersion(), List.of(), List.of(), null);
 
         List<ScriptBeat> beats = IntStream.range(0, outline.beats().size())
             .mapToObj(i -> {
                 var b = outline.beats().get(i);
-                return new ScriptBeat(i + 1, b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote());
+                return new ScriptBeat(i + 1, b.event(), b.narrativeFunction(), b.participants(), b.tone(), b.visualNote(), b.setting());
             }).toList();
         return new StoryScript(story.getId(), story.getTitle(), story.getSynopsis(), story.getStatus(),
-            story.getScriptVersion(), outline.cast(), beats);
+            story.getScriptVersion(), outline.cast(), beats, outline.cover());
     }
 }

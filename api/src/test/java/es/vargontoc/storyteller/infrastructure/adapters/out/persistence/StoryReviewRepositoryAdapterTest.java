@@ -19,6 +19,7 @@ import org.mockito.ArgumentCaptor;
 
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.domain.enums.RevisionStatus;
+import es.vargontoc.storyteller.domain.model.CoverPlan;
 import es.vargontoc.storyteller.domain.model.EpisodicCastMember;
 import es.vargontoc.storyteller.domain.model.StoryBeat;
 import es.vargontoc.storyteller.domain.model.StoryOutline;
@@ -51,6 +52,35 @@ class StoryReviewRepositoryAdapterTest {
         assertEquals(outline("a", "B", "c"), review.getCandidateOutline());
         assertEquals(List.of(2), review.getChangedBeats());
         assertEquals("Titulo", review.getPreviewStory().getTitle());
+    }
+
+    @Test
+    void candidateKeepsBeatSettingAndCoverThroughCreateReadAndConfirm() {
+        StoryOutline candidate = new StoryOutline(List.of(new EpisodicCastMember("Bruno", "amigo")),
+                List.of(new StoryBeat("a", "funcion", List.of("Luna"), "alegre", "bosque", "cocina")),
+                new CoverPlan("habitacion al anochecer", "calma"));
+        when(stories.findById(5L)).thenReturn(Optional.of(new StoryJpaEntity()));
+        when(outlines.find(5L)).thenReturn(Optional.empty());
+        when(reviews.save(any(StoryReviewJpaEntity.class))).thenAnswer(i -> i.getArgument(0));
+
+        StoryReview review = adapter.createOutlineReview(5L, "h", true, null, "t", "s", candidate);
+
+        assertEquals(candidate, review.getCandidateOutline());
+
+        StoryReviewJpaEntity pending = pendingWithCandidate(candidate);
+        when(reviews.getActiveStoryReviewByStoryId(5L)).thenReturn(Optional.of(pending));
+        adapter.changeStatus(5L, RevisionStatus.CONFIRMED);
+        verify(outlines).save(5L, candidate);
+    }
+
+    @Test
+    void legacyCandidateWithoutSettingNorCoverReadsBackWithNulls() {
+        StoryReviewJpaEntity legacy = pendingWithCandidate(outline("a"));
+
+        StoryOutline read = new StoryReviewMapper().toModel(legacy).getCandidateOutline();
+
+        assertNull(read.beats().get(0).setting());
+        assertNull(read.cover());
     }
 
     @Test
