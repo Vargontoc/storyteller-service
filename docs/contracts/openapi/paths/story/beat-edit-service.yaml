@@ -1,10 +1,11 @@
-# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004), specs/agent-writer (REQ-032, DEC-002, DEC-008), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, REQ-019, ALT-004, ALT-005, DEC-004), specs/agent-writer (REQ-032, DEC-002, DEC-008), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009), specs/export-import-feature (REQ-017)
 # Estado del contrato: contrastado con el código
 put:
   operationId: editStoryBeat
   summary: Edita directamente el beat de una página interior
   description: |
-    Sustituye el beat de la página indicada (página 1 = primer beat). El director solo valida las reglas de edad:
+    Sustituye el beat de la página indicada (página 1 = primer beat), incluido su lugar de escena (setting). El planteamiento
+    propio de la portada (lugar y tono) se conserva intacto. El director solo valida las reglas de edad:
     si rechaza el texto responde 200 con status REJECTED y reason, y el beat no cambia. Si el texto es válido y
     el cuento tiene páginas generadas, responde 200 con CONFIRMATION_REQUIRED, invalidatedPages y audioWillBeDeleted
     (true si el cuento tiene audio narrado publicado) sin aplicar nada; repetir la petición con confirmInvalidation=true
@@ -43,7 +44,7 @@ put:
           schema:
             $ref: "../../schemas/responses/beat-edit-response.yaml"
     "400":
-      description: La página no tiene beat en la escaleta, el beat no tiene los cinco campos obligatorios, o el director no está disponible o devolvió una respuesta incompleta
+      description: La página no tiene beat en la escaleta, el beat no tiene los cinco campos obligatorios o le falta el lugar de escena (setting vacío o ausente), o el director no está disponible o devolvió una respuesta incompleta
       content:
         application/json:
           schema:

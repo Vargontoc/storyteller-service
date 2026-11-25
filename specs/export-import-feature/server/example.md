@@ -272,23 +272,9 @@ view.pages().get(1).accepted().scene();   // escena completa de la página 1 (di
 pageQuery.findPage(storyId, pageId).orElseThrow().accepted().scene();   // la de esa página
 ```
 
-## CharacterBackgroundRemover: fondo del retrato con ComfyUI
+## CharacterBackgroundRemover: retirado
 
-Puerto que quita el fondo de un retrato y devuelve el PNG transparente. `ComfyUiBackgroundRemover` sube los bytes con `ComfyUIClient.upload`, lanza el workflow `comfyui/workflow-remove-background.json` (LoadImage, "Image Remove Background (rembg)" con `app.comfy.character-background-model`, SaveImage), sondea hasta `app.comfy.timeout-seconds` y descarga el PNG sin reescalarlo. No usa `generation-gate` ni reintenta: cualquier fallo (ComfyUI caído, sin resultado, timeout) devuelve `Optional.empty()`, que es el resultado identificable de "imagen no obtenida". Requiere el nodo rembg (WAS Node Suite) instalado en ComfyUI.
-
-Rutas: `api/src/main/java/es/vargontoc/storyteller/application/ports/out/external/CharacterBackgroundRemover.java`, `api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/out/external/ComfyUiBackgroundRemover.java` y `api/src/main/resources/comfyui/workflow-remove-background.json`
-
-```java
-StoryProtagonistSnapshot hero = snapshotReader.find(storyId).orElseThrow();
-byte[] portrait = storage.getResource(hero.portraitPath()).getContentAsByteArray();
-
-Optional<byte[]> cutout = backgroundRemover.removeBackground(portrait);
-if (cutout.isEmpty()) {
-    // no se pudo obtener la imagen: informar de la falta, sin reintentar
-} else {
-    byte[] png = cutout.get();   // mismo tamaño que el retrato, fondo transparente
-}
-```
+`CharacterBackgroundRemover`, `ComfyUiBackgroundRemover` y `comfyui/workflow-remove-background.json` se eliminaron por decisión expresa del usuario: el retrato del protagonista ya se genera con fondo transparente, así que la exportación visual (ver `VisualAgentExporter`) usa directamente los bytes del retrato de la instantánea y no llama a ComfyUI. `app.comfy.character-background-model` y `ComfyUIClient` se conservan porque los usa el flujo de retratos.
 
 ## VisualContractValidator: validador del contrato v0.1 del agente visual
 
@@ -372,7 +358,7 @@ storyService.approve(storyId);   // genera una portada nueva, pendiente de revis
 
 ## VisualAgentExporter: story.json y zip para el agente visual
 
-Compone el zip de entrada del agente visual (contrato v0.1) a partir de un `VisualAgentStory`: título, protagonista de la instantánea (`StoryProtagonistSnapshot`), escena de la portada (`Cover`: descripción, lugar y tono propios) y una `Page` por página interior (texto, descripción, lugar y tono del beat). Genera `story.json` con campos fijos (`schemaVersion` "0.1", `language` "es", `ageRange` "3-4", paleta base sin `colors`), `title` y `storyId` (slug del título), un único personaje `protagonist` con `id` (slug del nombre) y de 1 a 5 `immutableTraits` literales de su descripción visual (fragmentos separados por coma, punto y coma, punto o salto de línea), la escena `cover-01` (texto = título, `emotion` = tono de la portada) y `scene-01`, `scene-02`... en orden, todas referenciando solo al protagonista; los textos se recortan de espacios sobrantes. Carga el retrato de la instantánea con `ResourceStorage.getResource`, le quita el fondo con `CharacterBackgroundRemover` y lo incluye como `characters/<id>/character.png`. Antes de generar el zip pasa el resultado a `VisualContractValidator`: si hay errores devuelve `Result` sin zip y con todos ellos; si el retrato no existe o no se pudo obtener añade `CHARACTER_IMAGE_MISSING` o `CHARACTER_IMAGE_NOT_OBTAINED` a las demás faltas. Todo en memoria: no persiste nada. La operación pública y la evaluación de condiciones previas son de TASK-030.
+Compone el zip de entrada del agente visual (contrato v0.1) a partir de un `VisualAgentStory`: título, protagonista de la instantánea (`StoryProtagonistSnapshot`), escena de la portada (`Cover`: descripción, lugar y tono propios) y una `Page` por página interior (texto, descripción, lugar y tono del beat). Genera `story.json` con campos fijos (`schemaVersion` "0.1", `language` "es", `ageRange` "3-4", paleta base sin `colors`), `title` y `storyId` (slug del título), un único personaje `protagonist` con `id` (slug del nombre) y de 1 a 5 `immutableTraits` literales de su descripción visual (fragmentos separados por coma, punto y coma, punto o salto de línea), la escena `cover-01` (texto = título, `emotion` = tono de la portada) y `scene-01`, `scene-02`... en orden, todas referenciando solo al protagonista; los textos se recortan de espacios sobrantes. Carga el retrato de la instantánea con `ResourceStorage.getResource` (ya con fondo transparente) y lo incluye tal cual, sin reescalar ni transformar, como `characters/<id>/character.png`; no llama a ningún servicio externo. Antes de generar el zip pasa el resultado a `VisualContractValidator`: si hay errores (por ejemplo `CHARACTER_IMAGE_TOO_SMALL` si el retrato guardado no cumple) devuelve `Result` sin zip y con todos ellos; si el retrato no existe añade `CHARACTER_IMAGE_MISSING` a las demás faltas. Todo en memoria: no persiste nada. La operación pública y la evaluación de condiciones previas son de TASK-030.
 
 Rutas: `api/src/main/java/es/vargontoc/storyteller/application/service/VisualAgentExporter.java` y `api/src/main/java/es/vargontoc/storyteller/domain/model/VisualAgentStory.java`
 
@@ -388,7 +374,7 @@ if (result.isValid()) {
     byte[] zip = result.zip();   // story.json y characters/nina/character.png
 } else {
     for (VisualContractValidator.Error e : result.errors()) {
-        // e.code() "CHARACTER_IMAGE_TOO_SMALL" o "CHARACTER_IMAGE_NOT_OBTAINED", e.path(), e.message()
+        // e.code() "CHARACTER_IMAGE_TOO_SMALL" o "CHARACTER_IMAGE_MISSING", e.path(), e.message()
     }
 }
 ```
@@ -425,7 +411,7 @@ GET /api/v1/storyteller/{storyId}/export/nubi-game
 
 ## StoryExportService: exportación para el agente visual con evaluación completa de condiciones
 
-`StoryExport.exportForVisualAgent` (implementado por `StoryExportService`, en el mismo servicio y controlador que Nubi Game) no exige imágenes ni audio de las páginas. Comprueba en una sola pasada el guion aprobado (`SCRIPT_ACCEPTED` o `PAGES_ACCEPTED`; si no, `SCRIPT_NOT_APPROVED`), la portada aceptada (`COVER_NOT_ACCEPTED`) con lugar y tono propios en el guion (`COVER_SETTING_TONE`), cada página interior aceptada (`ACCEPTED_TEXT`), el lugar de escena de cada beat (`BEAT_SETTING`; en un cuento anterior a la feature faltan los lugares y la portada, y se indica cada condición) y la instantánea del protagonista (`PROTAGONIST_MISSING`). Acumula todas las faltas. Solo si no hay ninguna compone el `VisualAgentStory` (descripción de cada escena = escena aceptada de la página; lugar y tono de cada página = los de su beat) y se lo pasa a `VisualAgentExporter`: si éste devuelve errores, el rechazo trae todas las reglas del contrato incumplidas (`CONTRACT_RULE`, con su código estable en `code`) o el fallo del protagonista (`PROTAGONIST_IMAGE`: sin retrato o no se pudo quitar el fondo; la instantánea no cambia). Disponibilidad y contrato comparten la misma respuesta de rechazo (`ExportResult`/`ExportFault`); `page` es 0 para la portada, N para una página y -1 (`ExportFault.STORY`) para faltas del cuento entero. Lanza `ResourceNotFoundException` si el cuento no existe. No persiste nada.
+`StoryExport.exportForVisualAgent` (implementado por `StoryExportService`, en el mismo servicio y controlador que Nubi Game) no exige imágenes ni audio de las páginas. Comprueba en una sola pasada el guion aprobado (`SCRIPT_ACCEPTED` o `PAGES_ACCEPTED`; si no, `SCRIPT_NOT_APPROVED`), la portada aceptada (`COVER_NOT_ACCEPTED`) con lugar y tono propios en el guion (`COVER_SETTING_TONE`), cada página interior aceptada (`ACCEPTED_TEXT`), el lugar de escena de cada beat (`BEAT_SETTING`; en un cuento anterior a la feature faltan los lugares y la portada, y se indica cada condición) y la instantánea del protagonista (`PROTAGONIST_MISSING`). Acumula todas las faltas. Solo si no hay ninguna compone el `VisualAgentStory` (descripción de cada escena = escena aceptada de la página; lugar y tono de cada página = los de su beat) y se lo pasa a `VisualAgentExporter`: si éste devuelve errores, el rechazo trae todas las reglas del contrato incumplidas (`CONTRACT_RULE`, con su código estable en `code`) o el fallo del protagonista (`PROTAGONIST_IMAGE`: retrato ausente; la instantánea no cambia). Disponibilidad y contrato comparten la misma respuesta de rechazo (`ExportResult`/`ExportFault`); `page` es 0 para la portada, N para una página y -1 (`ExportFault.STORY`) para faltas del cuento entero. Lanza `ResourceNotFoundException` si el cuento no existe. No persiste nada.
 
 Rutas: `api/src/main/java/es/vargontoc/storyteller/application/service/StoryExportService.java`, `api/src/main/java/es/vargontoc/storyteller/application/ports/in/export/StoryExport.java`, `api/src/main/java/es/vargontoc/storyteller/domain/response/ExportFault.java`, `api/src/main/java/es/vargontoc/storyteller/domain/enums/ExportMissing.java` y `api/src/main/java/es/vargontoc/storyteller/infrastructure/adapters/in/rest/web/StoryExportController.java`
 
@@ -454,3 +440,26 @@ GET /api/v1/storyteller/{storyId}/export/visual-agent
 ```
 
 `missing`: `SCRIPT_NOT_APPROVED`, `COVER_NOT_ACCEPTED`, `COVER_SETTING_TONE`, `ACCEPTED_TEXT`, `BEAT_SETTING`, `PROTAGONIST_MISSING`, `PROTAGONIST_IMAGE`, `CONTRACT_RULE`. `code` solo viene en `CONTRACT_RULE` y `PROTAGONIST_IMAGE`; en el resto es `null` (y la exportación de Nubi Game también lo incluye a `null`).
+
+## StoryScript y revisión global: lugar de escena y portada en el guion
+
+`GET /api/v1/generations/story/{id}/script` (`StoryScriptService.getScript`) expone `setting` en cada beat y `cover` (lugar y tono propios de la portada) en el guion. En un cuento anterior a la feature ambos son `null`; sin escaleta, `cover` es `null` y `beats` va vacío. La revisión global conserva lo mismo: `CandidateBeat` guarda `setting` y la revisión guarda el planteamiento de portada de la candidata, de modo que `POST /api/v1/reviews/story`, `GET /api/v1/reviews/story/{storyId}` devuelven `candidateOutline` con `setting` por beat y `cover`, y al confirmar (`POST /api/v1/reviews/story/confirm`) el guion nuevo se guarda con ambos. Migración `029_add_setting_and_cover_plan_to_story_review.xml` (columnas nulables, sin backfill; las revisiones antiguas leen `null`). La confirmación sigue descartando la portada anterior.
+
+Rutas: `api/src/main/java/es/vargontoc/storyteller/domain/response/StoryScript.java`, `api/src/main/java/es/vargontoc/storyteller/application/service/StoryScriptService.java`, `api/src/main/java/es/vargontoc/storyteller/infrastructure/persistence/StoryReviewJpaEntity.java` y `api/src/main/java/es/vargontoc/storyteller/infrastructure/mappers/StoryReviewMapper.java`
+
+```java
+StoryScript script = scriptReading.getScript(storyId);
+script.cover();                       // CoverPlan("habitación al anochecer", "calma"), o null
+script.beats().get(0).setting();      // "cocina de la abuela", o null
+```
+
+```
+GET /api/v1/generations/story/{id}/script
+200 -> { id, title, synopsis, status, scriptVersion, cast: [...],
+         beats: [ { page: 1, event, narrativeFunction, participants, tone, visualNote,
+                    setting: "cocina de la abuela" } ],
+         cover: { setting: "habitación al anochecer", tone: "calma" } }
+
+POST|GET /api/v1/reviews/story ...
+-> candidateOutline: { cast, beats: [ { ..., setting } ], cover: { setting, tone } }   (null en revisiones antiguas)
+```

@@ -1,0 +1,51 @@
+# Origen: specs/export-import-feature (REQ-009, REQ-010, REQ-016, DEC-004, DEC-005, DEC-006)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: exportStoryForNubiGame
+  summary: Exporta el cuento completo en un zip para Nubi Game
+  description: |
+    Única operación de exportación para Nubi Game (sustituye a la descarga heredada por convención page_N, ya retirada).
+    Evalúa en una sola pasada que la portada esté aceptada y su guion tenga lugar y tono propios (si no, falla como
+    COVER_NOT_ACCEPTED, incluidos los cuentos anteriores a export-import-feature), que todas las páginas interiores
+    (1..N) estén aceptadas con texto, que la portada tenga imagen importada y que cada página interior tenga imagen importada
+    y audio narrado publicado (la portada no lleva audio). No rechaza por el formato ni las dimensiones de las imágenes.
+    Si falta cualquier elemento, responde 409 sin generar el zip e incluye todas las faltas acumuladas en data.faults.
+    Si está completo, compone en memoria (sin persistir en servidor) el zip descrito en docs/contracts/nubi-game/story-export.md.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Fichero zip para Nubi Game (attachment filename="story-{storyId}.zip")
+      headers:
+        Content-Disposition:
+          description: 'attachment; filename="story-{storyId}.zip"'
+          schema:
+            type: string
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        El cuento está incompleto o es anterior a export-import-feature. Devuelve success=false, message="El cuento no se puede exportar"
+        y data.faults con todas las faltas acumuladas (missing: COVER_NOT_ACCEPTED, ACCEPTED_TEXT, IMAGE, AUDIO; page=0 para portada,
+        1..N para página interior; code=null)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/export-rejected-response.yaml"

@@ -1,0 +1,12 @@
+# Origen: specs/export-import-feature (REQ-010, REQ-019, REQ-026, REQ-032, DEC-006)
+# Estado del contrato: contrastado con el código
+type: object
+description: Detalle de rechazo de exportación con todas las faltas o reglas incumplidas acumuladas (ExportRejected)
+additionalProperties: false
+properties:
+  faults:
+    type: array
+    items:
+      $ref: "./export-fault.yaml"
+required:
+  - faults

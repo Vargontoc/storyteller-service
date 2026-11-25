@@ -1,7 +1,7 @@
-# Origen: specs/agent-director (REQ-006, REQ-007, REQ-016, REQ-017, DEC-005)
+# Origen: specs/agent-director (REQ-006, REQ-007, REQ-016, REQ-017, DEC-005), specs/export-import-feature (REQ-017, REQ-037, DEC-001)
 # Estado del contrato: contrastado con el código
 type: object
-description: Guion vigente de un cuento. En un cuento anterior a la escaleta, scriptVersion es nulo y cast y beats van vacíos
+description: Guion vigente de un cuento. En un cuento anterior a la escaleta, scriptVersion es nulo, cast y beats van vacíos y cover es nulo. En guiones anteriores a export-import-feature, cover y el setting de cada beat son nulos
 additionalProperties: false
 properties:
   id:
@@ -26,7 +26,7 @@ properties:
       $ref: "./episodic-cast-member.yaml"
   beats:
     type: array
-    description: Escaleta ordenada por página. Mismos cinco campos que story-beat.yaml más el número de página explícito
+    description: Escaleta ordenada por página. Mismos campos que story-beat.yaml más el número de página explícito
     items:
       type: object
       additionalProperties: false
@@ -47,6 +47,10 @@ properties:
           type: string
         visualNote:
           type: string
+        setting:
+          type: string
+          nullable: true
+          description: Lugar o ambiente de la escena (obligatorio y no vacío en guiones nuevos; nulo en guiones anteriores a export-import-feature)
       required:
         - page
         - event
@@ -54,6 +58,12 @@ properties:
         - participants
         - tone
         - visualNote
+        - setting
+  cover:
+    allOf:
+      - $ref: "./cover-plan.yaml"
+    nullable: true
+    description: Planteamiento propio de la portada (lugar y tono). Nulo en cuentos sin escaleta o anteriores a export-import-feature
 required:
   - id
   - title

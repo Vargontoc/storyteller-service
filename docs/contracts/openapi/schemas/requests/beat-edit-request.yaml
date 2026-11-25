@@ -1,7 +1,7 @@
-# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005)
+# Origen: specs/agent-director (REQ-010, REQ-011, REQ-012, ALT-004, ALT-005), specs/export-import-feature (REQ-017)
 # Estado del contrato: contrastado con el código
 type: object
-description: Beat editado (los cinco campos obligatorios, no vacíos) y, opcionalmente, la respuesta al aviso de invalidación de páginas
+description: Beat editado (los seis campos obligatorios, incluido setting, no vacíos) y, opcionalmente, la respuesta al aviso de invalidación de páginas
 additionalProperties: false
 properties:
   event:
@@ -17,6 +17,9 @@ properties:
     type: string
   visualNote:
     type: string
+  setting:
+    type: string
+    description: Lugar o ambiente de la escena (obligatorio y no vacío)
   confirmInvalidation:
     type: boolean
     nullable: true
@@ -27,3 +30,4 @@ required:
   - participants
   - tone
   - visualNote
+  - setting

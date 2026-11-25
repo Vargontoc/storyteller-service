@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -14,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import es.vargontoc.framework.json.JsonMapperFactory;
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
-import es.vargontoc.storyteller.application.ports.out.external.CharacterBackgroundRemover;
 import es.vargontoc.storyteller.domain.model.StoryProtagonistSnapshot;
 import es.vargontoc.storyteller.domain.model.VisualAgentStory;
 import es.vargontoc.storyteller.domain.service.StorySlugger;
@@ -22,7 +20,7 @@ import tools.jackson.databind.json.JsonMapper;
 
 /**
  * Compone el zip de entrada del agente visual (contrato v0.1): {@code story.json} en la raíz y
- * {@code characters/<id>/character.png} con el retrato del protagonista sin fondo.
+ * {@code characters/<id>/character.png} con el retrato del protagonista de la instantánea, sin transformar.
  * Valida con {@link VisualContractValidator} antes de generar el zip. Todo en memoria: no persiste nada.
  */
 @Component
@@ -39,15 +37,12 @@ public class VisualAgentExporter {
     private static final String PROTAGONIST_FALLBACK_ID = "protagonist";
 
     private final ResourceStorage storage;
-    private final CharacterBackgroundRemover backgroundRemover;
     private final VisualContractValidator validator;
     private final StorySlugger slugger = new StorySlugger();
     private final JsonMapper mapper = JsonMapperFactory.create();
 
-    public VisualAgentExporter(ResourceStorage storage, CharacterBackgroundRemover backgroundRemover,
-            VisualContractValidator validator) {
+    public VisualAgentExporter(ResourceStorage storage, VisualContractValidator validator) {
         this.storage = storage;
-        this.backgroundRemover = backgroundRemover;
         this.validator = validator;
     }
 
@@ -77,7 +72,7 @@ public class VisualAgentExporter {
         return new Result(zip(storyJson, files), List.of());
     }
 
-    // Carga el retrato de la instantánea y le quita el fondo; si no se obtiene, añade el error y no lo incluye.
+    // Carga el retrato de la instantánea (ya transparente) tal cual; si no existe, añade el error.
     private void loadCharacterImage(StoryProtagonistSnapshot hero, String imagePath, Map<String, byte[]> files,
             List<VisualContractValidator.Error> errors) {
         String path = "$.characters[0].image";
@@ -87,13 +82,7 @@ public class VisualAgentExporter {
                     "El protagonista de la instantanea no tiene retrato."));
             return;
         }
-        Optional<byte[]> cutout = backgroundRemover.removeBackground(portrait);
-        if (cutout.isEmpty()) {
-            errors.add(new VisualContractValidator.Error("CHARACTER_IMAGE_NOT_OBTAINED", path,
-                    "No se pudo obtener la imagen del protagonista sin fondo."));
-            return;
-        }
-        files.put(imagePath, cutout.get());
+        files.put(imagePath, portrait);
     }
 
     private Map<String, Object> compose(VisualAgentStory story, String heroId, String imagePath) {

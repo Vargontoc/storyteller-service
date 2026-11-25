@@ -1,0 +1,10 @@
+# Origen: specs/export-import-feature (REQ-038, REQ-040, DEC-002, ALT-003)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../story-approval.yaml"
+    required:
+      - data

@@ -155,7 +155,7 @@ public class StoryExportService implements StoryExport {
     }
 
     private static ExportFault contractFault(VisualContractValidator.Error error) {
-        boolean image = error.code().equals("CHARACTER_IMAGE_MISSING") || error.code().equals("CHARACTER_IMAGE_NOT_OBTAINED");
+        boolean image = error.code().equals("CHARACTER_IMAGE_MISSING");
         return new ExportFault(ExportFault.STORY, image ? ExportMissing.PROTAGONIST_IMAGE : ExportMissing.CONTRACT_RULE,
             error.message() + " (" + error.path() + ")", error.code());
     }

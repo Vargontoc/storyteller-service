@@ -238,7 +238,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica desde la interfaz en TASK-019.
 
-### [ ] TASK-016 Cliente del guion con los campos ampliados
+### [x] TASK-016 Cliente del guion con los campos ampliados
 
 - **Cubre:** REQ-017, REQ-037
 - **Componente:** story-script-api | app/src/api/storyScript.ts
@@ -253,7 +253,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica en TASK-017.
 
-### [ ] TASK-017 Escaleta con lugar por beat y planteamiento de portada
+### [x] TASK-017 Escaleta con lugar por beat y planteamiento de portada
 
 - **Cubre:** REQ-017, REQ-037
 - **Componente:** story-script-panel | app/src/components/StoryScriptPanel.vue
@@ -269,7 +269,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   2. Editar el lugar del beat 2 y guardar: la escaleta muestra el nuevo lugar.
   3. Aprobar el guion: la aprobación se completa.
 
-### [ ] TASK-018 Cliente de portada y páginas: subida de imagen y hint de portada
+### [x] TASK-018 Cliente de portada y páginas: subida de imagen y hint de portada
 
 - **Cubre:** REQ-002, REQ-003, REQ-039
 - **Componente:** story-pages-api | app/src/api/storyPages.ts
@@ -284,7 +284,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica en TASK-020 y TASK-021.
 
-### [ ] TASK-019 Descripción de escena completa visible en la portada y en las páginas
+### [x] TASK-019 Descripción de escena completa visible en la portada y en las páginas
 
 - **Cubre:** REQ-001, REQ-036
 - **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
@@ -298,7 +298,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   1. Abrir la página 2 aceptada de un cuento: se ve su descripción de escena completa.
   2. Abrir la portada aceptada: se ve su propia descripción completa, distinta de la de la página 1.
 
-### [ ] TASK-020 Subida de imagen desde el panel de portada y páginas
+### [x] TASK-020 Subida de imagen desde el panel de portada y páginas
 
 - **Cubre:** REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, ALT-001, ALT-002
 - **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue
@@ -318,7 +318,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   4. En la página 3, subir un fichero de texto: aparece un mensaje que indica que no es una imagen y se sigue viendo la imagen anterior.
   5. Cerrar y volver a abrir la aplicación y el cuento: la página 3 sigue mostrando la misma imagen.
 
-### [ ] TASK-021 Revisión de la portada en el panel y bloqueo de la página 1
+### [x] TASK-021 Revisión de la portada en el panel y bloqueo de la página 1
 
 - **Cubre:** REQ-038, REQ-039, REQ-040, REQ-041, REQ-043, ALT-003, ALT-004, ALT-005, ALT-006
 - **Componente:** story-pages-panel | app/src/components/StoryPagesPanel.vue (integración con story-page-notifier | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageNotifier.java por websocket)
@@ -512,10 +512,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica desde la interfaz en TASK-032.
 
-### [ ] TASK-031 Cliente REST de las exportaciones
+### [x] TASK-031 Cliente REST de las exportaciones
 
 - **Cubre:** REQ-009, REQ-016, REQ-018
-- **Componente:** story-export-api | por definir (analista técnico)
+- **Componente:** story-export-api | app/src/api/storyExports.ts
 - **Depende de:** TASK-025, TASK-030
 - **Alcance:** Cliente de las dos operaciones de exportación, que entrega el zip como descarga o la lista de faltas o reglas incumplidas.
 - **Hecho cuando:** el cliente distingue la respuesta con zip de la de rechazo en las dos exportaciones y entrega la lista completa en el rechazo.
@@ -525,10 +525,10 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   No aplica: se verifica en TASK-032.
 
-### [ ] TASK-032 Acciones de exportación en la interfaz
+### [x] TASK-032 Acciones de exportación en la interfaz
 
 - **Cubre:** REQ-009, REQ-010, REQ-011, REQ-015, REQ-016, REQ-018, REQ-019, REQ-026, REQ-032, ALT-009, ALT-011
-- **Componente:** story-export-actions | no consta en el mapa
+- **Componente:** story-export-actions | app/src/views/StorytellerView.vue
 - **Depende de:** TASK-031
 - **Alcance:** Sustituye la acción actual de exportación para Nubi Game por la nueva, añade la exportación para el agente visual, descarga el zip o muestra la lista completa de faltas o reglas incumplidas.
 - **Hecho cuando:** el adulto solo encuentra una exportación para Nubi Game y una para el agente visual, descarga el zip cuando se cumplen las condiciones y ve todas las faltas cuando no.
@@ -545,7 +545,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
   6. Validar ese zip con las reglas de la sección 5 de `docs/contracts/agent-visual/input.md`: no hay errores.
   7. Exportar para el agente visual un cuento anterior a la feature: no se descarga nada y se indica qué condición falta.
 
-### [ ] TASK-033 Contrato: openapi - lugar de escena en el beat
+### [x] TASK-033 Contrato: openapi - lugar de escena en el beat
 
 - **Cubre:** REQ-017, DEC-001
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java. Contrato: docs/contracts/openapi/schemas/story-beat.yaml
@@ -557,7 +557,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que el lugar de escena del beat aparece en el esquema como obligatorio y coincide con la implementación.
 
-### [ ] TASK-034 Contrato: openapi - lugar y tono de la portada en el guion
+### [x] TASK-034 Contrato: openapi - lugar y tono de la portada en el guion
 
 - **Cubre:** REQ-017, REQ-037, DEC-001
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java. Contrato: docs/contracts/openapi/schemas/story-outline.yaml, story-script.yaml
@@ -569,7 +569,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que el lugar y el tono de la portada aparecen en ambos esquemas, que se indica su ausencia en los cuentos anteriores y que coinciden con la implementación.
 
-### [ ] TASK-035 Contrato: openapi - lugar de escena en la edición de beat
+### [x] TASK-035 Contrato: openapi - lugar de escena en la edición de beat
 
 - **Cubre:** REQ-017
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java. Contrato: docs/contracts/openapi/paths/story/beat-edit-service.yaml, requests/beat-edit-request.yaml
@@ -581,7 +581,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que la petición incluye el lugar y que la respuesta de rechazo por lugar vacío coincide con la implementación.
 
-### [ ] TASK-036 Contrato: openapi - aprobar el guion lanza la portada
+### [x] TASK-036 Contrato: openapi - aprobar el guion lanza la portada
 
 - **Cubre:** REQ-038, REQ-040, DEC-002, ALT-003
 - **Componente:** story-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryService.java. Contrato: docs/contracts/openapi/paths/story/approve-service.yaml
@@ -593,7 +593,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que la respuesta de aprobación distingue si la portada empezó o no a generarse, y que coincide con la implementación.
 
-### [ ] TASK-037 Contrato: openapi - generación de portada sin planteamiento
+### [x] TASK-037 Contrato: openapi - generación de portada sin planteamiento
 
 - **Cubre:** REQ-038, DEC-004, ALT-006
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/paths/story/cover-generate-service.yaml
@@ -605,7 +605,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que el rechazo por falta de lugar y tono de portada figura con su respuesta y coincide con la implementación.
 
-### [ ] TASK-038 Contrato: openapi - hint de portada, bloqueo de página 1 y aceptación sin cascada
+### [x] TASK-038 Contrato: openapi - hint de portada, bloqueo de página 1 y aceptación sin cascada
 
 - **Cubre:** REQ-008, REQ-039, REQ-040, REQ-041, REQ-043, DEC-003, DEC-004
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/paths/story/page-hint-service.yaml, page-generate-service.yaml, page-accept-service.yaml, page-accept-proposal-service.yaml
@@ -617,7 +617,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que el hint de portada, el rechazo de la página 1 sin portada aceptada y la aceptación de la portada sin cascada figuran y coinciden con la implementación.
 
-### [ ] TASK-039 Contrato: openapi - subida de imagen de portada o página
+### [x] TASK-039 Contrato: openapi - subida de imagen de portada o página
 
 - **Cubre:** REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, DEC-013
 - **Componente:** story-page-service | api/src/main/java/es/vargontoc/storyteller/application/service/StoryPageService.java. Contrato: docs/contracts/openapi/, fichero por definir (analista técnico)
@@ -629,7 +629,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que la operación, sus dos rechazos y la ausencia de límite de formato o tamaño figuran y coinciden con la implementación.
 
-### [ ] TASK-040 Contrato: openapi - exportación para Nubi Game
+### [x] TASK-040 Contrato: openapi - exportación para Nubi Game
 
 - **Cubre:** REQ-009, REQ-010, REQ-016, DEC-004, DEC-006
 - **Componente:** story-export-service | por definir (analista técnico). Contrato: docs/contracts/openapi/, fichero por definir (analista técnico)
@@ -641,7 +641,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que la respuesta con zip y la de rechazo (portada sin aceptar, texto aceptado, imagen y audio, cada una con su portada o página) coinciden con la implementación, y que no figura ningún rechazo por imagen no convertible.
 
-### [ ] TASK-041 Contrato: openapi - exportación para el agente visual
+### [x] TASK-041 Contrato: openapi - exportación para el agente visual
 
 - **Cubre:** REQ-018, REQ-019, REQ-026, REQ-032, DEC-006
 - **Componente:** story-export-service | por definir (analista técnico). Contrato: docs/contracts/openapi/, fichero por definir (analista técnico)
@@ -653,7 +653,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que la respuesta con zip y la de rechazo (condiciones de REQ-018, reglas del contrato y fallo de la imagen del protagonista) coinciden con la implementación.
 
-### [ ] TASK-042 Contrato: file/json - zip para Nubi Game
+### [x] TASK-042 Contrato: file/json - zip para Nubi Game
 
 - **Cubre:** REQ-011, REQ-012, REQ-013, REQ-014, REQ-015, DEC-014, DEC-015
 - **Componente:** nubi-game-exporter | no consta en el mapa. Contrato: docs/contracts/nubi-game/story-export.md (nuevo, según "Contratos afectados")
@@ -665,7 +665,7 @@ El trabajo se divide en cinco bloques en orden de dependencias: guion ampliado (
 - **Prueba manual:**
   1. Repasar que cada campo del `story.json`, la estructura del zip y las reglas de imagen (original sin modificar, extensión según el formato real, sin campo de formato) coinciden con un zip exportado y que el contrato no menciona WebP ni límite de dimensiones.
 
-### [ ] TASK-043 Contrato: file/json - StoryTeller como productor del agente visual
+### [x] TASK-043 Contrato: file/json - StoryTeller como productor del agente visual
 
 - **Cubre:** REQ-020, REQ-021, REQ-022, REQ-023, REQ-024, REQ-025, REQ-026, REQ-027, REQ-028, REQ-029, REQ-030, REQ-031
 - **Componente:** visual-agent-exporter | por definir (analista técnico). Contrato: docs/contracts/agent-visual/input.md

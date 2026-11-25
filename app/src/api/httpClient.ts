@@ -4,33 +4,40 @@ export class ApiError extends Error {
   readonly status?: number
   // Motivo estable del servidor (errors[0], p. ej. NAME_DUPLICATED), si lo informa.
   readonly code?: string
+  // Carga útil (`data`) de la respuesta de error, si el servidor la envía (p. ej. la lista de faltas).
+  readonly data?: unknown
 
-  constructor(message: string, status?: number, code?: string) {
+  constructor(message: string, status?: number, code?: string, data?: unknown) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
+    this.data = data
   }
 }
 
-async function extractError(response: Response): Promise<{ message: string; code?: string }> {
+async function extractError(
+  response: Response,
+): Promise<{ message: string; code?: string; data?: unknown }> {
   let code: string | undefined
+  let data: unknown
   try {
     const body = await response.clone().json()
+    data = body?.data ?? undefined
     if (Array.isArray(body?.errors) && typeof body.errors[0] === 'string') {
       code = body.errors[0]
     }
     if (typeof body?.message === 'string' && body.message) {
-      return { message: body.message, code }
+      return { message: body.message, code, data }
     }
     if (Array.isArray(body?.errors) && body.errors.length > 0) {
-      return { message: body.errors.join(', '), code }
+      return { message: body.errors.join(', '), code, data }
     }
   } catch {
     // Body wasn't JSON (or was empty) — fall through to the generic message below.
   }
 
-  return { message: `Request failed: ${response.status} ${response.statusText}`, code }
+  return { message: `Request failed: ${response.status} ${response.statusText}`, code, data }
 }
 
 async function requestRaw(path: string, init?: RequestInit): Promise<Response> {
@@ -49,8 +56,8 @@ async function requestRaw(path: string, init?: RequestInit): Promise<Response> {
     })
 
     if (!response.ok) {
-      const { message, code } = await extractError(response)
-      throw new ApiError(message, response.status, code)
+      const { message, code, data } = await extractError(response)
+      throw new ApiError(message, response.status, code, data)
     }
 
     return response
@@ -83,7 +90,19 @@ async function requestBlob(path: string, init?: RequestInit): Promise<Blob> {
   return response.blob()
 }
 
+// Nombre de fichero de Content-Disposition (`filename="x.zip"`), si viene.
+function filenameOf(response: Response): string | undefined {
+  const header = response.headers.get('Content-Disposition')
+  return header?.match(/filename="?([^";]+)"?/i)?.[1]
+}
+
+async function requestFile(path: string): Promise<{ blob: Blob; filename?: string }> {
+  const response = await requestRaw(path, { method: 'GET', headers: { Accept: 'application/octet-stream' } })
+  return { blob: await response.blob(), filename: filenameOf(response) }
+}
+
 export const httpClient = {
+  getForFile: (path: string) => requestFile(path),
   get: <T>(path: string) => request<T>(path, { method: 'GET' }),
   post: <T>(path: string, body?: unknown) =>
     request<T>(path, { method: 'POST', body: body !== undefined ? JSON.stringify(body) : undefined }),

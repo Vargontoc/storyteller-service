@@ -1,0 +1,15 @@
+# Origen: specs/export-import-feature (REQ-017, REQ-037, DEC-001)
+# Estado del contrato: contrastado con el código
+type: object
+description: Planteamiento propio de la portada (CoverPlan), independiente del beat de la página 1. Obligatorio y con ambos campos no vacíos en guiones nuevos
+additionalProperties: false
+properties:
+  setting:
+    type: string
+    description: Lugar o ambiente de escena propio de la portada
+  tone:
+    type: string
+    description: Tono o emoción dominante propio de la portada
+required:
+  - setting
+  - tone

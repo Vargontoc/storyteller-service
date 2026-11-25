@@ -12,6 +12,7 @@ import {
   regenerate,
   selectVersion,
   sendHint,
+  uploadPageImage,
 } from './storyPages'
 
 const BASE = 'http://localhost:8080/api/v1/storyteller/7'
@@ -231,6 +232,66 @@ describe('mutaciones síncronas', () => {
     expect(lastCall()).toEqual({ url: `${BASE}/pages/22/proposals/discard`, method: 'POST', body: undefined })
     expect(result).toEqual(data)
   })
+})
+
+describe('imagen subida y hint de portada', () => {
+  it('sube el fichero a la página 3 como multipart sin fijar Content-Type', async () => {
+    const data = { storyId: 7, pageId: 24, pageNumber: 3, status: 'ACCEPTED' }
+    fetchMock.mockResolvedValue(ok(data))
+    const file = new File(['png'], 'foto.png', { type: 'image/png' })
+
+    const result = await uploadPageImage(7, 24, file)
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe(`${BASE}/pages/24/image`)
+    expect(init.method).toBe('POST')
+    expect(init.body).toBeInstanceOf(FormData)
+    expect((init.body as FormData).get('file')).toBe(file)
+    expect(new Headers(init.headers).has('Content-Type')).toBe(false)
+    expect(result).toEqual(data)
+  })
+
+  it('envía el hint de la portada con el id de la página 0', async () => {
+    fetchMock.mockResolvedValue(ok({ storyId: 7, pageNumber: 0 }, 202))
+
+    const result = await sendHint(7, 21, 'que se vea la luna llena')
+
+    expect(lastCall()).toEqual({
+      url: `${BASE}/pages/21/hint`,
+      method: 'POST',
+      body: JSON.stringify({ hint: 'que se vea la luna llena' }),
+    })
+    expect(result.pageNumber).toBe(0)
+  })
+
+  async function expectRejection(call: () => Promise<unknown>, status: number, message: string) {
+    fetchMock.mockResolvedValue(rejected(status, message))
+    const error = await call().catch((e: unknown) => e)
+    expect(error).toBeInstanceOf(ApiError)
+    expect((error as ApiError).message).toBe(message)
+    expect((error as ApiError).status).toBe(status)
+  }
+
+  it('rechazo: el fichero no es una imagen', () =>
+    expectRejection(
+      () => uploadPageImage(7, 24, new File(['hola'], 'nota.txt', { type: 'text/plain' })),
+      415,
+      'El fichero no es una imagen',
+    ))
+
+  it('rechazo: subida a portada o página sin aceptar', () =>
+    expectRejection(
+      () => uploadPageImage(7, 21, new File(['png'], 'a.png', { type: 'image/png' })),
+      409,
+      'La página no está aceptada',
+    ))
+
+  it('rechazo: hint de portada sin planteamiento de portada', () =>
+    expectRejection(
+      () => sendHint(7, 21, 'luna'),
+      409,
+      'Al guion le faltan el lugar y el tono de la portada',
+    ))
 })
 
 describe('rechazos del servidor', () => {

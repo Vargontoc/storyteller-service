@@ -99,6 +99,10 @@ paths:
     $ref: "./paths/story/narration-service.yaml"
   /storyteller/{storyId}/pages/{number}/audio:
     $ref: "./paths/story/page-audio-service.yaml"
+  /storyteller/{storyId}/export/nubi-game:
+    $ref: "./paths/story/export-nubi-game-service.yaml"
+  /storyteller/{storyId}/export/visual-agent:
+    $ref: "./paths/story/export-visual-agent-service.yaml"
   /storyteller/asset:
     $ref: "./paths/storyteller/asset-service.yaml"
 
@@ -188,3 +192,13 @@ components:
       $ref: "./schemas/narration-state.yaml"
     StartNarrationRequest:
       $ref: "./schemas/requests/start-narration-request.yaml"
+    CoverPlan:
+      $ref: "./schemas/cover-plan.yaml"
+    StoryApproval:
+      $ref: "./schemas/story-approval.yaml"
+    ExportMissing:
+      $ref: "./schemas/enums/export-missing.yaml"
+    ExportFault:
+      $ref: "./schemas/export-fault.yaml"
+    ExportRejected:
+      $ref: "./schemas/export-rejected.yaml"

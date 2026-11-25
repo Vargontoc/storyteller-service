@@ -15,6 +15,15 @@
     <p v-else-if="error" class="error">{{ error }}</p>
 
     <template v-else>
+      <div v-if="rejection" class="export-rejection" role="alert">
+        <p class="rejection-message">{{ rejection.message }}</p>
+        <ul>
+          <li v-for="(fault, index) in rejection.faults" :key="index" class="export-fault">
+            <strong>{{ faultContext(fault.page) }}:</strong> {{ fault.message }}
+          </li>
+        </ul>
+      </div>
+
       <table class="stories-table">
         <thead>
           <tr>
@@ -52,20 +61,22 @@
                 </svg>
               </button>
               <button
-                v-if="story.pages === story.size"
                 type="button"
-                class="icon-button"
-                aria-label="Descargar cuento"
-                title="Descargar cuento"
-                :disabled="downloadingId === story.id"
-                @click.stop="onDownloadStory(story)"
+                class="export-button"
+                data-export="nubi-game"
+                :disabled="exportingId === story.id"
+                @click.stop="onExport(story, 'nubi-game')"
               >
-                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-                  <path
-                    fill="currentColor"
-                    d="M12 3a1 1 0 0 1 1 1v8.59l2.3-2.3a1 1 0 1 1 1.4 1.42l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.42l2.3 2.3V4a1 1 0 0 1 1-1ZM5 19a1 1 0 1 0 0 2h14a1 1 0 1 0 0-2H5Z"
-                  />
-                </svg>
+                Exportar para Nubi Game
+              </button>
+              <button
+                type="button"
+                class="export-button"
+                data-export="visual-agent"
+                :disabled="exportingId === story.id"
+                @click.stop="onExport(story, 'visual-agent')"
+              >
+                Exportar para agente visual
               </button>
             </td>
           </tr>
@@ -110,7 +121,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { ApiError } from '../api/httpClient'
-import { deleteStory, getStory, getStories, type StorySummary, downloadStory } from '../api/storyteller'
+import { deleteStory, getStory, getStories, type StorySummary } from '../api/storyteller'
+import { exportNubiGame, exportVisualAgent, type ExportFault } from '../api/storyExports'
 import { useToastStore } from '../stores/toast'
 import ConfirmModal from '../components/ConfirmModal.vue'
 import PathImage from '../components/PathImage.vue'
@@ -126,7 +138,8 @@ const totalPages = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const deletingId = ref<number | null>(null)
-const downloadingId = ref<number | null>(null)
+const exportingId = ref<number | null>(null)
+const rejection = ref<{ message: string; faults: ExportFault[] } | null>(null)
 const pendingDelete = ref<StorySummary | null>(null)
 const showTopicModal = ref(false)
 const showStoryModal = ref(false)
@@ -158,29 +171,41 @@ function onDeleteClick(story: StorySummary) {
   pendingDelete.value = story
 }
 
-function sanitizeFileName(name: string) {
-  return name.replace(/[^a-z0-9-_]+/gi, '_').replace(/^_+|_+$/g, '') || 'story'
+function faultContext(page: number) {
+  if (page === 0) return 'Portada'
+  if (page > 0) return `Página ${page}`
+  return 'Cuento'
 }
 
-async function onDownloadStory(story: StorySummary) {
-  downloadingId.value = story.id
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob)
+
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  link.remove()
+
+  URL.revokeObjectURL(url)
+}
+
+async function onExport(story: StorySummary, target: 'nubi-game' | 'visual-agent') {
+  exportingId.value = story.id
+  rejection.value = null
 
   try {
-    const blob = await downloadStory(story.id)
-    const url = URL.createObjectURL(blob)
+    const result = await (target === 'nubi-game' ? exportNubiGame(story.id) : exportVisualAgent(story.id))
 
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${sanitizeFileName(story.title)}.zip`
-    document.body.appendChild(link)
-    link.click()
-    link.remove()
-
-    URL.revokeObjectURL(url)
+    if (result.kind === 'download') {
+      saveBlob(result.blob, result.filename)
+    } else {
+      rejection.value = { message: result.message, faults: result.faults }
+    }
   } catch (err) {
-    toastStore.show(err instanceof ApiError ? err.message : 'No se pudo descargar el cuento', 'error')
+    toastStore.show(err instanceof ApiError ? err.message : 'No se pudo exportar el cuento', 'error')
   } finally {
-    downloadingId.value = null
+    exportingId.value = null
   }
 }
 
@@ -275,6 +300,29 @@ onMounted(() => loadPage(0))
 .icon-button:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.export-button {
+  margin-left: 6px;
+  padding: 6px 10px;
+  color: var(--text-h);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.export-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.export-rejection {
+  margin-bottom: 12px;
+  padding: 8px 12px;
+  color: #e5484d;
+  border: 1px solid #e5484d;
+  border-radius: 6px;
 }
 
 .stories-table {

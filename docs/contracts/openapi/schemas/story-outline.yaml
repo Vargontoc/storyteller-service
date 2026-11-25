@@ -1,7 +1,7 @@
-# Origen: specs/agent-director (REQ-004, REQ-005, REQ-008)
+# Origen: specs/agent-director (REQ-004, REQ-005, REQ-008), specs/export-import-feature (REQ-017, REQ-037, DEC-001)
 # Estado del contrato: contrastado con el código
 type: object
-description: Escaleta de un cuento. El beat de la posición i (desde 0) corresponde a la página interior i + 1. Título y sinopsis no forman parte de la escaleta
+description: Escaleta de un cuento. El beat de la posición i (desde 0) corresponde a la página interior i + 1; cover contiene el planteamiento propio de la portada (nulo en escaletas o revisiones anteriores a export-import-feature). Título y sinopsis no forman parte de la escaleta
 additionalProperties: false
 properties:
   cast:
@@ -12,6 +12,11 @@ properties:
     type: array
     items:
       $ref: "./story-beat.yaml"
+  cover:
+    allOf:
+      - $ref: "./cover-plan.yaml"
+    nullable: true
+    description: Lugar y tono propios de la portada (nulo en guiones o revisiones anteriores a export-import-feature)
 required:
   - cast
   - beats

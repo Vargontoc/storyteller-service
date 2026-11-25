@@ -14,7 +14,7 @@
     <p v-if="eventError" class="error event-error">{{ eventError }}</p>
 
     <div class="row">
-      <button v-if="view.nextPage !== null" type="button" class="btn" :disabled="busy || view.generating" @click="generate">
+      <button v-if="canGenerate" type="button" class="btn" :disabled="busy || view.generating" @click="generate">
         {{ view.nextPage === 0 ? 'Generar portada' : `Generar página ${view.nextPage}` }}
       </button>
       <button type="button" class="btn" :disabled="busy" @click="load">Recargar</button>
@@ -29,6 +29,11 @@
         <h5 v-if="page.title" class="title">{{ page.title }}</h5>
         <p v-if="page.accepted.text" class="text">{{ page.accepted.text }}</p>
         <p class="scene">Escena: {{ page.accepted.scene }}</p>
+        <!-- Subida de imagen: solo contenido aceptado; sin prevalidar tipo ni tamaño (decide el servidor). -->
+        <label class="upload">
+          Subir imagen
+          <input type="file" class="upload-input" :disabled="busy" @change="upload(page.id, $event)" />
+        </label>
       </template>
       <p v-else-if="!page.versions.length" class="info">Pendiente de aceptar.</p>
 
@@ -112,6 +117,7 @@ import {
   regenerate,
   selectVersion,
   sendHint,
+  uploadPageImage,
   type PageDetail,
   type StoryPagesView,
   type VersionWarning,
@@ -138,6 +144,15 @@ const cascadeMessage = computed(() => {
   const n = cascade.value?.affectedPages ?? 0
   const audioNotice = view.value?.hasAudio ? ' Se borrará todo el audio de la narración y la voz.' : ''
   return `Se eliminará${n === 1 ? '' : 'n'} ${n} página${n === 1 ? '' : 's'} posterior${n === 1 ? '' : 'es'}.${audioNotice} ¿Continuar?`
+})
+
+// La página 1 no se ofrece hasta que la portada esté aceptada (el servidor la rechazaría con 409).
+// Portada (0) y resto de páginas siguen lo que indica nextPage.
+const canGenerate = computed(() => {
+  const next = view.value?.nextPage
+  if (next === null || next === undefined) return false
+  if (next !== 1) return true
+  return view.value?.pages.some((p) => p.page === 0 && p.status === 'ACCEPTED') === true
 })
 
 // Mientras se narra, el servidor rechaza reabrir, regenerar, cambiar versión y aceptar propuesta.
@@ -293,6 +308,16 @@ function confirmCascade() {
   return mutate(() => acceptProposal(props.storyId, pending.pageId, true))
 }
 
+// Sube o sustituye la imagen; tras éxito mutate recarga la vista, ante rechazo conserva la imagen ya cargada.
+function upload(pageId: number, event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  return mutate(() => uploadPageImage(props.storyId, pageId, file)).finally(() => {
+    input.value = ''
+  })
+}
+
 function discard(pageId: number) {
   return mutate(() => discardProposals(props.storyId, pageId))
 }
@@ -398,6 +423,11 @@ initialLoad()
 
 .scene {
   font-style: italic;
+}
+
+.upload {
+  display: block;
+  margin: 8px 0;
 }
 
 .versions {

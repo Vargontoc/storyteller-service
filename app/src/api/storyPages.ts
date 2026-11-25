@@ -129,6 +129,7 @@ export function generatePage(storyId: number, pageNumber: number) {
 }
 
 // Asíncrono: 202. Un hint vacío lo rechaza el servidor (400); el panel debe validarlo antes de enviar.
+// También vale para la portada: pageId es el de la página 0. Sin planteamiento de portada el servidor responde 409.
 export function sendHint(storyId: number, pageId: number, hint: string) {
   return httpClient
     .post<ApiEnvelope<GenerationRequested>>(`${base(storyId)}/pages/${pageId}/hint`, { hint })
@@ -166,6 +167,16 @@ export function acceptProposal(storyId: number, pageId: number, confirm = false)
 export function discardProposals(storyId: number, pageId: number) {
   return httpClient
     .post<ApiEnvelope<ProposalsDiscarded>>(`${base(storyId)}/pages/${pageId}/proposals/discard`)
+    .then((envelope) => envelope.data)
+}
+
+// Sube o sustituye la imagen del contenido aceptado (portada o página). Multipart con la parte `file`;
+// no se fija Content-Type. Rechazos: 404 (página de otro cuento), 409 (portada o página sin aceptar), 415 (no es una imagen).
+export function uploadPageImage(storyId: number, pageId: number, file: File) {
+  const form = new FormData()
+  form.append('file', file)
+  return httpClient
+    .postForm<ApiEnvelope<PageAccepted>>(`${base(storyId)}/pages/${pageId}/image`, form)
     .then((envelope) => envelope.data)
 }
 

@@ -1,11 +1,13 @@
-# Origen: specs/agent-writer (REQ-002, REQ-003, REQ-010, REQ-021, REQ-028, REQ-032, DEC-003, DEC-007, ALT-001, ALT-002, ALT-003, ALT-014)
+# Origen: specs/agent-writer (REQ-002, REQ-003, REQ-010, REQ-021, REQ-028, REQ-032, DEC-003, DEC-007, ALT-001, ALT-002, ALT-003, ALT-014), specs/export-import-feature (REQ-040, DEC-002)
 # Estado del contrato: contrastado con el código
 post:
   operationId: generateStoryOutlinePage
   summary: Inicia la generación asíncrona de la página N desde su beat
   description: |
     Solicita generar la página interior N de un cuento con escaleta y guion aprobado (SCRIPT_ACCEPTED), exigiendo que la portada
-    y todas las páginas anteriores (1..N-1) estén aceptadas y que N sea exactamente la siguiente página y no supere la escaleta.
+    esté aceptada por primera vez (pageStatus = ACCEPTED; la página 1 se rechaza con 409 mientras la portada esté pendiente o no exista,
+    y sigue habilitada si la portada aceptada se reabre con hint) y todas las páginas anteriores (1..N-1) estén aceptadas, y que N sea
+    exactamente la siguiente página y no supere la escaleta.
     Pide turno a generation-gate; al concederlo responde 202 con GenerationStarted (pageNumber = N). El resultado llega después
     por WebSocket en /storyteller (STARTED, VERSION_PRESENTED o FAILED), aplicando hasta 3 intentos automáticos si el texto
     incumple el límite de longitud dentro del mismo turno.
@@ -41,9 +43,9 @@ post:
             $ref: "../../schemas/api-response.yaml"
     "409":
       description: |
-        El cuento es anterior a la escaleta, ya está completo (PAGES_ACCEPTED, REQ-021), el guion no está aprobado, falta aceptar
-        la portada (REQ-002) o alguna página anterior (REQ-010), el número no corresponde a la siguiente página o supera la escaleta
-        (REQ-021), o hay una generación en curso en la aplicación (REQ-032)
+        El cuento es anterior a la escaleta, ya está completo (PAGES_ACCEPTED, REQ-021), el guion no está aprobado, la portada aún no está
+        aceptada (bloqueo de la página 1 hasta aceptar la portada, REQ-002 / REQ-040) o falta aceptar alguna página anterior (REQ-010),
+        el número no corresponde a la siguiente página o supera la escaleta (REQ-021), o hay una generación en curso en la aplicación (REQ-032)
       content:
         application/json:
           schema:

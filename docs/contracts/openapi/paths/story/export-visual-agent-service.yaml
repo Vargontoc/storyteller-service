@@ -1,0 +1,53 @@
+# Origen: specs/export-import-feature (REQ-018, REQ-019, REQ-026, REQ-032, DEC-004, DEC-005, DEC-006)
+# Estado del contrato: contrastado con el código
+get:
+  operationId: exportStoryForVisualAgent
+  summary: Exporta el cuento en un zip para el agente de recursos visuales (contrato v0.1)
+  description: |
+    Evalúa en una sola pasada las condiciones de disponibilidad sin exigir imágenes importadas ni audio de las páginas:
+    guion aprobado (SCRIPT_ACCEPTED o PAGES_ACCEPTED), portada aceptada, lugar y tono propios de la portada en el guion,
+    todas las páginas interiores (1..N) aceptadas con texto, lugar de escena en cada beat e instantánea del protagonista.
+    Si falta alguna condición, responde 409 sin generar el zip con todas las faltas acumuladas.
+    Si se cumplen las condiciones de disponibilidad, compone el story.json v0.1, obtiene el retrato de la instantánea del
+    protagonista sin fondo (vía ComfyUI) y valida todo en una sola pasada contra la sección 5 de docs/contracts/agent-visual/input.md.
+    Si hay reglas incumplidas o no se pudo obtener la imagen del protagonista, responde 409 sin generar ni persistir el zip,
+    devolviendo todas las faltas con el código estable en ExportFault.code. Si la validación pasa, devuelve el zip en memoria.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+  responses:
+    "200":
+      description: Fichero zip para el agente visual (attachment filename="story-{storyId}-visual-agent.zip")
+      headers:
+        Content-Disposition:
+          description: 'attachment; filename="story-{storyId}-visual-agent.zip"'
+          schema:
+            type: string
+      content:
+        application/octet-stream:
+          schema:
+            type: string
+            format: binary
+    "404":
+      description: El cuento no existe
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: |
+        Faltan condiciones de exportación o el resultado incumple el contrato v0.1 / imagen del protagonista. Devuelve success=false,
+        message="El cuento no se puede exportar" y data.faults con todas las faltas o reglas incumplidas (missing: SCRIPT_NOT_APPROVED,
+        COVER_NOT_ACCEPTED, COVER_SETTING_TONE, ACCEPTED_TEXT, BEAT_SETTING, PROTAGONIST_MISSING, PROTAGONIST_IMAGE, CONTRACT_RULE;
+        page=0 para portada, 1..N para página interior, -1 para todo el cuento; code informado en PROTAGONIST_IMAGE y CONTRACT_RULE)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/export-rejected-response.yaml"

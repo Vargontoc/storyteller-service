@@ -16,12 +16,22 @@
         </ul>
       </section>
 
+      <section class="cover-plan">
+        <h4>Portada</h4>
+        <p v-if="!script.cover">Este cuento no tiene planteamiento de portada.</p>
+        <dl v-else class="beat-fields">
+          <dd>Lugar de la portada: {{ script.cover.setting }}</dd>
+          <dd>Tono de la portada: {{ script.cover.tone }}</dd>
+        </dl>
+      </section>
+
       <section>
         <h4>Escaleta</h4>
         <ol class="beats">
           <li v-for="beat in sortedBeats" :key="beat.page" class="beat">
             <template v-if="editingPage === beat.page">
               <label>Qué ocurre <textarea v-model="form.event" rows="2" /></label>
+              <label>Lugar de la escena <input v-model="form.setting" /></label>
               <label>Función narrativa <input v-model="form.narrativeFunction" /></label>
               <label>Quiénes aparecen (separados por comas) <input v-model="form.participants" /></label>
               <label>Emoción o tono <input v-model="form.tone" /></label>
@@ -41,6 +51,7 @@
       </section>
 
       <p v-if="actionError" class="error">{{ actionError }}</p>
+      <p v-if="coverNotice" class="notice">{{ coverNotice }}</p>
 
       <div class="row">
         <button
@@ -64,6 +75,11 @@
       <section v-if="review && review.candidateOutline">
         <h4>Propuesta candidata</h4>
         <p v-if="review.changedBeats.length === 0">Sin cambios respecto a la versión anterior.</p>
+        <dl v-if="review.candidateOutline.cover" class="beat-fields">
+          <dt>Portada</dt>
+          <dd>Lugar de la portada: {{ review.candidateOutline.cover.setting }}</dd>
+          <dd>Tono de la portada: {{ review.candidateOutline.cover.tone }}</dd>
+        </dl>
         <ol class="beats">
           <li
             v-for="(beat, index) in review.candidateOutline.beats"
@@ -131,6 +147,7 @@ const BeatFields = defineComponent({
       h('dl', { class: 'beat-fields' }, [
         h('dt', `Página ${p.page}`),
         h('dd', p.beat.event),
+        h('dd', `Lugar: ${p.beat.setting || 'sin definir'}`),
         h('dd', `Función: ${p.beat.narrativeFunction}`),
         h('dd', `Aparecen: ${p.beat.participants.join(', ')}`),
         h('dd', `Tono: ${p.beat.tone}`),
@@ -150,7 +167,9 @@ const hintRejection = ref<string | null>(null)
 
 const editingPage = ref<number | null>(null)
 const editError = ref<string | null>(null)
-const form = reactive({ event: '', narrativeFunction: '', participants: '', tone: '', visualNote: '' })
+const form = reactive({ event: '', setting: '', narrativeFunction: '', participants: '', tone: '', visualNote: '' })
+// Aviso informativo si la aprobación no inició la portada (lo informa el servidor).
+const coverNotice = ref<string | null>(null)
 // Páginas que el servidor avisa que se eliminarán; null = sin aviso abierto.
 const invalidationPages = ref<number | null>(null)
 // Lo informa el servidor; no se deduce del estado local.
@@ -205,7 +224,11 @@ async function mutate(action: () => Promise<unknown>, notify = false) {
 }
 
 function approve() {
-  return mutate(() => approveStoryScript(props.storyId), true)
+  coverNotice.value = null
+  return mutate(async () => {
+    const result = await approveStoryScript(props.storyId)
+    if (result.coverStarted === false) coverNotice.value = 'La portada no se inició con la aprobación: pídela a mano desde las páginas del cuento.'
+  }, true)
 }
 
 function sendHint() {
@@ -224,6 +247,7 @@ function startEdit(beat: ScriptBeat) {
   editingPage.value = beat.page
   editError.value = null
   form.event = beat.event
+  form.setting = beat.setting ?? ''
   form.narrativeFunction = beat.narrativeFunction
   form.participants = beat.participants.join(', ')
   form.tone = beat.tone
@@ -238,6 +262,7 @@ function cancelEdit() {
 function formBeat(): StoryBeatFields {
   return {
     event: form.event.trim(),
+    setting: form.setting.trim(),
     narrativeFunction: form.narrativeFunction.trim(),
     participants: form.participants.split(',').map((p) => p.trim()).filter(Boolean),
     tone: form.tone.trim(),
@@ -293,6 +318,11 @@ initialLoad()
 .error {
   margin: 8px 0 0;
   color: #e5484d;
+}
+
+.notice {
+  margin: 8px 0 0;
+  color: #92400e;
 }
 
 .title {

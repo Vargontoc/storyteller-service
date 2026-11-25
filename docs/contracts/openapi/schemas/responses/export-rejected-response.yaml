@@ -1,0 +1,10 @@
+# Origen: specs/export-import-feature (REQ-010, REQ-019, REQ-026, REQ-032, DEC-006)
+# Estado del contrato: contrastado con el código
+allOf:
+  - $ref: "../api-response.yaml"
+  - type: object
+    properties:
+      data:
+        $ref: "../export-rejected.yaml"
+    required:
+      - data

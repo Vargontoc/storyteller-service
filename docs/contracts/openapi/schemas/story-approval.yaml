@@ -1,0 +1,14 @@
+# Origen: specs/export-import-feature (REQ-038, REQ-040, DEC-002, ALT-003)
+# Estado del contrato: contrastado con el código
+type: object
+description: Resultado de aprobar el guion del cuento (StoryApproval)
+additionalProperties: false
+properties:
+  story:
+    $ref: "./story.yaml"
+  coverStarted:
+    type: boolean
+    description: Indica si la generación asíncrona de la portada comenzó al aprobar el guion (false si no pudo empezar; la aprobación se completa igualmente y la portada puede pedirse a mano)
+required:
+  - story
+  - coverStarted

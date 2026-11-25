@@ -1,13 +1,15 @@
 package es.vargontoc.storyteller.application.service;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
@@ -17,7 +19,6 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
-import es.vargontoc.storyteller.application.ports.out.external.CharacterBackgroundRemover;
 import es.vargontoc.storyteller.domain.model.StoryProtagonistSnapshot;
 import es.vargontoc.storyteller.domain.model.VisualAgentStory;
 
@@ -40,18 +40,15 @@ class VisualAgentExporterTest {
 
     private final ObjectMapper mapper = new ObjectMapper();
     private ResourceStorage storage;
-    private CharacterBackgroundRemover remover;
     private VisualAgentExporter exporter;
-    private byte[] cutout;
+    private byte[] portrait;
 
     @BeforeEach
     void setUp() throws IOException {
         storage = mock(ResourceStorage.class);
-        remover = mock(CharacterBackgroundRemover.class);
-        when(storage.getResource(PORTRAIT_PATH)).thenReturn(new byte[] {1, 2, 3});
-        cutout = transparentPng(1024);
-        when(remover.removeBackground(any())).thenReturn(Optional.of(cutout));
-        exporter = new VisualAgentExporter(storage, remover, new VisualContractValidator());
+        portrait = transparentPng(1024);
+        when(storage.getResource(PORTRAIT_PATH)).thenReturn(portrait);
+        exporter = new VisualAgentExporter(storage, new VisualContractValidator());
     }
 
     private byte[] transparentPng(int side) throws IOException {
@@ -90,14 +87,14 @@ class VisualAgentExporterTest {
     }
 
     @Test
-    void zipContieneStoryJsonEnLaRaizYElRetratoSinFondo() throws IOException {
+    void zipContieneStoryJsonEnLaRaizYElRetratoDeLaInstantanea() throws IOException {
         var result = exporter.export(story());
 
         assertTrue(result.isValid());
         Map<String, byte[]> entries = unzip(result.zip());
         assertEquals(2, entries.size());
         assertTrue(entries.containsKey("story.json"));
-        assertEquals(cutout.length, entries.get("characters/nina/character.png").length);
+        assertEquals(portrait.length, entries.get("characters/nina/character.png").length);
         assertEquals("characters/nina/character.png", json(result.zip()).at("/characters/0/image").asText());
     }
 
@@ -194,7 +191,7 @@ class VisualAgentExporterTest {
         VisualContractValidator validator = mock(VisualContractValidator.class);
         var error = new VisualContractValidator.Error("STORY_ID_INVALID", "$.storyId", "malo");
         when(validator.validate(any(), any())).thenReturn(new VisualContractValidator.Result(List.of(error)));
-        exporter = new VisualAgentExporter(storage, remover, validator);
+        exporter = new VisualAgentExporter(storage, validator);
 
         var result = exporter.export(story());
 
@@ -205,7 +202,7 @@ class VisualAgentExporterTest {
 
     @Test
     void retratoPequenoSeRechazaConLaReglaDelValidador() throws IOException {
-        when(remover.removeBackground(any())).thenReturn(Optional.of(transparentPng(768)));
+        when(storage.getResource(PORTRAIT_PATH)).thenReturn(transparentPng(768));
 
         var result = exporter.export(story());
 
@@ -214,20 +211,33 @@ class VisualAgentExporterTest {
     }
 
     @Test
-    void imagenNoObtenidaSeIndicaYSeAcumulanLasDemasFaltas() {
-        when(remover.removeBackground(any())).thenReturn(Optional.empty());
+    void retratoSinAlfaSeRechazaConLaReglaDelValidador() throws IOException {
+        BufferedImage opaque = new BufferedImage(1024, 1024, BufferedImage.TYPE_INT_RGB);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        ImageIO.write(opaque, "png", out);
+        when(storage.getResource(PORTRAIT_PATH)).thenReturn(out.toByteArray());
+
+        var result = exporter.export(story());
+
+        assertNull(result.zip());
+        assertFalse(result.errors().isEmpty());
+        assertTrue(result.errors().stream().allMatch(e -> e.code().startsWith("CHARACTER_IMAGE")));
+    }
+
+    @Test
+    void retratoAusenteEnAlmacenSeIndicaYSeAcumulanLasDemasFaltas() {
+        when(storage.getResource(PORTRAIT_PATH)).thenReturn(null);
 
         var result = exporter.export(story("Yo", "Nina", "pelo rizado", 2));
 
         assertNull(result.zip());
         List<String> codes = result.errors().stream().map(VisualContractValidator.Error::code).toList();
-        assertTrue(codes.contains("CHARACTER_IMAGE_NOT_OBTAINED"));
+        assertEquals(1, codes.stream().filter(c -> c.equals("CHARACTER_IMAGE_MISSING")).count());
         assertTrue(codes.contains("STORY_ID_INVALID"));
-        assertFalse(codes.contains("CHARACTER_IMAGE_MISSING"));
     }
 
     @Test
-    void sinRetratoNoSeLlamaAlEliminadorDeFondo() {
+    void sinRutaDeRetratoNoSeLeeNadaDelAlmacen() {
         var hero = new StoryProtagonistSnapshot("Nina", "pelo rizado", null);
         var base = story();
 
@@ -236,6 +246,16 @@ class VisualAgentExporterTest {
         assertNull(result.zip());
         assertEquals(1, result.errors().size());
         assertEquals("CHARACTER_IMAGE_MISSING", result.errors().get(0).code());
-        verify(remover, never()).removeBackground(any());
+        verifyNoInteractions(storage);
+    }
+
+    @Test
+    void elCharacterPngSonExactamenteLosBytesDelRetratoYSoloSeLeeDelAlmacen() throws IOException {
+        var result = exporter.export(story());
+
+        assertTrue(result.isValid());
+        assertArrayEquals(portrait, unzip(result.zip()).get("characters/nina/character.png"));
+        verify(storage).getResource(PORTRAIT_PATH);
+        verifyNoMoreInteractions(storage);
     }
 }

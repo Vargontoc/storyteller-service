@@ -1,9 +1,14 @@
-# Origen: specs/agent-director (REQ-006, REQ-007)
+# Origen: specs/agent-director (REQ-006, REQ-007), specs/export-import-feature (REQ-038, REQ-040, DEC-002, ALT-003)
 # Estado del contrato: contrastado con el código
 post:
   operationId: approveStoryScript
-  summary: Aprueba el guion del cuento
-  description: Pasa el guion de SCRIPT_PENDING a SCRIPT_ACCEPTED. Es idempotente si ya está aprobado. Hasta la aprobación, la generación de portada y páginas se rechaza
+  summary: Aprueba el guion del cuento y lanza la generación de la portada
+  description: |
+    Pasa el guion de SCRIPT_PENDING a SCRIPT_ACCEPTED (idempotente si ya está aprobado) y lanza de forma asíncrona la
+    generación de la escena de portada mediante la operación de portada, sin generar la página 1. Hasta la aprobación,
+    la generación de portada y páginas se rechaza. La respuesta indica en coverStarted si la portada empezó a generarse
+    (el resultado llega por WebSocket en /storyteller); si no pudo empezar (turno ocupado, escritor no disponible o guion
+    sin planteamiento de portada), coverStarted es false, no hay reintento automático y la aprobación se completa igualmente.
   tags:
     - Generators
   parameters:
@@ -16,11 +21,11 @@ post:
         format: int64
   responses:
     "200":
-      description: Cuento con el guion en SCRIPT_ACCEPTED
+      description: Cuento con el guion en SCRIPT_ACCEPTED e indicador coverStarted de si se inició la generación de la portada
       content:
         application/json:
           schema:
-            $ref: "../../schemas/responses/story-response.yaml"
+            $ref: "../../schemas/responses/story-approval-response.yaml"
     "404":
       description: El cuento no existe
       content:

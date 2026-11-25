@@ -1,7 +1,7 @@
-# Origen: specs/agent-director (REQ-003, REQ-004, DEC-006)
+# Origen: specs/agent-director (REQ-003, REQ-004, DEC-006), specs/export-import-feature (REQ-017, DEC-001)
 # Estado del contrato: contrastado con el código
 type: object
-description: Beat de la escaleta, lo que ocurre en una página interior. Los cinco campos son obligatorios y ninguno puede estar vacío (participants debe tener al menos un nombre)
+description: Beat de la escaleta, lo que ocurre en una página interior. Los seis campos son obligatorios y ninguno puede estar vacío (participants debe tener al menos un nombre). En guiones o revisiones anteriores a export-import-feature, setting es nulo
 additionalProperties: false
 properties:
   event:
@@ -22,9 +22,14 @@ properties:
   visualNote:
     type: string
     description: Nota visual
+  setting:
+    type: string
+    nullable: true
+    description: Lugar o ambiente de la escena (obligatorio y no vacío en guiones y revisiones nuevos; nulo en guiones o revisiones anteriores a export-import-feature)
 required:
   - event
   - narrativeFunction
   - participants
   - tone
   - visualNote
+  - setting

@@ -1,13 +1,14 @@
-# Origen: specs/agent-writer (REQ-011, REQ-021, REQ-027, REQ-028, REQ-033, REQ-037, REQ-041, ALT-004, ALT-009)
+# Origen: specs/agent-writer (REQ-011, REQ-021, REQ-027, REQ-028, REQ-033, REQ-037, REQ-041, ALT-004, ALT-009), specs/export-import-feature (REQ-039, REQ-040, DEC-002)
 # Estado del contrato: contrastado con el código
 post:
   operationId: acceptStoryPage
   summary: Acepta la versión vigente de la portada o de una página pendiente
   description: |
     Promueve la versión vigente de la portada (página 0) o de una página pendiente a contenido aceptado sin imagen y elimina el resto
-    del histórico. No inicia ninguna generación siguiente. Si es la última página interior de la escaleta, el cuento pasa a PAGES_ACCEPTED
-    (REQ-021). Admite versiones con aviso solo de exceso de palabras (TOO_MANY_WORDS), pero se rechaza si la vigente tiene aviso de
-    número de frases (SENTENCE_COUNT o BOTH) o si hay una generación en curso de ese cuento (REQ-033).
+    del histórico. No inicia ninguna generación siguiente (aceptar la portada habilita la generación bajo demanda de la página 1, sin
+    lanzarla automáticamente). Si es la última página interior de la escaleta, el cuento pasa a PAGES_ACCEPTED (REQ-021). Admite
+    versiones con aviso solo de exceso de palabras (TOO_MANY_WORDS), pero se rechaza si la vigente tiene aviso de número de frases
+    (SENTENCE_COUNT o BOTH) o si hay una generación en curso de ese cuento (REQ-033).
   tags:
     - Storyteller
   parameters:

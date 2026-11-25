@@ -1,0 +1,22 @@
+# Origen: specs/export-import-feature (REQ-010, REQ-019, REQ-026, REQ-032, DEC-006)
+# Estado del contrato: contrastado con el código
+type: object
+description: Falta o regla incumplida detectada al intentar exportar un cuento (ExportFault)
+additionalProperties: false
+properties:
+  page:
+    type: integer
+    description: Página afectada (0 = portada, 1..N = página interior, -1 = cuento completo)
+  missing:
+    $ref: "./enums/export-missing.yaml"
+  message:
+    type: string
+    description: Descripción legible de la falta o regla incumplida (en CONTRACT_RULE y PROTAGONIST_IMAGE incluye el JSONPath)
+  code:
+    type: string
+    nullable: true
+    description: Código estable de la regla del contrato v0.1 o de la imagen del protagonista (en CONTRACT_RULE y PROTAGONIST_IMAGE); nulo en el resto de faltas
+required:
+  - page
+  - missing
+  - message

@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-022, REQ-040, DEC-012)
+# Origen: specs/agent-writer (REQ-022, REQ-040, DEC-012), specs/export-import-feature (REQ-002, REQ-003, REQ-004, REQ-005, REQ-006, REQ-007, DEC-013)
 # Estado del contrato: contrastado con el código
 get:
   operationId: getStoryPageAcceptedImage
@@ -33,6 +33,77 @@ get:
             format: binary
     "404":
       description: El cuento o la página no existe, la página no pertenece al cuento, no está aceptada o no tiene imagen importada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+post:
+  operationId: uploadStoryPageImage
+  summary: Sube o sustituye la imagen importada de la portada o de una página aceptada
+  description: |
+    Asocia una imagen importada al contenido aceptado de la portada (página 0) o de una página interior (pageStatus = ACCEPTED),
+    sustituyendo la imagen previa si ya existía. Comprueba si el fichero es una imagen por su contenido real (firma del formato),
+    sin mirar la extensión, el tipo MIME declarado, las dimensiones ni el peso, y sin aplicar límite de formato ni límite de tamaño
+    propio de la aplicación (límite técnico multipart de Spring configurado en 100 MB por fichero).
+    Todas las validaciones se ejecutan antes de modificar el almacenamiento: si la página no está aceptada (409) o el fichero no
+    es una imagen (415), la subida se rechaza y se conserva intacta cualquier imagen anterior.
+  tags:
+    - Storyteller
+  parameters:
+    - name: storyId
+      in: path
+      required: true
+      description: Identificador del cuento
+      schema:
+        type: integer
+        format: int64
+    - name: id
+      in: path
+      required: true
+      description: Identificador de la portada o página (StoryPage.id)
+      schema:
+        type: integer
+        format: int64
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          type: object
+          properties:
+            file:
+              type: string
+              format: binary
+              description: Fichero de imagen en cualquier formato reconocido por contenido (PNG, JPEG, BMP, GIF, WebP, etc.); sin límite de formato ni de tamaño propio. Si se omite o llega vacío se rechaza con 415
+          required:
+            - file
+  responses:
+    "200":
+      description: Imagen asociada o sustituida en la portada o página aceptada
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/responses/page-accepted-response.yaml"
+    "400":
+      description: No se pudo leer el fichero subido en la petición multipart
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "404":
+      description: La página no existe o no pertenece al cuento
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "409":
+      description: La portada o página no está en estado ACCEPTED (las portadas o páginas pendientes o sin aceptar no admiten subida)
+      content:
+        application/json:
+          schema:
+            $ref: "../../schemas/api-response.yaml"
+    "415":
+      description: El fichero no es una imagen según la inspección de su contenido real (se conserva la imagen anterior, si la había)
       content:
         application/json:
           schema:

@@ -1,4 +1,4 @@
-# Origen: specs/agent-writer (REQ-012, REQ-013, REQ-014, REQ-015, REQ-032, DEC-003, ALT-003, ALT-005, ALT-006), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
+# Origen: specs/agent-writer (REQ-012, REQ-013, REQ-014, REQ-015, REQ-032, DEC-003, ALT-003, ALT-005, ALT-006), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009), specs/export-import-feature (REQ-039, DEC-004, ALT-006)
 # Estado del contrato: contrastado con el código
 post:
   operationId: hintStoryPage
@@ -7,6 +7,9 @@ post:
     Envía un hint obligatorio sobre la portada (página 0) o una página de un cuento con escaleta. Si está PENDING, parte de su
     versión vigente y añade la nueva versión al histórico; si está ACCEPTED, reabre la página guardando la propuesta en el histórico
     de propuestas sin modificar el contenido aceptado ni su imagen (en hints posteriores parte de la propuesta vigente).
+    En la portada (página 0), el escritor recibe el lugar y el tono propios de la portada del guion (sin validación de longitud);
+    si al guion le faltan el lugar o el tono de portada, se rechaza con 409 sin pedir turno ni llamar al escritor (ALT-006), y la
+    reapertura de una portada aceptada no bloquea la página 1 ni toca las páginas interiores ni su audio.
     Pide turno a generation-gate; al concederlo responde 202 con GenerationStarted. El resultado llega por WebSocket en /storyteller
     (STARTED, VERSION_PRESENTED, HINT_REJECTED con motivo o FAILED).
     Si es una página interior (página >= 1), se rechaza con 409 (IN_PROGRESS) mientras el cuento se está narrando (ALT-008) y,
@@ -55,9 +58,9 @@ post:
             $ref: "../../schemas/api-response.yaml"
     "409":
       description: |
-        La página no tiene un estado válido (PENDING o ACCEPTED), no tiene versión vigente ni beat asociado en la escaleta,
-        hay una generación en curso en la aplicación (REQ-032), o el cuento se está narrando en una página interior
-        (ALT-008; errors[0] = IN_PROGRESS)
+        La página no tiene un estado válido (PENDING o ACCEPTED), no tiene versión vigente, si es la portada al guion le faltan el lugar
+        y el tono propios de la portada (ALT-006), si es una página interior no tiene beat asociado en la escaleta, hay una generación
+        en curso en la aplicación (REQ-032), o el cuento se está narrando en una página interior (ALT-008; errors[0] = IN_PROGRESS)
       content:
         application/json:
           schema:

@@ -46,6 +46,98 @@ async function save(wrapper: Awaited<ReturnType<typeof openEdit>>) {
 const modalMessage = (wrapper: Awaited<ReturnType<typeof openEdit>>) =>
   wrapper.findComponent(ConfirmModal).props('message')
 
+const fourBeats: StoryScript = {
+  ...script,
+  beats: [1, 2, 3, 4].map((page) => ({
+    page,
+    event: `Evento ${page}`,
+    narrativeFunction: 'nudo',
+    participants: ['Luna'],
+    tone: 'alegre',
+    visualNote: 'nota',
+    setting: `Lugar ${page}`,
+  })),
+  cover: { setting: 'Habitación al anochecer', tone: 'calma' },
+}
+
+async function mountWith(value: StoryScript) {
+  vi.mocked(scriptApi.getStoryScript).mockResolvedValue(value)
+  vi.mocked(reviews.getPendingStoryReview).mockResolvedValue(null as never)
+  const wrapper = mount(StoryScriptPanel, { props: { storyId: 7 }, global: { stubs: { teleport: true } } })
+  await flushPromises()
+  return wrapper
+}
+
+describe('StoryScriptPanel: lugar y planteamiento de portada', () => {
+  beforeEach(() => {
+    vi.resetAllMocks()
+  })
+
+  it('muestra los cuatro lugares y la portada aparte de los beats', async () => {
+    const wrapper = await mountWith(fourBeats)
+    const beats = wrapper.findAll('.beat')
+    expect(beats).toHaveLength(4)
+    beats.forEach((b, i) => expect(b.text()).toContain(`Lugar: Lugar ${i + 1}`))
+
+    const cover = wrapper.find('.cover-plan')
+    expect(cover.text()).toContain('Lugar de la portada: Habitación al anochecer')
+    expect(cover.text()).toContain('Tono de la portada: calma')
+    expect(beats[0].text()).not.toContain('Habitación al anochecer')
+  })
+
+  it('cuento anterior: sin portada ni lugar, no se rellena nada', async () => {
+    const wrapper = await mountWith(script)
+    expect(wrapper.find('.cover-plan').text()).toContain('no tiene planteamiento de portada')
+    expect(wrapper.find('.beat').text()).toContain('Lugar: sin definir')
+  })
+
+  it('la edición carga el lugar actual y lo envía', async () => {
+    const wrapper = await mountWith(fourBeats)
+    await wrapper.findAll('.beat')[1].find('button').trigger('click')
+    const input = wrapper.findAll('.beat')[1].findAll('input').find((i) => (i.element as HTMLInputElement).value === 'Lugar 2')!
+    expect(input).toBeTruthy()
+    await input.setValue('Playa')
+    vi.mocked(scriptApi.editStoryBeat).mockResolvedValue(editResult({ status: 'APPLIED', invalidatedPages: 0 }))
+    await wrapper.findAll('.beat')[1].findAll('button').find((b) => b.text() === 'Guardar')!.trigger('click')
+    await flushPromises()
+    expect(scriptApi.editStoryBeat).toHaveBeenCalledWith(7, 2, expect.objectContaining({ setting: 'Playa' }))
+  })
+
+  it('un error del servidor al editar se muestra y no cambia el guion local', async () => {
+    const wrapper = await mountWith(fourBeats)
+    await wrapper.findAll('.beat')[0].find('button').trigger('click')
+    vi.mocked(scriptApi.editStoryBeat).mockRejectedValue(new ApiError('El lugar es obligatorio', 400, 'VALIDATION'))
+    await wrapper.findAll('.beat')[0].findAll('button').find((b) => b.text() === 'Guardar')!.trigger('click')
+    await flushPromises()
+    expect(wrapper.text()).toContain('El lugar es obligatorio')
+    expect(vi.mocked(scriptApi.getStoryScript)).toHaveBeenCalledTimes(1)
+  })
+
+  it('la propuesta candidata muestra su portada', async () => {
+    vi.mocked(scriptApi.getStoryScript).mockResolvedValue(fourBeats)
+    vi.mocked(reviews.getPendingStoryReview).mockResolvedValue({
+      id: 1,
+      status: 'PENDING',
+      previewStory: {} as never,
+      changedBeats: [],
+      candidateOutline: { cast: [], beats: fourBeats.beats, cover: { setting: 'Jardín', tone: 'misterio' } },
+    })
+    const wrapper = mount(StoryScriptPanel, { props: { storyId: 7 }, global: { stubs: { teleport: true } } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('Lugar de la portada: Jardín')
+  })
+
+  it('avisa cuando la aprobación no inició la portada', async () => {
+    const pending = { ...fourBeats, status: 'SCRIPT_PENDING' as const }
+    const wrapper = await mountWith(pending)
+    vi.mocked(scriptApi.approveStoryScript).mockResolvedValue({ story: {} as never, coverStarted: false })
+    await wrapper.findAll('button').find((b) => b.text() === 'Aprobar guion')!.trigger('click')
+    await flushPromises()
+    expect(wrapper.findAll('.notice')).toHaveLength(1)
+    expect(wrapper.find('.notice').text()).toContain('pídela a mano')
+  })
+})
+
 describe('StoryScriptPanel: aviso al editar un beat', () => {
   beforeEach(() => {
     vi.resetAllMocks()

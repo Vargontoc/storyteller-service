@@ -1,14 +1,18 @@
-# Origen: specs/agent-writer (REQ-016, REQ-017, REQ-018, REQ-028, REQ-031, REQ-033, REQ-038, REQ-041, ALT-004, ALT-012), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009)
+# Origen: specs/agent-writer (REQ-016, REQ-017, REQ-018, REQ-028, REQ-031, REQ-033, REQ-038, REQ-041, ALT-004, ALT-012), specs/agent-narrator (REQ-027, REQ-033, REQ-034, DEC-007, ALT-008, ALT-009), specs/export-import-feature (REQ-008, REQ-039, REQ-041, REQ-043, DEC-003)
 # Estado del contrato: contrastado con el código
 post:
   operationId: acceptStoryPageProposal
   summary: Acepta la propuesta vigente de una portada o página aceptada reabierta
   description: |
-    Acepta la propuesta vigente de una portada o página aceptada reabierta. Si existen páginas posteriores (nunca ocurre en la portada)
-    y confirm es false (valor por defecto), no cambia nada y responde 200 con requiresConfirmation=true y affectedPages indicando cuántas
-    páginas se eliminarán. Con confirm=true (o sin páginas posteriores), sustituye el contenido aceptado sin imagen (desasociando cualquier
-    imagen previa), borra el histórico de propuestas y elimina en cascada las páginas posteriores junto con sus históricos e imágenes,
-    sin regenerar nada. Si el cuento estaba en PAGES_ACCEPTED y se eliminan páginas, vuelve a SCRIPT_ACCEPTED.
+    Acepta la propuesta vigente de la portada (página 0) o de una página aceptada reabierta.
+    La portada queda fuera de la cascada: aceptar una nueva versión de la portada nunca pide confirmación ni elimina páginas
+    interiores (requiresConfirmation=false y affectedPages=0), retira únicamente su propia imagen importada (referencia y fichero)
+    y conserva intactas todas las páginas interiores aceptadas (texto, descripción de escena, imagen importada y audio).
+    En páginas interiores (página >= 1), si existen páginas posteriores y confirm es false (valor por defecto), no cambia nada y
+    responde 200 con requiresConfirmation=true y affectedPages indicando cuántas páginas se eliminarían. Con confirm=true (o sin
+    páginas posteriores), sustituye el contenido aceptado de esa página retirando su imagen importada (referencia y fichero), borra
+    su histórico de propuestas y elimina en cascada las páginas posteriores junto con sus históricos e imágenes importadas (sin
+    tocar la portada ni su imagen), sin regenerar nada. Si el cuento estaba en PAGES_ACCEPTED y se eliminan páginas, vuelve a SCRIPT_ACCEPTED.
     En páginas interiores (página >= 1), se rechaza con 409 (IN_PROGRESS) mientras el cuento se está narrando (ALT-008) y, cuando la
     propuesta se acepta de forma efectiva en un cuento con audio, borra todos los audios y la voz guardada en la misma operación (ALT-009).
   tags:

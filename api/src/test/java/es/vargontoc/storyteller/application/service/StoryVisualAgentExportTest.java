@@ -1,5 +1,6 @@
 package es.vargontoc.storyteller.application.service;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -11,11 +12,14 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import javax.imageio.ImageIO;
 
@@ -23,7 +27,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
-import es.vargontoc.storyteller.application.ports.out.external.CharacterBackgroundRemover;
 import es.vargontoc.storyteller.application.ports.out.persistence.NarrationRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryOutlineRepository;
 import es.vargontoc.storyteller.application.ports.out.persistence.StoryProtagonistSnapshotReader;
@@ -48,7 +51,8 @@ class StoryVisualAgentExportTest {
 
     private StoryOutlineRepository outlines;
     private StoryProtagonistSnapshotReader snapshots;
-    private CharacterBackgroundRemover remover;
+    private ResourceStorage storage;
+    private byte[] portrait;
     private StoryExportService service;
     private Story story;
     private List<StoryBeat> beats;
@@ -58,12 +62,11 @@ class StoryVisualAgentExportTest {
         StoryRepository stories = mock(StoryRepository.class);
         outlines = mock(StoryOutlineRepository.class);
         snapshots = mock(StoryProtagonistSnapshotReader.class);
-        remover = mock(CharacterBackgroundRemover.class);
-        ResourceStorage storage = mock(ResourceStorage.class);
-        when(storage.getResource("portrait")).thenReturn(new byte[] {1});
+        storage = mock(ResourceStorage.class);
+        portrait = png(1024);
+        when(storage.getResource("portrait")).thenReturn(portrait);
         when(snapshots.find(STORY)).thenReturn(Optional.of(
             new StoryProtagonistSnapshot("Nina", "vestido amarillo, pelo rizado", "portrait")));
-        when(remover.removeBackground(any())).thenReturn(Optional.of(png(1024)));
 
         beats = new ArrayList<>();
         for (int n = 1; n <= PAGES; n++) {
@@ -86,7 +89,7 @@ class StoryVisualAgentExportTest {
 
         service = new StoryExportService(stories, outlines, mock(NarrationRepository.class), storage,
             mock(NubiGameExporter.class), snapshots,
-            new VisualAgentExporter(storage, remover, new VisualContractValidator()));
+            new VisualAgentExporter(storage, new VisualContractValidator()));
     }
 
     private static StoryPage page(int number) {
@@ -187,12 +190,12 @@ class StoryVisualAgentExportTest {
 
         assertEquals(List.of("-1:SCRIPT_NOT_APPROVED", "0:COVER_NOT_ACCEPTED", "2:ACCEPTED_TEXT", "5:BEAT_SETTING",
             "-1:PROTAGONIST_MISSING"), summary(service.exportForVisualAgent(STORY)));
-        verify(remover, never()).removeBackground(any());
+        verify(storage, never()).getResource(any());
     }
 
     @Test
     void smallPortraitIsRejectedByTheContract() throws IOException {
-        when(remover.removeBackground(any())).thenReturn(Optional.of(png(768)));
+        when(storage.getResource("portrait")).thenReturn(png(768));
 
         ExportResult result = service.exportForVisualAgent(STORY);
 
@@ -202,14 +205,30 @@ class StoryVisualAgentExportTest {
     }
 
     @Test
-    void backgroundRemovalFailureIsReportedAsProtagonistImage() {
-        when(remover.removeBackground(any())).thenReturn(Optional.empty());
+    void missingStoredPortraitIsReportedAsProtagonistImage() {
+        when(storage.getResource("portrait")).thenReturn(null);
 
         ExportResult result = service.exportForVisualAgent(STORY);
 
         assertFalse(result.isDelivered());
         assertEquals(List.of("-1:PROTAGONIST_IMAGE"), summary(result));
-        assertEquals("CHARACTER_IMAGE_NOT_OBTAINED", result.faults().get(0).code());
+        assertEquals("CHARACTER_IMAGE_MISSING", result.faults().get(0).code());
+    }
+
+    @Test
+    void deliveredZipCarriesTheSnapshotPortraitBytes() throws IOException {
+        ExportResult result = service.exportForVisualAgent(STORY);
+
+        assertTrue(result.isDelivered());
+        try (ZipInputStream in = new ZipInputStream(new ByteArrayInputStream(result.zip()))) {
+            byte[] character = null;
+            for (ZipEntry e = in.getNextEntry(); e != null; e = in.getNextEntry()) {
+                if (e.getName().equals("characters/nina/character.png")) {
+                    character = in.readAllBytes();
+                }
+            }
+            assertArrayEquals(portrait, character);
+        }
     }
 
     @Test

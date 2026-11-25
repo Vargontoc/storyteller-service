@@ -88,6 +88,27 @@ describe('StoryPagesPanel', () => {
     expect(wrapper.find('img').exists()).toBe(true)
   })
 
+  it('muestra completa la escena de la página 2 aceptada', async () => {
+    const long = 'Un claro del bosque al amanecer con niebla baja, un río estrecho, tres conejos junto a una roca y un sol naranja detrás de los pinos.'
+    const p2 = page({ id: 12, page: 2, accepted: { text: 'Texto 2', scene: long, hasImage: false } })
+    const wrapper = await mountPanel(view({ pages: [p2] }))
+
+    expect(wrapper.find('[data-page="2"] .scene').text()).toBe(`Escena: ${long}`)
+  })
+
+  it('portada y página 1 muestran cada una su propia escena', async () => {
+    const cover = page({ id: 1, page: 0, accepted: { text: null, scene: 'Escena de portada: el protagonista frente al mar', hasImage: false } })
+    const p1 = page({ id: 11, page: 1, accepted: { text: 'Texto 1', scene: 'Escena de la página uno: una cueva oscura', hasImage: false } })
+    const wrapper = await mountPanel(view({ pages: [cover, p1] }))
+
+    const coverScene = wrapper.find('[data-page="0"] .scene').text()
+    const p1Scene = wrapper.find('[data-page="1"] .scene').text()
+    expect(coverScene).toContain('el protagonista frente al mar')
+    expect(coverScene).not.toContain('cueva oscura')
+    expect(p1Scene).toContain('una cueva oscura')
+    expect(p1Scene).not.toContain('frente al mar')
+  })
+
   it('muestra página aceptada sin imagen sin pedirla', async () => {
     const wrapper = await mountPanel(view({ pages: [page()] }))
 
@@ -149,7 +170,7 @@ describe('StoryPagesPanel', () => {
   it('no hay campos editables para texto ni escena', async () => {
     const wrapper = await mountPanel(view({ pages: [page({ actions: [] })] }))
 
-    expect(wrapper.find('input').exists()).toBe(false)
+    expect(wrapper.find('input:not([type="file"])').exists()).toBe(false)
     expect(wrapper.find('textarea').exists()).toBe(false)
     expect(wrapper.find('[contenteditable]').exists()).toBe(false)
 
@@ -567,9 +588,10 @@ describe('StoryPagesPanel', () => {
     })
 
     it('fallo muestra el error y permite reintentar tras sincronizar', async () => {
-      const wrapper = await mountPanel(view({ nextPage: 1, generating: true }))
+      const acceptedCover = page({ id: 1, page: 0, accepted: { text: null, scene: 'Portada', hasImage: false } })
+      const wrapper = await mountPanel(view({ nextPage: 1, generating: true, pages: [acceptedCover] }))
       expect(buttonByText(wrapper, 'Generar página 1')!.attributes('disabled')).toBeDefined()
-      mocked.getStoryPagesView.mockResolvedValue(view({ nextPage: 1, generating: false }))
+      mocked.getStoryPagesView.mockResolvedValue(view({ nextPage: 1, generating: false, pages: [acceptedCover] }))
       mocked.generatePage.mockResolvedValue({ storyId: 7, pageNumber: 1 })
 
       await emit('FAILED', 7, 1, 'Ollama no responde')
@@ -593,7 +615,8 @@ describe('StoryPagesPanel', () => {
 
     it('la reconexión recarga el panel completo', async () => {
       const wrapper = await mountPanel(view({ generating: true }))
-      mocked.getStoryPagesView.mockResolvedValue(view({ generating: false, nextPage: 1 }))
+      const acceptedCover = page({ id: 1, page: 0, accepted: { text: null, scene: 'Portada', hasImage: false } })
+      mocked.getStoryPagesView.mockResolvedValue(view({ generating: false, nextPage: 1, pages: [acceptedCover] }))
 
       useWebsocketStore(pinia).connectionId += 1
       await flushPromises()
@@ -735,5 +758,219 @@ describe('StoryPagesPanel', () => {
     wrapper.unmount()
 
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:img')
+  })
+
+  describe('subida de imagen', () => {
+    const cover = (overrides: Partial<PageDetail> = {}) =>
+      page({ id: 1, page: 0, accepted: { text: null, scene: 'Portada', hasImage: true }, ...overrides })
+
+    async function selectFile(wrapper: ReturnType<typeof mount>, section: string, file: File) {
+      const input = wrapper.find(`[data-page="${section}"] input[type="file"]`)
+      Object.defineProperty(input.element, 'files', { value: [file], configurable: true })
+      await input.trigger('change')
+      await flushPromises()
+    }
+
+    it('ofrece subir imagen en la portada aceptada', async () => {
+      const wrapper = await mountPanel(view({ pages: [cover()] }))
+
+      expect(wrapper.find('[data-page="0"] input[type="file"]').exists()).toBe(true)
+    })
+
+    it('no ofrece subir imagen en portada ni página pendientes', async () => {
+      const pendingCover = page({ id: 1, page: 0, status: 'PENDING', accepted: null, actions: ['ACCEPT'] })
+      const pendingPage = page({ id: 11, page: 1, status: 'PENDING', accepted: null, actions: ['ACCEPT', 'HINT'] })
+      const wrapper = await mountPanel(view({ pages: [pendingCover, pendingPage] }))
+
+      expect(wrapper.find('input[type="file"]').exists()).toBe(false)
+    })
+
+    it('tras subir recarga y muestra la imagen nueva', async () => {
+      const p3 = page({ id: 13, page: 3, accepted: { text: 'Tres', scene: 'Escena', hasImage: false } })
+      const wrapper = await mountPanel(view({ pages: [p3] }))
+      expect(wrapper.find('img').exists()).toBe(false)
+      mocked.uploadPageImage.mockResolvedValue({ storyId: 7, pageId: 13, pageNumber: 3, status: 'ACCEPTED' } as never)
+      mocked.getStoryPagesView.mockResolvedValue(
+        view({ pages: [page({ id: 13, page: 3, accepted: { text: 'Tres', scene: 'Escena', hasImage: true } })] }),
+      )
+      const file = new File(['png'], 'a.png', { type: 'image/png' })
+
+      await selectFile(wrapper, '3', file)
+
+      expect(mocked.uploadPageImage).toHaveBeenCalledWith(7, 13, file)
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('img').attributes('src')).toBe('blob:img')
+    })
+
+    it('ante rechazo muestra el mensaje y mantiene la imagen anterior', async () => {
+      const wrapper = await mountPanel(view({ pages: [cover()] }))
+      mocked.uploadPageImage.mockRejectedValue(new ApiError('El fichero no es una imagen', 415))
+
+      await selectFile(wrapper, '0', new File(['txt'], 'a.txt', { type: 'text/plain' }))
+
+      expect(wrapper.text()).toContain('El fichero no es una imagen')
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(1)
+      expect(wrapper.find('img').attributes('src')).toBe('blob:img')
+    })
+  })
+
+  describe('revisión de la portada (página 0)', () => {
+    let eventId = 1000
+
+    async function emit(type: 'STARTED' | 'VERSION_PRESENTED' | 'HINT_REJECTED' | 'FAILED', reason?: string) {
+      useWebsocketStore(pinia).lastStoryPageEvent = { storyId: 7, pageNumber: 0, type, reason, id: ++eventId }
+      await flushPromises()
+    }
+
+    const pendingCover = (text = 'Luna sobre el mar') =>
+      page({
+        id: 1,
+        page: 0,
+        status: 'PENDING',
+        accepted: null,
+        title: 'Mi cuento',
+        versions: [{ id: 5, text: null, scene: text, warning: 'NONE', current: true }],
+        actions: ['ACCEPT', 'HINT'],
+      })
+    const acceptedCover = (hasImage = false) =>
+      page({ id: 1, page: 0, accepted: { text: null, scene: 'Luna sobre el mar', hasImage }, title: 'Mi cuento' })
+
+    it('versión presentada de la portada: muestra la descripción pendiente con aceptar y hint', async () => {
+      const wrapper = await mountPanel(view({ nextPage: null, generating: true }))
+      mocked.getStoryPagesView.mockResolvedValue(view({ pages: [pendingCover()] }))
+
+      await emit('VERSION_PRESENTED')
+
+      expect(mocked.getStoryPagesView).toHaveBeenCalledTimes(2)
+      expect(wrapper.find('[data-page="0"]').text()).toContain('Luna sobre el mar')
+      expect(buttonByText(wrapper, 'Aceptar')).toBeDefined()
+      expect(buttonByText(wrapper, 'Enviar hint')).toBeDefined()
+    })
+
+    it('pide un cambio de la portada con hint usando el id de la página 0', async () => {
+      const wrapper = await mountPanel(view({ pages: [pendingCover()] }))
+      mocked.sendHint.mockResolvedValue({ storyId: 7, pageNumber: 0 })
+      await wrapper.find('textarea').setValue('que se vea la luna llena')
+
+      await buttonByText(wrapper, 'Enviar hint')!.trigger('click')
+      await flushPromises()
+
+      expect(mocked.sendHint).toHaveBeenCalledWith(7, 1, 'que se vea la luna llena')
+    })
+
+    it('hint rechazado de la portada muestra el motivo y mantiene la versión vigente', async () => {
+      const wrapper = await mountPanel(view({ pages: [pendingCover()] }))
+
+      await emit('HINT_REJECTED', 'El hint contradice el planteamiento')
+
+      expect(wrapper.find('.event-error').text()).toContain('El hint contradice el planteamiento')
+      expect(wrapper.find('[data-page="0"] .version.current').text()).toContain('Luna sobre el mar')
+    })
+
+    it('fallo de la portada muestra el motivo y permite volver a pedirla', async () => {
+      const wrapper = await mountPanel(view({ generating: true, nextPage: null }))
+      mocked.getStoryPagesView.mockResolvedValue(view({ nextPage: 0 }))
+      mocked.generateCover.mockResolvedValue({ storyId: 7, pageNumber: 0 })
+
+      await emit('FAILED', 'Ollama no responde')
+
+      expect(wrapper.find('.event-error').text()).toContain('Ollama no responde')
+      await buttonByText(wrapper, 'Generar portada')!.trigger('click')
+      await flushPromises()
+      expect(mocked.generateCover).toHaveBeenCalledWith(7)
+    })
+
+    it('portada sin aceptar: no se ofrece generar la página 1', async () => {
+      const wrapper = await mountPanel(view({ nextPage: 1, pages: [pendingCover()] }))
+
+      expect(buttonByText(wrapper, 'Generar página 1')).toBeUndefined()
+    })
+
+    it('sin portada en la vista tampoco se ofrece la página 1', async () => {
+      const wrapper = await mountPanel(view({ nextPage: 1, pages: [] }))
+
+      expect(buttonByText(wrapper, 'Generar página 1')).toBeUndefined()
+    })
+
+    it('aceptar la portada habilita la página 1 pero no la genera', async () => {
+      const wrapper = await mountPanel(view({ nextPage: null, pages: [pendingCover()] }))
+      mocked.acceptPage.mockResolvedValue({ storyId: 7, pageId: 1, pageNumber: 0, status: 'ACCEPTED' })
+      mocked.getStoryPagesView.mockResolvedValue(view({ nextPage: 1, pages: [acceptedCover()] }))
+
+      await buttonByText(wrapper, 'Aceptar')!.trigger('click')
+      await flushPromises()
+
+      expect(mocked.acceptPage).toHaveBeenCalledWith(7, 1)
+      expect(buttonByText(wrapper, 'Generar página 1')).toBeDefined()
+      expect(mocked.generatePage).not.toHaveBeenCalled()
+      expect(mocked.generateCover).not.toHaveBeenCalled()
+    })
+
+    it('aprobación sin inicio automático: ofrece pedir la portada a mano', async () => {
+      const wrapper = await mountPanel(view({ nextPage: 0, pages: [] }))
+      mocked.generateCover.mockResolvedValue({ storyId: 7, pageNumber: 0 })
+
+      await buttonByText(wrapper, 'Generar portada')!.trigger('click')
+      await flushPromises()
+
+      expect(mocked.generateCover).toHaveBeenCalledWith(7)
+    })
+
+    it('cuento anterior: muestra el aviso del servidor de que faltan lugar y tono de la portada', async () => {
+      const wrapper = await mountPanel(view({ nextPage: 0, pages: [] }))
+      mocked.generateCover.mockRejectedValue(new ApiError('Al guion le faltan el lugar y el tono de la portada', 409))
+
+      await buttonByText(wrapper, 'Generar portada')!.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.error').text()).toContain('faltan el lugar y el tono de la portada')
+    })
+
+    it('cuento anterior: el hint de la portada muestra el mismo aviso', async () => {
+      const wrapper = await mountPanel(view({ pages: [acceptedCover()] }))
+      mocked.sendHint.mockRejectedValue(new ApiError('Al guion le faltan el lugar y el tono de la portada', 409))
+      await wrapper.find('textarea').setValue('más luna')
+
+      await buttonByText(wrapper, 'Enviar hint')!.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('.error').text()).toContain('faltan el lugar y el tono de la portada')
+    })
+
+    it('cambiar la portada conserva las páginas interiores y retira solo su imagen', async () => {
+      const proposals: PageVersionView[] = [{ id: 300, text: null, scene: 'Nueva portada', warning: 'NONE', current: true }]
+      const reopenedCover = page({
+        id: 1,
+        page: 0,
+        accepted: { text: null, scene: 'Luna sobre el mar', hasImage: true },
+        proposals,
+        actions: ['HINT', 'ACCEPT_PROPOSAL', 'DISCARD_PROPOSALS'],
+      })
+      const interior = (hasImage: boolean) =>
+        page({ id: 12, page: 2, accepted: { text: 'Texto 2', scene: 'Escena 2', hasImage } })
+      const wrapper = await mountPanel(view({ pages: [reopenedCover, page({ id: 11, page: 1 }), interior(true)] }))
+      expect(wrapper.findAll('img')).toHaveLength(2)
+      mocked.acceptProposal.mockResolvedValue({ storyId: 7, pageId: 1, pageNumber: 0, status: 'ACCEPTED', requiresConfirmation: false, affectedPages: 0 })
+      mocked.getStoryPagesView.mockResolvedValue(
+        view({
+          nextPage: null,
+          pages: [
+            page({ id: 1, page: 0, accepted: { text: null, scene: 'Nueva portada', hasImage: false } }),
+            page({ id: 11, page: 1 }),
+            interior(true),
+          ],
+        }),
+      )
+
+      await buttonByText(wrapper, 'Aceptar propuesta')!.trigger('click')
+      await flushPromises()
+
+      expect(wrapper.find('[role="alertdialog"]').exists()).toBe(false)
+      expect(wrapper.find('[data-page="0"] img').exists()).toBe(false)
+      expect(wrapper.find('[data-page="0"]').text()).toContain('Nueva portada')
+      expect(wrapper.find('[data-page="1"]').text()).toContain('Había una vez')
+      expect(wrapper.find('[data-page="2"] img').exists()).toBe(true)
+      expect(wrapper.find('[data-page="2"]').text()).toContain('Texto 2')
+    })
   })
 })

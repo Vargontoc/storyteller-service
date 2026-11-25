@@ -1,0 +1,26 @@
+# Origen: specs/export-import-feature (REQ-009, REQ-010, REQ-018, REQ-019, REQ-026, REQ-032)
+# Estado del contrato: contrastado con el código
+type: string
+description: |
+  Elemento o condición que impide exportar el cuento (ExportMissing).
+  - COVER_NOT_ACCEPTED: portada sin aceptar o guion sin planteamiento propio de portada (lugar y tono).
+  - ACCEPTED_TEXT: página interior sin aceptar o sin texto aceptado.
+  - IMAGE: falta imagen importada en portada (page 0) o página interior (solo Nubi Game).
+  - AUDIO: falta audio narrado en página interior (solo Nubi Game).
+  - SCRIPT_NOT_APPROVED: el guion no está aprobado (page -1; solo agente visual).
+  - BEAT_SETTING: al beat de la página le falta el lugar de escena (solo agente visual).
+  - COVER_SETTING_TONE: a la portada le faltan el lugar o el tono propios en el guion (page 0; solo agente visual).
+  - PROTAGONIST_MISSING: el cuento no tiene instantánea del protagonista (page -1; solo agente visual).
+  - PROTAGONIST_IMAGE: no hay imagen del protagonista sin fondo (sin retrato en la instantánea o fallo al quitar el fondo; page -1; solo agente visual; detalle en code).
+  - CONTRACT_RULE: regla del contrato v0.1 incumplida (page -1; solo agente visual; código estable de la regla en code).
+enum:
+  - COVER_NOT_ACCEPTED
+  - ACCEPTED_TEXT
+  - IMAGE
+  - AUDIO
+  - SCRIPT_NOT_APPROVED
+  - BEAT_SETTING
+  - COVER_SETTING_TONE
+  - PROTAGONIST_MISSING
+  - PROTAGONIST_IMAGE
+  - CONTRACT_RULE
