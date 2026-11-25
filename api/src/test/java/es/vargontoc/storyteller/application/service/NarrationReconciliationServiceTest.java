@@ -41,6 +41,7 @@ class NarrationReconciliationServiceTest {
                     List.copyOf(audiosByPage.keySet())));
         }
         public Optional<byte[]> findAudio(Long storyId, int page) { return Optional.empty(); }
+        public Optional<String> findAudioPath(Long storyId, int page) { return Optional.empty(); }
         public void markError(Long storyId) {
             rows.put(storyId, new StoryNarration(storyId, NarrationStatus.ERROR, null, List.of()));
         }

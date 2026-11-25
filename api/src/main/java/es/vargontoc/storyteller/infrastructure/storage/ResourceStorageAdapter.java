@@ -1,30 +1,16 @@
 package es.vargontoc.storyteller.infrastructure.storage;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Component;
 
 
 import es.vargontoc.storyteller.application.ports.out.ResourceStorage;
 import es.vargontoc.storyteller.domain.enums.KindImage;
-import es.vargontoc.storyteller.domain.enums.ResourceType;
-import es.vargontoc.storyteller.domain.request.PageAssetRequest;
-import es.vargontoc.storyteller.shared.exceptions.AppException;
-import ws.schild.jave.Encoder;
-import ws.schild.jave.MultimediaObject;
-import ws.schild.jave.encode.AudioAttributes;
-import ws.schild.jave.encode.EncodingAttributes;
 
 @Component
 public class ResourceStorageAdapter implements ResourceStorage {
@@ -64,6 +50,24 @@ public class ResourceStorageAdapter implements ResourceStorage {
             return file.toString();
         } catch (IOException e) {
             throw new IllegalStateException("No se pudo guardar la imagen importada", e);
+        }
+    }
+
+    @Override
+    public void deleteImportedImage(long storyId, long pageId) {
+        deleteTree(basePath.resolve(String.valueOf(storyId)).resolve("pages")
+            .resolve(String.valueOf(pageId)).resolve("imported"));
+    }
+
+    /** Borra el fichero o el directorio con todo su contenido; si no existe, no hace nada. */
+    private void deleteTree(Path root) {
+        if (!Files.exists(root))
+            return;
+        try (var paths = Files.walk(root)) {
+            for (Path p : (Iterable<Path>) paths.sorted(java.util.Comparator.reverseOrder())::iterator)
+                Files.deleteIfExists(p);
+        } catch (IOException e) {
+            throw new IllegalStateException("No se pudo eliminar " + root, e);
         }
     }
 
@@ -209,89 +213,14 @@ public class ResourceStorageAdapter implements ResourceStorage {
     @Override
     public void deletePageAssets(long idStory, long pageId, List<Long> descendants) {
 
-        // Borramos los assets propios
-        Path dir = basePath.resolve(String.valueOf(idStory)).resolve("pages").resolve(String.valueOf(pageId));
-        if(Files.exists(dir)) {
-            try {
-                Files.deleteIfExists(dir);
-            }catch(IOException e) {
-                
-            }
-        }
-
-        // Borramos assets de paginas descendientes
-        descendants.forEach(d ->  {
-            Path desc = basePath.resolve(String.valueOf(idStory)).resolve("pages").resolve(String.valueOf(d));
-            try {
-                Files.deleteIfExists(desc);
-            }catch(IOException e) {
-                
-            }
-        });
+        // Borramos los assets propios y los de las páginas descendientes, con todo el contenido de sus directorios
+        Path pages = basePath.resolve(String.valueOf(idStory)).resolve("pages");
+        deleteTree(pages.resolve(String.valueOf(pageId)));
+        descendants.forEach(d -> deleteTree(pages.resolve(String.valueOf(d))));
     }
 
     @Override
     public boolean existsAsset(String asset) {
         return asset != null && !asset.isBlank() && Files.exists(Path.of(asset));
-    }
-
-    @Override
-    public File downloadStory(String json, List<PageAssetRequest> assets) {
-        try {
-            Path zipFile = Files.createTempFile("story-", ".zip");
-
-            try (ZipOutputStream zip = new ZipOutputStream(Files.newOutputStream(zipFile))) {
-                zip.putNextEntry(new ZipEntry("story.json"));
-                zip.write(json.getBytes(StandardCharsets.UTF_8));
-                zip.closeEntry();
-
-                for (PageAssetRequest asset : assets) {
-                    Path source = Path.of(asset.asset());
-                    if (!Files.exists(source))
-                        continue;
-                    
-                    zip.putNextEntry(new ZipEntry(resourceFileName(asset)));
-                    if (asset.type() == ResourceType.AUDIO)
-                        zip.write(convertWavToMp3(source.toFile()));
-                    else
-                        Files.copy(source, zip);
-                    zip.closeEntry();
-                }
-            }
-
-            return zipFile.toFile();
-        }catch(IOException e){
-            throw new IllegalStateException("No se pudo generar el zip del cuento", e);
-        }
-    }
-
-    private String resourceFileName(PageAssetRequest asset) {
-        String extension = asset.type() == ResourceType.IMAGE ? ".png" : ".mp3";
-        if (asset.page() == 0)
-            return "cover" + extension;
-        return "page_" + asset.page() + extension;
-    }
-
-    private byte[] convertWavToMp3(File source) throws IOException {
-        try {
-            AudioAttributes audio = new AudioAttributes();
-            audio.setCodec("libmp3lame");
-            audio.setBitRate(128000);
-            audio.setChannels(1);
-            audio.setSamplingRate(44100);
-
-            EncodingAttributes attrs = new EncodingAttributes();
-            attrs.setOutputFormat("mp3");
-            attrs.setAudioAttributes(audio);
-
-            Encoder encoder = new Encoder();
-            MultimediaObject mo = new MultimediaObject(source);
-            File f = new File(source.getName() + ".mp3");
-            encoder.encode(mo, f, attrs);
-
-            return Files.readAllBytes(f.toPath());
-        } catch (Exception e) {
-            throw new AppException("Error conversion a mp3", HttpStatus.INTERNAL_SERVER_ERROR);
-        }
     }
 }

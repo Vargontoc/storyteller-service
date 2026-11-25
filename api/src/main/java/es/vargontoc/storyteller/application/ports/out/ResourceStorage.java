@@ -1,10 +1,8 @@
 package es.vargontoc.storyteller.application.ports.out;
 
-import java.io.File;
 import java.util.List;
 
 import es.vargontoc.storyteller.domain.enums.KindImage;
-import es.vargontoc.storyteller.domain.request.PageAssetRequest;
 
 public interface ResourceStorage {
 
@@ -14,6 +12,9 @@ public interface ResourceStorage {
 
     /** Guarda tal cual (sin convertir) la imagen importada de una portada o página y borra la importada anterior. Devuelve su ruta. */
     String saveImportedImage(long storyId, long pageId, byte[] imageBytes);
+
+    /** Borra del almacén la imagen importada de una portada o página (el fichero, no la referencia). */
+    void deleteImportedImage(long storyId, long pageId);
 
     String saveAudio(Long storyId, Long id, byte[] audioBytes);
 
@@ -37,6 +38,4 @@ public interface ResourceStorage {
     void deleteCharacterAssets(long idStory, long characterId);
 
     void deletePageAssets(long idStory, long pageId, List<Long> descendants);
-
-    File downloadStory(String json, List<PageAssetRequest> assets);
 }

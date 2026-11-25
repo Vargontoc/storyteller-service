@@ -17,6 +17,7 @@ import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.BeatEditRequ
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryPageGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryScriptReading;
+import es.vargontoc.storyteller.domain.response.StoryApproval;
 import es.vargontoc.storyteller.domain.response.StoryScript;
 import es.vargontoc.storyteller.domain.command.StoryGenerateCommand;
 import es.vargontoc.storyteller.domain.command.StoryPageGenerateCommand;
@@ -57,8 +58,8 @@ public class GenerationsController
     }
 
     @PostMapping("/story/{id}/approve")
-    @Operation(description = "El adulto aprueba el guión (escaleta) del cuento antes de generar páginas")
-    public ResponseEntity<ApiResponse<Story>> approveStory(@PathVariable("id") Long id) {
+    @Operation(description = "El adulto aprueba el guión (escaleta) del cuento y se lanza la generación de la portada. La respuesta indica en coverStarted si la portada empezó; si no puede empezar la aprobación se completa igualmente")
+    public ResponseEntity<ApiResponse<StoryApproval>> approveStory(@PathVariable("id") Long id) {
         return ResponseEntity.ok(ApiResponse.ok(storyGenerator.approve(id)));
     }
 

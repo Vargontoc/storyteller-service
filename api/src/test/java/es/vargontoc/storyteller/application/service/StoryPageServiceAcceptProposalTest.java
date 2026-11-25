@@ -56,6 +56,7 @@ class StoryPageServiceAcceptProposalTest {
     private StoryRepository stories;
     private InMemoryVersions versions;
     private GenerationGatePort gate;
+    private ResourceStorage storage;
     private StoryPageService service;
 
     private final SceneComposition scene = new SceneComposition("Escena", List.of(), "claro");
@@ -70,9 +71,10 @@ class StoryPageServiceAcceptProposalTest {
         stories = mock(StoryRepository.class);
         versions = new InMemoryVersions();
         gate = mock(GenerationGatePort.class);
+        storage = mock(ResourceStorage.class);
         service = new StoryPageService(mock(OllamaPort.class), "writer", mock(ChatClient.class), pages,
             mock(StoryPageReviewRepository.class), stories, mock(StoryOutlineRepository.class),
-            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class), mock(ResourceStorage.class), new ImageContentInspector());
+            gate, mock(WriterAgent.class), versions, mock(StoryPageNotifier.class), Runnable::run, mock(StoryNarrationUseCase.class), storage, new ImageContentInspector());
 
         cover = page(COVER_ID, 0, PageStatus.ACCEPTED);
         StoryPage page1 = page(PAGE1_ID, 1, PageStatus.ACCEPTED);
@@ -160,6 +162,42 @@ class StoryPageServiceAcceptProposalTest {
         verify(pages, never()).deleteAfter(anyLong(), anyInt());
         verify(pages, never()).deleteByStory(anyLong());
         assertTrue(versions.findByPage(COVER_ID).isEmpty());
+    }
+
+    @Test
+    void acceptingTheCoverRemovesOnlyItsImportedImageAndKeepsInteriorPages() {
+        versions.add(COVER_ID, new PageVersion(null, proposalScene, PageLengthWarning.NONE, true));
+
+        service.acceptProposal(STORY, COVER_ID, false);
+
+        verify(storage).deleteImportedImage(STORY, COVER_ID);
+        verify(storage, never()).deleteImportedImage(STORY, PAGE1_ID);
+        verify(storage, never()).deleteImportedImage(STORY, PAGE2_ID);
+        verify(storage, never()).deleteImportedImage(STORY, PAGE3_ID);
+        verify(storage, never()).deletePageAssets(anyLong(), anyLong(), any());
+        verify(pages, never()).deleteAfter(anyLong(), anyInt());
+        verify(pages, never()).deleteByStory(anyLong());
+    }
+
+    @Test
+    void acceptingAnInteriorPageRemovesItsImageAndTheCascadeButNotTheCoverImage() {
+        versions.add(PAGE2_ID, new PageVersion("Propuesta.", proposalScene, PageLengthWarning.NONE, true));
+
+        service.acceptProposal(STORY, PAGE2_ID, true);
+
+        verify(storage).deleteImportedImage(STORY, PAGE2_ID);
+        // Las posteriores (3 y 4) las retira el repositorio con sus assets; la portada no se toca
+        verify(pages).deleteAfter(STORY, 2);
+        verify(storage, never()).deleteImportedImage(STORY, COVER_ID);
+    }
+
+    @Test
+    void rejectedProposalKeepsTheImportedImage() {
+        versions.add(PAGE2_ID, new PageVersion("Uno. Dos. Tres. Cuatro. Cinco.", scene, PageLengthWarning.SENTENCE_COUNT, true));
+
+        assertThrows(AppException.class, () -> service.acceptProposal(STORY, PAGE2_ID, true));
+
+        verify(storage, never()).deleteImportedImage(anyLong(), anyLong());
     }
 
     @Test

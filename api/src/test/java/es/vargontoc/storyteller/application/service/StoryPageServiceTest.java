@@ -309,6 +309,19 @@ class StoryPageServiceTest {
     }
 
     @Test
+    void generateOfPageOneIsRejectedWhileTheCoverIsPending() {
+        Story story = story(StoryStatus.SCRIPT_ACCEPTED, 0, true);
+        story.getPages().get(0).setPageStatus(es.vargontoc.storyteller.domain.enums.PageStatus.PENDING);
+        when(stories.getStory(STORY)).thenReturn(story);
+
+        AppException ex = assertThrows(AppException.class, () -> service.generate(new StoryPageGenerateCommand(STORY)));
+
+        assertTrue(ex.getMessage().contains("aceptar la portada"));
+        verifyNoInteractions(client, gate);
+        verify(pages, never()).create(any(), anyLong(), anyInt());
+    }
+
+    @Test
     void firstInteriorPageReceivesFirstBeat() {
         when(stories.getStory(STORY)).thenReturn(story(StoryStatus.SCRIPT_ACCEPTED, 0, true));
         when(client.prompt().user(anyConsumer()).call().entity(StoryPageAgentResult.class))
@@ -520,6 +533,7 @@ class StoryPageServiceTest {
         if (interior > 0 || coverOnly) {
             StoryPage cover = new StoryPage();
             cover.setPage(0);
+            cover.setPageStatus(es.vargontoc.storyteller.domain.enums.PageStatus.ACCEPTED);
             list.add(cover);
         }
         for (int i = 1; i <= interior; i++) {

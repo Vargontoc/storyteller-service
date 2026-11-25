@@ -156,6 +156,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         // La portada de un cuento con escaleta es asíncrona y tiene su propia operación
         if(story.getPages().isEmpty())
             throw new AppException("Primero hay que generar la portada con la operación de portada", HttpStatus.CONFLICT);
+        requireCoverAccepted(story);
         checkWriterAvailable();
         return generateNext(story, page -> readBeat(story.getId(), page));
     }
@@ -177,6 +178,18 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         return launch(storyId, 0, () -> createCover(storyId, writer.writeCover(context)));
     }
 
+    /** Rehacer el guion: la portada deja de existir (versiones, contenido aceptado e imagen importada); la regenera la nueva aprobación. */
+    @Override
+    public void discardCover(Long storyId) {
+        storyRepository.getStory(storyId).getPages().stream().filter(p -> p.getPage() == 0).findFirst().ifPresent(cover -> {
+            if(gate.isGeneratingStory(storyId))
+                throw new AppException("Hay una generación en curso", HttpStatus.CONFLICT);
+            versions.deleteByPage(cover.getId());
+            repository.delete(cover.getId());
+            storage.deleteImportedImage(storyId, cover.getId());
+        });
+    }
+
     /**
      * Página N de un cuento con escaleta: exige la portada y las páginas anteriores aceptadas y que N sea la siguiente,
      * pide turno y responde; el escritor genera la página en segundo plano. Una sola generación por solicitud.
@@ -190,10 +203,7 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         if(story.getStatus() != StoryStatus.SCRIPT_ACCEPTED)
             throw new AppException("Debe aprobarse el guion antes de generar la portada o las páginas", HttpStatus.CONFLICT);
 
-        boolean coverAccepted = story.getPages().stream()
-            .anyMatch(p -> p.getPage() == 0 && p.getPageStatus() == PageStatus.ACCEPTED);
-        if(!coverAccepted)
-            throw new AppException("Primero hay que aceptar la portada", HttpStatus.CONFLICT);
+        requireCoverAccepted(story);
 
         List<StoryPage> previous = story.getPages().stream()
             .filter(p -> p.getPage() != 0).sorted(Comparator.comparingInt(StoryPage::getPage)).toList();
@@ -243,6 +253,14 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
         if(page.getPage() > 0 && outlineRepository.find(storyId).map(o -> o.beats().size() == page.getPage()).orElse(false))
             storyRepository.updateStatus(storyId, StoryStatus.PAGES_ACCEPTED);
         return accepted;
+    }
+
+    /** La página 1 se admite solo cuando la portada tiene contenido aceptado; reabrirla con hint no lo retira. */
+    private void requireCoverAccepted(Story story) {
+        boolean coverAccepted = story.getPages().stream()
+            .anyMatch(p -> p.getPage() == 0 && p.getPageStatus() == PageStatus.ACCEPTED);
+        if(!coverAccepted)
+            throw new AppException("Primero hay que aceptar la portada", HttpStatus.CONFLICT);
     }
 
     /** Página interior con texto pero sin estado: generada antes de que existiera el estado por página. */
@@ -369,6 +387,8 @@ public class StoryPageService implements StoryPageGeneration, StoryPageUseCase, 
 
         // accept ya deja la página sin imagen importada y con el contenido de la propuesta
         StoryPage accepted = repository.accept(pageId, current.getText(), current.getScene());
+        // La referencia ya no existe: se borra también el fichero de la imagen importada (la portada no toca ninguna otra)
+        storage.deleteImportedImage(storyId, pageId);
         versions.deleteByPage(pageId);
         if(affected > 0) {
             repository.deleteAfter(storyId, number);

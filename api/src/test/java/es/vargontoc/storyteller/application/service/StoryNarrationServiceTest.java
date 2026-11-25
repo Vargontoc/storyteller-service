@@ -491,6 +491,11 @@ class StoryNarrationServiceTest {
         }
 
         @Override
+        public Optional<String> findAudioPath(Long storyId, int page) {
+            return Optional.empty();
+        }
+
+        @Override
         public Optional<byte[]> findAudio(Long storyId, int page) {
             return Optional.ofNullable(audios.get(page));
         }

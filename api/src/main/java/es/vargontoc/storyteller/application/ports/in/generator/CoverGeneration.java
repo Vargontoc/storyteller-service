@@ -7,4 +7,10 @@ public interface CoverGeneration {
 
     /** Valida, pide turno y devuelve el inicio; la portada se crea después, de forma asíncrona. */
     GenerationStarted startCover(Long storyId);
+
+    /**
+     * Descarta la portada del cuento (versiones, contenido aceptado e imagen importada) al rehacerse el guion.
+     * Sin portada no hace nada; con una generación del cuento en curso se rechaza con 409 sin tocar nada.
+     */
+    void discardCover(Long storyId);
 }

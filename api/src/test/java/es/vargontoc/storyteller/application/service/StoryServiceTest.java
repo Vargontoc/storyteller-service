@@ -25,7 +25,10 @@ import org.mockito.ArgumentCaptor;
 
 import org.springframework.http.HttpStatus;
 
+import es.vargontoc.storyteller.application.ports.in.generator.CoverGeneration;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
+import es.vargontoc.storyteller.domain.response.GenerationStarted;
+import es.vargontoc.storyteller.domain.response.StoryApproval;
 import es.vargontoc.storyteller.application.ports.out.external.CharacterImageConditionPort;
 import es.vargontoc.storyteller.application.ports.out.external.DirectorAgent;
 import es.vargontoc.storyteller.application.ports.out.persistence.CatalogCharacterRepository;
@@ -67,6 +70,7 @@ class StoryServiceTest {
     private CharacterImageConditionPort images;
     private PortraitLockService lock;
     private GenerationGate gate;
+    private CoverGeneration covers;
     private StoryService service;
 
     @BeforeEach
@@ -79,7 +83,8 @@ class StoryServiceTest {
         images = mock(CharacterImageConditionPort.class);
         lock = mock(PortraitLockService.class);
         gate = new GenerationGate();
-        service = new StoryService(stories, reviews, outlines, director, catalog, images, lock, gate);
+        covers = mock(CoverGeneration.class);
+        service = new StoryService(stories, reviews, outlines, director, catalog, images, lock, gate, covers);
 
         Story created = story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE);
         when(stories.create(any(), any(), anyString(), anyString(), anyLong())).thenReturn(created);
@@ -248,6 +253,62 @@ class StoryServiceTest {
     }
 
     @Test
+    void approvalWithFreeTurnStartsTheCoverAndReportsIt() {
+        when(stories.getStory(10L)).thenReturn(story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE));
+        when(covers.startCover(10L)).thenReturn(new GenerationStarted(10L, 0));
+
+        StoryApproval approval = service.approve(10L);
+
+        assertTrue(approval.coverStarted());
+        verify(stories).updateStatus(10L, StoryStatus.SCRIPT_ACCEPTED);
+        verify(covers, times(1)).startCover(10L);
+    }
+
+    @Test
+    void approvalIsPersistedBeforeRequestingTheCover() {
+        when(stories.getStory(10L)).thenReturn(story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE));
+        when(covers.startCover(10L)).thenReturn(new GenerationStarted(10L, 0));
+
+        service.approve(10L);
+
+        var order = org.mockito.Mockito.inOrder(stories, covers);
+        order.verify(stories).updateStatus(10L, StoryStatus.SCRIPT_ACCEPTED);
+        order.verify(covers).startCover(10L);
+    }
+
+    @Test
+    void approvalWithBusyTurnCompletesWithoutCoverAndWithoutRetry() {
+        when(stories.getStory(10L)).thenReturn(story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE));
+        when(covers.startCover(10L)).thenThrow(new AppException("Hay una generación en curso", HttpStatus.CONFLICT));
+
+        StoryApproval approval = service.approve(10L);
+
+        assertEquals(false, approval.coverStarted());
+        verify(stories).updateStatus(10L, StoryStatus.SCRIPT_ACCEPTED);
+        verify(covers, times(1)).startCover(10L);
+    }
+
+    @Test
+    void approvalWithUnavailableWriterCompletesWithoutCover() {
+        when(stories.getStory(10L)).thenReturn(story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE));
+        when(covers.startCover(10L)).thenThrow(new IllegalStateException("escritor no disponible"));
+
+        StoryApproval approval = service.approve(10L);
+
+        assertEquals(false, approval.coverStarted());
+        verify(stories).updateStatus(10L, StoryStatus.SCRIPT_ACCEPTED);
+    }
+
+    @Test
+    void approvingALegacyStoryDoesNotRequestTheCover() {
+        when(stories.getStory(11L)).thenReturn(story(11L, StoryStatus.SCRIPT_PENDING, null));
+
+        assertThrows(AppException.class, () -> service.approve(11L));
+
+        verifyNoInteractions(covers);
+    }
+
+    @Test
     void approvingALegacyStoryIsRejected() {
         when(stories.getStory(11L)).thenReturn(story(11L, StoryStatus.SCRIPT_PENDING, null));
 
@@ -347,6 +408,43 @@ class StoryServiceTest {
     }
 
     @Test
+    void confirmingTheCandidateDiscardsTheCoverAfterPublishingTheScript() {
+        StoryReview pending = pendingWithCandidate();
+        when(reviews.getPendingReview(10L)).thenReturn(pending);
+
+        service.confirmReview(new ConfirmReviewRequestDto(10L, RevisionStatus.CONFIRMED));
+
+        var order = org.mockito.Mockito.inOrder(stories, covers);
+        order.verify(stories).updateScript(10L, "Nuevo título", "Nueva sinopsis");
+        order.verify(covers).discardCover(10L);
+    }
+
+    @Test
+    void rebuiltScriptApprovedAgainRequestsANewCover() {
+        when(reviews.getPendingReview(10L)).thenReturn(pendingWithCandidate());
+        when(stories.getStory(10L)).thenReturn(story(10L, StoryStatus.SCRIPT_PENDING, StoryScriptVersion.OUTLINE));
+        when(covers.startCover(10L)).thenReturn(new GenerationStarted(10L, 0));
+
+        service.confirmReview(new ConfirmReviewRequestDto(10L, RevisionStatus.CONFIRMED));
+        StoryApproval approval = service.approve(10L);
+
+        var order = org.mockito.Mockito.inOrder(covers);
+        order.verify(covers).discardCover(10L);
+        order.verify(covers).startCover(10L);
+        assertTrue(approval.coverStarted());
+    }
+
+    @Test
+    void failureDiscardingTheCoverPropagatesAndIsNotSwallowed() {
+        when(reviews.getPendingReview(10L)).thenReturn(pendingWithCandidate());
+        org.mockito.Mockito.doThrow(new AppException("Hay una generación en curso", HttpStatus.CONFLICT))
+            .when(covers).discardCover(10L);
+
+        assertThrows(AppException.class,
+            () -> service.confirmReview(new ConfirmReviewRequestDto(10L, RevisionStatus.CONFIRMED)));
+    }
+
+    @Test
     void discardingTheCandidateLeavesTheStoryUntouched() {
         when(reviews.getPendingReview(10L)).thenReturn(new StoryReview());
 
@@ -354,6 +452,27 @@ class StoryServiceTest {
 
         verify(reviews).changeStatus(10L, RevisionStatus.DISCARDED);
         verify(stories, never()).updateScript(anyLong(), any(), any());
+        verifyNoInteractions(covers);
+    }
+
+    @Test
+    void reviewingOrRejectedHintDoesNotTouchTheCover() {
+        arrangeCurrentOutline();
+        when(director.reviewScript(any())).thenReturn(new DirectorReviewResult(false, "No apto para 3-4 años", null, null, null, null));
+
+        service.review(new StoryReviewCommand(10L, "hint"));
+
+        verifyNoInteractions(covers);
+    }
+
+    private StoryReview pendingWithCandidate() {
+        StoryReview pending = new StoryReview();
+        Story preview = new Story();
+        preview.setTitle("Nuevo título");
+        preview.setSynopsis("Nueva sinopsis");
+        pending.setPreviewStory(preview);
+        pending.setCandidateOutline(new StoryOutline(List.of(), List.of()));
+        return pending;
     }
 
     // --- Turno de generación ---

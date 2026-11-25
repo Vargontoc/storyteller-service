@@ -91,6 +91,14 @@ public class NarrationRepositoryAdapter implements NarrationRepository {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public Optional<String> findAudioPath(Long storyId, int page) {
+        return narrations.findByStoryId(storyId)
+                .flatMap(n -> n.getAudios().stream().filter(a -> a.getPage() == page).findFirst())
+                .map(StoryNarrationAudioJpaEntity::getAudioAsset);
+    }
+
+    @Override
     @Transactional
     public void markError(Long storyId) {
         reset(storyId, NarrationStatus.ERROR);

@@ -128,6 +128,8 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
 
     @Override
     public void delete(Long idPage) {
+        // story_page_review no cae en cascada: se retiran sus revisiones antes que la página
+        pageReviewsRepository.deleteByPageIds(List.of(idPage));
         repository.deleteById(idPage);
     }
 
@@ -196,6 +198,8 @@ public class StoryPageRepositoryAdapter implements StoryPageRepository {
             repository.deletePages(entity.getStory().getId(), entity.getPage());
         }
         
+        // deletePageAssets retira el directorio de la página, imagen importada incluida: se retira también su referencia
+        entity.setImportedImage(null);
         var stored = repository.save(entity);
 
         storage.deletePageAssets(stored.getStory().getId(), idPage, stored.getPage() == 0 ? List.of() : pages);

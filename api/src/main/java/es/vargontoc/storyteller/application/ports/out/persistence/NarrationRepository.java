@@ -27,6 +27,9 @@ public interface NarrationRepository {
     /** Audio de una pagina interior publicada; vacio para la portada o si no hay audio. */
     Optional<byte[]> findAudio(Long storyId, int page);
 
+    /** Ruta del almacén del audio de una pagina interior publicada; vacio para la portada o si no hay audio. */
+    Optional<String> findAudioPath(Long storyId, int page);
+
     /** Marca la narracion con error y deja el cuento sin audio ni voz. */
     void markError(Long storyId);
 

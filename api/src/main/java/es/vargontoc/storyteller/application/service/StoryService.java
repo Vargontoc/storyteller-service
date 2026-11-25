@@ -7,6 +7,7 @@ import java.util.function.Supplier;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import es.vargontoc.storyteller.application.ports.in.generator.CoverGeneration;
 import es.vargontoc.storyteller.application.ports.in.generator.StoryGeneration;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort;
 import es.vargontoc.storyteller.application.ports.out.GenerationGatePort.GenerationType;
@@ -35,6 +36,7 @@ import es.vargontoc.storyteller.domain.response.DirectorCastMember;
 import es.vargontoc.storyteller.domain.response.DirectorReviewResult;
 import es.vargontoc.storyteller.domain.response.DirectorScriptResult;
 import es.vargontoc.storyteller.domain.response.StoryAgentResult;
+import es.vargontoc.storyteller.domain.response.StoryApproval;
 import es.vargontoc.storyteller.infrastructure.adapters.in.rest.dto.ConfirmReviewRequestDto;
 import es.vargontoc.storyteller.shared.exceptions.AppException;
 import es.vargontoc.storyteller.shared.exceptions.ResourceNotFoundException;
@@ -58,6 +60,7 @@ public class StoryService implements StoryGeneration {
     private final PortraitLockService portraitLock;
     private final DirectorAgent director;
     private final GenerationGatePort gate;
+    private final CoverGeneration covers;
     private final Random random = new Random();
 
     public StoryService(StoryRepository repository,
@@ -67,7 +70,9 @@ public class StoryService implements StoryGeneration {
             CatalogCharacterRepository catalog,
             CharacterImageConditionPort portraits,
             PortraitLockService portraitLock,
-            GenerationGatePort gate) {
+            GenerationGatePort gate,
+            CoverGeneration covers) {
+        this.covers = covers;
         this.gate = gate;
         this.repository = repository;
         this.reviewRepository = reviewRepository;
@@ -111,14 +116,29 @@ public class StoryService implements StoryGeneration {
         }
     }
 
+    /**
+     * Aprueba el guion y después pide la portada. Va sin transacción propia: la aprobación se confirma antes de
+     * pedir la portada (que lee el estado ya aprobado) y un rechazo de la portada no la revierte.
+     */
     @Override
-    public Story approve(Long storyId) {
+    @Transactional(Transactional.TxType.NOT_SUPPORTED)
+    public StoryApproval approve(Long storyId) {
         Story story = repository.getStory(storyId);
         requireOutline(story);
         if (story.getStatus() != StoryStatus.SCRIPT_ACCEPTED) {
             repository.updateStatus(storyId, StoryStatus.SCRIPT_ACCEPTED);
         }
-        return repository.getStory(storyId);
+        return new StoryApproval(repository.getStory(storyId), startCover(storyId));
+    }
+
+    /** Pide la portada con la operación existente. Cualquier motivo para no empezar (turno ocupado, planteamiento ausente...) se traduce en false, sin reintento. */
+    private boolean startCover(Long storyId) {
+        try {
+            covers.startCover(storyId);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     @Override
@@ -186,6 +206,8 @@ public class StoryService implements StoryGeneration {
             // Publica la escaleta candidata como vigente y deja el guion pendiente de aprobación
             reviewRepository.changeStatus(request.entityId(), RevisionStatus.CONFIRMED);
             repository.updateScript(request.entityId(), review.getPreviewStory().getTitle(), review.getPreviewStory().getSynopsis());
+            // Guion rehecho: la portada anterior y su imagen se descartan; la nueva aprobación genera otra
+            covers.discardCover(request.entityId());
             return repository.getStory(request.entityId());
         }
         return current;

@@ -1,6 +1,5 @@
 package es.vargontoc.storyteller.application.ports.in.persistence;
 
-import java.io.File;
 import java.util.List;
 
 import org.springframework.data.domain.PageRequest;
@@ -14,8 +13,6 @@ import es.vargontoc.storyteller.domain.model.StorySummary;
 public interface StorytellerUseCase {
 
     StorySummary getStory(Long id);
-
-    File downloadStory(Long storyId);
 
     PaginatedResponse<StorySummary> getStories(PageRequest request);
 
